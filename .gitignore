@@ -12,3 +12,5 @@
 *.out
 
 /ImpactServer
+
+.DS_Store
