@@ -1,0 +1,2 @@
+# Enable livereload on jekyll serve
+livereload: true

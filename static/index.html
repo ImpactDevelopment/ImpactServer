@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no"/>
+
+    <!-- Title -->
+    <title>Impact client - The utility mod for Minecraft</title>
+
+    <!-- CSS  -->
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="/min/style-min.css" />
+
+    <!-- Favicon -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="favicon-128.png" sizes="128x128" />
+    <link rel="icon" type="image/png" href="favicon-196x196.png" sizes="196x196" />
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#2196f3" />
+    <meta name="application-name" content="Impact client - The utility mod for Minecraft"/>
+    <meta name="theme-color" content="#2196f3" />
+    <meta name="msapplication-TileColor" content="#2196f3" />
+    <meta name="msapplication-TileImage" content="mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="mstile-310x310.png" />
+    
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-7064131913845178",
+        enable_page_level_ads: true
+      });
+    </script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-143397381-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-143397381-1');
+        
+        var getOutboundLink = function(label) {
+  gtag('event', 'click', {
+    'event_category': 'outbound',
+    'event_label': label,
+    'transport_type': 'beacon'
+  });
+}
+    </script>
+
+</head>
+<body id="top" class="scrollspy">
+
+<!-- Pre Loader -->
+<div id="loader-wrapper">
+    <div id="loader"></div>
+
+    <div class="loader-section section-left"></div>
+    <div class="loader-section section-right"></div>
+
+</div>
+
+<!--Navigation/Header-->
+<header>
+    <div class="navbar-fixed">
+        <nav role="navigation">
+            <div class="nav-wrapper container">
+                <a href="#" class="brand-logo"><h1>Impact</h1></a>
+                <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="small fa fa-bars" aria-hidden="true"></i></a>
+                <ul class="right hide-on-med-and-down">
+                    <li><a class="waves-effect" href="#about">About</a></li>
+                    <li><a class="waves-effect" href="#download">Download</a></li>
+                    <li><a class="waves-effect" href="#team">Team</a></li>
+                    <li><a class="waves-effect" href="#donate">Donate</a></li>
+                    <li><a class="waves-effect" href="#contact">Contact</a></li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+    <ul class="side-nav" id="nav-mobile">
+        <li><a class="waves-effect" href="#about">About</a></li>
+        <li><a class="waves-effect" href="#download">Download</a></li>
+        <li><a class="waves-effect" href="#team">Team</a></li>
+        <li><a class="waves-effect" href="#donate">Donate</a></li>
+        <li><a class="waves-effect" href="#contact">Contact</a></li>
+    </ul>
+</header>
+
+<!-- about section -->
+<div id="about" class="section scrollspy">
+    <div class="container">
+        <div class="row">
+            <p class="col s12 center large_text">
+                The Impact client is an <b>advanced</b> utility mod for Minecraft, it is based on <b>ClientAPI</b> and includes a large number of <b>useful mods</b>
+            </p>
+            <p class="col s12 center med_text">
+                You can view a list of past and upcoming changes <a href="/Impact/changelog" target="_blank">here</a>.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    window.impactPlatform = window.location.search.split("platform=")[1];
+</script>
+
+<div id="download-complete-modal" class="modal">
+    <div class="modal-content">
+        <h4>Thank you for downloading Impact!</h4>
+        <p style="font-size: 18px">
+            <span>If your download does not start immediately, please click</span>
+            <span id="exeOnly"><a target="_blank" href="https://github.com/ImpactDevelopment/Installer/releases/download/0.6.0/installer-0.6.0.exe" onclick="getOutboundLink('direct_exe'); return true;">here</a> for a direct link to the Windows .exe</span>
+            <span id="bothPlatforms">or</span>
+            <span id="jarOnly"><a target="_blank" href="https://github.com/ImpactDevelopment/Installer/releases/download/0.6.0/installer-0.6.0.jar" onclick="getOutboundLink('direct_jar'); return true;">here</a> for a direct link to the universal .jar</span>
+        </p>
+        <p>
+            <div style="font-size: 15px;float: left;font-weight: bold">Having trouble installing or setting up Impact? There's almost certainly a solution in the&nbsp;</div>
+            <a target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Setup-FAQ" onclick="getOutboundLink('faq_setup'); return true;">Setup / Install FAQ</a>
+            <br />
+            <br />
+            <a target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Usage-FAQ" onclick="getOutboundLink('faq_usage'); return true;">Usage FAQ</a>
+        </p>
+        <p id="mac-moment">
+            On Mac, you may run into the following issue with "Unidentified Developer" on opening the Installer. <a href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Opening-the-installer-on-Mac" onclick="getOutboundLink('install_mac'); return true;">Click here</a> for instructions on how to get around this issue.<br />
+            <img src="img/macmoment.png" style="width: 50%">
+        </p>
+        <p id="exe-moment">
+            On Windows, you may run into the following issue with missing Java on opening the Installer. This is normal; Java can be downloaded from <a target="_blank" href="https://www.java.com/download/">here</a>.<br />
+            <img src="img/nojava.png" style="width: 50%">
+        </p>
+        <script type="text/javascript">
+            function delet(id) {
+                var elem = document.getElementById(id);
+                if (elem)
+                    elem.parentNode.removeChild(elem);
+            }
+            if (navigator.platform.toUpperCase().indexOf('MAC') == -1) { // if NOT on Mac OS X
+                delet("mac-moment"); // then delete the mac info
+            } else {
+                delet("exe-moment"); // big brain: if on mac, delete the big exe meme
+            }
+            if (impactPlatform) {
+                delet("bothPlatforms");
+                if (impactPlatform == "exe") {
+                    delet("jarOnly");
+                } else {
+                    delet("exeOnly");
+                    delet("exe-moment");
+                }
+            }
+        </script>
+        <p>If you need help with Impact, come <a href="https://discord.gg/YFhR2Ab" target="_blank" onclick="getOutboundLink('discord'); return true;">join our Discord</a>!</p>
+        <p><a href="https://github.com/ImpactDevelopment/ImpactClient/issues" target="_blank" onclick="getOutboundLink('issues'); return true;">Report issues</a> on GitHub</p>
+        <p><a href="https://github.com/ImpactDevelopment/Installer" target="_blank" onclick="getOutboundLink('installer_source'); return true;">Source code</a> of the installer you just downloaded</p>
+    </div>
+    <div class="modal-footer">
+        <a class="modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
+</div>
+
+<!-- Downloads -->
+<div id="download" class="section scrollspy">
+    <div class="container">
+        <div class="row">
+            <div class="col s12">
+              <div class="center promo promo-example">
+                <h2>Downloads</h2>
+                Impact supports Minecraft 1.13.2, 1.12.2, 1.12.1, 1.12, and 1.11.2.
+                <br />
+                Impact for 1.14.4 is currently in <a href="#donate" onclick="getOutboundLink('donator_1_14_4'); return true;">donator</a>-only prerelease.
+                <br />
+              </div>
+            </div>
+            <div class="center col s12 l4 offset-l2">
+                <a href="http://evassmat.com/K4AN" onclick="getOutboundLink('adfly_exe'); return true;" id="adfly-link-exe">
+                    <div class="card-panel waves-effect z-depth-2 hoverable">
+                        <h5 class="black-text">
+                            Impact Installer
+                            <br />
+                            for Windows
+                            <br />
+                        </h5>
+                        <h6 class="black-text">
+                            Vanilla & Forge
+                        </h6>
+                        <div>
+                            <img class="large" src="img/windows-icon.png" height=128/>
+                            <br />
+                            Download
+                            <br />
+                            <span style="font-height: 10px" class="black-text">
+                                installer-0.6.0.exe
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="center col s12 l4">
+                <a href="http://evassmat.com/K44b" onclick="getOutboundLink('adfly_jar'); return true;" id="adfly-link-jar">
+                    <div class="card-panel waves-effect z-depth-2 hoverable">
+                        <h5 class="black-text">
+                            Impact Installer
+                            <br />
+                            for non-Windows
+                            <br />
+                            <div style="font-size: 10px"></div>
+                        </h5>
+                        <h6 class="black-text">
+                            Vanilla & Forge
+                        </h6>
+                        <div>
+                            <img class="large" src="img/java-icon.png" height=128/>
+                            <br />
+                            Download
+                            <br />
+                            <span style="font-height: 10px" class="black-text">
+                                installer-0.6.0.jar
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <script type="text/javascript">
+                // analytics says almost half of firefox users never come back from the adfly
+                // probably a really aggressive adblocker
+                // so... just let them straight through lmao
+                if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
+                    document.getElementById("adfly-link-jar").href = "/?brady-money-grubbing-completed=true&platform=jar";
+                    document.getElementById("adfly-link-exe").href = "/?brady-money-grubbing-completed=true&platform=exe";
+                }
+            </script>
+            <div class="col s12">
+              <div class="center promo promo-example">
+                <br />
+                <a target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Setup-FAQ" onclick="getOutboundLink('faq_download'); return true;">Download/Setup FAQ</a>
+              </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Parallax-->
+<div class="parallax-container">
+    <div class="parallax"><img src="img/parallax1.png"></div>
+</div>
+
+<!--Team-->
+<div class="section scrollspy" id="team">
+    <div class="container">
+        <h2>The Impact Dev Team </h2>
+        <div class="row">
+            <div class="col s12 l4 push-l4">
+                <div class="card card-avatar z-depth-2">
+                    <br/>
+                    <div class="center">
+                        <img src="https://avatars0.githubusercontent.com/u/24485393">
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title grey-text text-darken-4">Brady <br/>
+                            <small><em class="red-text text-darken-1">Head Developer</em></small>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="col s12 l4 pull-l4">
+                <div class="card card-avatar z-depth-2">
+                    <br/>
+                    <div class="center">
+                        <img src="https://avatars1.githubusercontent.com/u/23565638">
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title grey-text text-darken-4">LeafHacker<br/>
+                            <small><em class="red-text text-darken-1">Developer</em></small>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="col s12 l4">
+                <div class="card card-avatar z-depth-2">
+                    <br/>
+                    <div class="center">
+                        <img src="https://avatars1.githubusercontent.com/u/3837873" style="opacity:0.5;position:absolute;">
+                        <img src="https://i.imgur.com/n00Fnw8.jpg" style="opacity:0.5;">
+                    </div>
+                    <div class="card-content">
+                        <span class="card-title grey-text text-darken-4">leijurv<br/>
+                            <small><em class="red-text text-darken-1">Developer</em></small>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Donate-->
+<div class="section scrollspy" id="donate">
+    <div class="container">
+        <div class="row">
+            <div class="col s12">
+                <h3 class="center">You can <a id="donate_link" href="#donate">donate</a> to help support Brady with Impact Development.</h3>
+                <div class="container">
+                    <p>
+                        If you donate <b>$5 USD or more</b> (and enter your Minecraft username),
+                        you will recieve a few small rewards such as <b>early access</b> to upcoming releases through nightly builds (now including 1.14.4 builds), <b>premium mods</b> (currently Ignite),
+                        a <b>cape</b> visible to other Impact users, and a gold colored name in the
+                        <a href="https://discord.gg/YFhR2Ab" target="_blank" onclick="getOutboundLink('discord'); return true;">Impact Discord Server</a>.
+                    </p>
+                    <p>
+                        Before making a payment, <b>ensure that your Minecraft Username or UUID is specified in the payment note and Discord
+                        Username#XXXX if you would like the roles in our server.</b> Payments may take up to <b>72 hours</b> to process.
+                    </p>
+                    <p>
+                        In order to <b>access nightly builds</b> you must <a href="https://discord.gg/YFhR2Ab" target="_blank" onclick="getOutboundLink('discord'); return true;">join the Discord server</a> and provide proof of payment, or when you make
+                        the payment specify your Discord account.
+                    </p>
+                    <div class="row">
+                        <div class="col s12 center">
+                            <a href="https://www.paypal.me/BradyHahn" onclick="getOutboundLink('paypal'); return true;">
+                                <img src="/img/paypal.png" alt="PayPal. The safer, easier way to pay online."/>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section scrollspy">
+    <div class="container">
+        <div class="row">
+            <div class="col s12">
+                <div class="container center">
+                    Impact is not a hack client, a cheat client, or a hacked client, it is a utility mod (like OptiFine). Please bear in mind that utility mods like Impact can be against the rules on some servers. 😉
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Footer-->
+<footer id="contact" class="page-footer scrollspy">
+    <div class="container">
+        <div class="row">
+            <div class="col s12 m6 l4 offset-l4">
+                <h4 class="white-text">Contact us on discord</h4>
+                <div style="padding-right: 2em;">
+                    <iframe src="https://discordapp.com/widget?id=208753003996512258&theme=dark" style="max-width:400px;" width="100%" height="500" allowtransparency="true" frameborder="0"></iframe>
+                </div>
+            </div>
+            <div class="col s12 m6 l4">
+                <h4 class="white-text">More links</h4>
+                <ul>
+                    <li>
+                        <a class="grey-text text-lighten-3 waves-effect" target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/issues" onclick="getOutboundLink('issues'); return true;">
+                            <h5>
+                                <i class="medium fa fa-github-square"></i> Report issues on GitHub
+                            </h5>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="grey-text text-lighten-3 waves-effect" target="_blank" href="https://www.youtube.com/channel/UCKNtEpIxdgpdhglhVob3NfA">
+                            <h5>
+                                <i class="medium fa fa-youtube-square"></i> YouTube
+                            </h5>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="grey-text text-lighten-3 waves-effect" target="_blank" href="https://twitter.com/ImpactClient">
+                            <h5>
+                                <i class="medium fa fa-twitter-square"></i> Twitter
+                            </h5>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            © 2016 - 2019 Impact Development - Website based on a <a class="white-text" href="https://github.com/joashp/material-design-template">template</a> by <a class="white-text" href="http://joashpereira.com">Joash Pereira</a>.
+            <div>Icons made by <a class="white-text" target="_blank" rel='noreferrer noopener' href="https://www.flaticon.com/authors/dave-gandy" title="Dave Gandy">Dave Gandy</a> from <a rel='noreferrer noopener' class="white-text" target="_blank" href="https://www.flaticon.com/"                 title="Flaticon">www.flaticon.com</a> is licensed by <a rel='noreferrer noopener' class="white-text" target="_blank" href="http://creativecommons.org/licenses/by/3.0/"              title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+            <div>Icons made by <a rel='noreferrer noopener' class="white-text" target="_blank" href="https://www.freepik.com/" title="Freepik">Freepik</a> from <a rel='noreferrer noopener' class="white-text" target="_blank" href="https://www.flaticon.com/"              title="Flaticon">www.flaticon.com</a> is licensed by <a rel='noreferrer noopener' class="white-text" target="_blank" href="http://creativecommons.org/licenses/by/3.0/"              title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+            <br /> All credits for the on hover animations go to <a rel='noreferrer noopener' target="_blank" href="https://github.com/joerez/" class="white-text">joerez</a>. <a rel='noreferrer noopener' target="_blank" href="https://github.com/ImpactDevelopment/impactdevelopment.github.io/commits?author=joerez" class="white-text">Commits</a>. <a rel='noreferrer noopener' target="_blank" href="http://www.joerezendes.com/" class="white-text">Portfolio</a>.
+        </div>
+    </div>
+</footer>
+
+
+<!--  Scripts-->
+<script type="text/javascript" src="/min/modernizr-min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/js/materialize.min.js"></script>
+<script type="text/javascript" src="/min/init-min.js"></script>
+<script type="text/javascript">
+    if (window.location.search.indexOf("brady-money-grubbing-completed") != -1) {
+        jQuery('#download-complete-modal').modal('open');
+        if (impactPlatform) {
+            var url = "https://github.com/ImpactDevelopment/Installer/releases/download/0.6.0/installer-0.6.0." + impactPlatform;
+            var w = window.open(url);
+            setTimeout(function(){
+                if ((!w || (typeof w) == 'undefined') || (w && (w.closed || w.test || w.outerHeight == 0))) {
+                    // pop up was blocked
+                    // sadly they will not get the install info from the modal, since we need to redirect to make the download work =(
+                    document.location.href = url;
+                }
+            }, 25);
+            getOutboundLink('download_' + impactPlatform);
+        } else {
+            getOutboundLink('download_generic');
+        }
+    }
+</script>
+</body>
+</html>
