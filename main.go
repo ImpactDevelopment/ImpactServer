@@ -7,7 +7,11 @@ import (
 )
 
 func main() {
-	http.Handle("/", http.FileServer(http.Dir("static")))
+	fs := http.FileServer(http.Dir("static"))
+	http.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "max-age=300")
+		fs.ServeHTTP(w, r)
+	})
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "3000"
