@@ -22,10 +22,7 @@ func main() {
 		HTML5:  false,    // Don't forward everything to root (would allow client-side routing)
 	}))
 
-	// Compress responses
-	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-		Level: 5,
-	}))
+	// Compression not required because the CDN does that for us
 
 	// Log all the things TODO formatting https://echo.labstack.com/middleware/logger
 	e.Use(middleware.Logger())
