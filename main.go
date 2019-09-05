@@ -11,9 +11,8 @@ func main() {
 	e := echo.New()
 
 	// Enforce URL style
-	// FIXME forwarding to https breaks localhost testing cos I haven't setup a TLS cert
-	// See https://echo.labstack.com/cookbook/auto-tls
-	//e.Pre(middleware.HTTPSNonWWWRedirect())
+	// We don't need to do any http->https or www->root stuff here 'coi cloudflare
+	e.Pre(middleware.NonWWWRedirect())
 	e.Pre(middleware.RemoveTrailingSlash())
 
 	// Fall back to static files
