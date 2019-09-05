@@ -6,6 +6,16 @@ import (
 	"os"
 )
 
+var port string
+
+func init() {
+	// Get the specified port
+	port = os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+}
+
 func main() {
 	// Echo is cool https://echo.labstack.com
 	e := echo.New()
@@ -29,12 +39,6 @@ func main() {
 
 	// Don't crash
 	e.Use(middleware.Recover())
-
-	// Get the specified port
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3000"
-	}
 
 	// Start the server
 	e.Logger.Fatal(e.Start(":" + port))
