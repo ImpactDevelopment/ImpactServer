@@ -6,13 +6,12 @@ import (
 	"os"
 )
 
-var port string
+var port = "3000"
 
 func init() {
-	// Get the specified port
-	port = os.Getenv("PORT")
-	if port == "" {
-		port = "3000"
+	// Check if $PORT has been set
+	if p := os.Getenv("PORT"); p != "" {
+		port = p
 	}
 }
 
