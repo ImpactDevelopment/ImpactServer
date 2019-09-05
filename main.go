@@ -20,7 +20,7 @@ func main() {
 	e := echo.New()
 
 	// Enforce URL style
-	// We don't need to do any http->https or www->root stuff here 'coi cloudflare
+	// We don't need to do any http->https stuff here 'cos cloudflare
 	e.Pre(middleware.NonWWWRedirect())
 	e.Pre(middleware.RemoveTrailingSlash())
 
