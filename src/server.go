@@ -1,31 +1,39 @@
 package main
 
 import (
+	"github.com/ImpactDevelopment/ImpactServer/src/lib"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"os"
+	"strconv"
 )
 
-var port = "3000"
+var port = 3000
 
 func init() {
-	// Check if $PORT has been set
-	if p := os.Getenv("PORT"); p != "" {
+	// Check if $PORT has been set to an int
+	if p, err := strconv.Atoi(os.Getenv("PORT")); err == nil {
 		port = p
 	}
 }
 
 func main() {
 	// Echo is cool https://echo.labstack.com
-	e := echo.New()
+	server := echo.New()
+	AddMiddleware(server)
 
+	// Start the server
+	server.Logger.Fatal(StartServer(server, port))
+}
+
+func AddMiddleware(s lib.HttpServer) {
 	// Enforce URL style
 	// We don't need to do any http->https stuff here 'cos cloudflare
-	e.Pre(middleware.NonWWWRedirect())
-	e.Pre(middleware.RemoveTrailingSlash())
+	s.Pre(middleware.NonWWWRedirect())
+	s.Pre(middleware.RemoveTrailingSlash())
 
 	// Fall back to static files
-	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+	s.Use(middleware.StaticWithConfig(middleware.StaticConfig{
 		Root:   "static", // Root directory from where the static content is served.
 		Browse: false,    // Don't enable directory browsing.
 		HTML5:  false,    // Don't forward everything to root (would allow client-side routing)
@@ -34,11 +42,12 @@ func main() {
 	// Compression not required because the CDN does that for us
 
 	// Log all the things TODO formatting https://echo.labstack.com/middleware/logger
-	e.Use(middleware.Logger())
+	s.Use(middleware.Logger())
 
 	// Don't crash
-	e.Use(middleware.Recover())
+	s.Use(middleware.Recover())
+}
 
-	// Start the server
-	e.Logger.Fatal(e.Start(":" + port))
+func StartServer(s lib.HttpServer, port int) error {
+	return s.Start(":" + string(port))
 }
