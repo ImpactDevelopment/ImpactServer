@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/ImpactDevelopment/ImpactServer/src/lib"
 	"github.com/stretchr/testify/assert"
+	"strconv"
 	"testing"
 )
 
@@ -19,5 +20,5 @@ func TestServerStart(t *testing.T) {
 	port := 100
 	err := StartServer(s, port)
 	assert.Nil(t, err)
-	assert.Equal(t, ":"+string(port), s.StartAddress)
+	assert.Equal(t, ":"+strconv.FormatInt(int64(port), 10), s.StartAddress)
 }

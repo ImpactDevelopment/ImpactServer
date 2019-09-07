@@ -49,5 +49,5 @@ func AddMiddleware(s lib.HttpServer) {
 }
 
 func StartServer(s lib.HttpServer, port int) error {
-	return s.Start(":" + string(port))
+	return s.Start(":" + strconv.FormatInt(int64(port), 10))
 }
