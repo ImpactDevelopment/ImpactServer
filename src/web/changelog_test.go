@@ -36,7 +36,3 @@ func TestImpactRedirect(t *testing.T) {
 		assert.Equal(t, github+path, rec.Header().Get(echo.HeaderLocation))
 	}
 }
-
-func TestReplaceLinks(t *testing.T) {
-	// Should replace links
-}
