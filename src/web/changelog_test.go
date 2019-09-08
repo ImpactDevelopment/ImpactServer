@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httputil"
 	"testing"
 )
 
@@ -13,9 +14,36 @@ func TestConst(t *testing.T) {
 }
 
 func TestChangelog(t *testing.T) {
-	// Should proxy to github
-	//e := echo.New()
-	//req := httptest.NewRequest(http.MethodGet, "/changelog")
+	// Override serveProxy and store what's passed into it
+	var (
+		servedCount = 0
+		servedProxy *httputil.ReverseProxy
+		servedReq   *http.Request
+		servedRes   http.ResponseWriter
+	)
+	serveProxy = func(proxy *httputil.ReverseProxy, req *http.Request, res http.ResponseWriter) {
+		servedCount++
+		servedProxy = proxy
+		servedReq = req
+		servedRes = res
+	}
+
+	// Setup the request
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/changelog", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/changelog")
+
+	// Run the handler
+	err := Changelog(c)
+	if assert.NoError(t, err) {
+		assert.Equal(t, 1, servedCount)
+		assert.NotNil(t, servedProxy)
+		assert.NotNil(t, servedReq)
+		assert.NotNil(t, servedRes)
+	}
+
 }
 
 func TestImpactRedirect(t *testing.T) {

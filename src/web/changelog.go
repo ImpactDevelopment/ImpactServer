@@ -17,7 +17,7 @@ func Changelog(c echo.Context) error {
 		return err //wtf
 	}
 
-	proxy := httputil.ReverseProxy{
+	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
 			// Change the URL
 			req.URL = target
@@ -30,8 +30,13 @@ func Changelog(c echo.Context) error {
 		},
 	}
 
-	proxy.ServeHTTP(c.Response(), c.Request())
+	serveProxy(proxy, c.Request(), c.Response())
 	return nil
+}
+
+// var func to allow overriding in tests
+var serveProxy = func(proxy *httputil.ReverseProxy, req *http.Request, res http.ResponseWriter) {
+	proxy.ServeHTTP(res, req)
 }
 
 func ImpactRedirect(c echo.Context) error {
