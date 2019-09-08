@@ -28,11 +28,11 @@ func Changelog(c echo.Context) error {
 			req.Host = target.Host
 
 			// Don't send our cookies to github
-			req.Header.Del("Cookie")
-			req.Header.Del("Authorization")
+			req.Header.Del(echo.HeaderCookie)
+			req.Header.Del(echo.HeaderAuthorization)
 
 			// Ask github not to compress so we can do string-replace in the response body
-			req.Header.Set("Accept-Encoding", "identity")
+			req.Header.Set(echo.HeaderAcceptEncoding, "identity")
 		},
 		// Epic string replace meme
 		ModifyResponse: replaceLinks,
