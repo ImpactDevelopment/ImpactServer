@@ -1,8 +1,10 @@
 package main
 
 import (
+	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"net/http"
 	"os"
 	"strconv"
 )
@@ -31,6 +33,7 @@ func AddMiddleware(e *echo.Echo) {
 	// We don't need to do any http->https stuff here 'cos cloudflare
 	e.Pre(middleware.NonWWWRedirect())
 	e.Pre(middleware.RemoveTrailingSlash())
+	e.Pre(mid.RemoveIndexHTML(http.StatusMovedPermanently))
 
 	// Fall back to static files
 	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
