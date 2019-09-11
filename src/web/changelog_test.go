@@ -69,7 +69,7 @@ func TestImpactRedirect(t *testing.T) {
 	const path = "assets/css/style.css?v=foobar"
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, route+path, nil)
+	req := httptest.NewRequest(http.MethodGet, "http://foobar.cool"+route+path, nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetPath(route + "*")
@@ -80,5 +80,24 @@ func TestImpactRedirect(t *testing.T) {
 		assert.Equal(t, http.StatusFound, rec.Code)
 		// Expect the correct target
 		assert.Equal(t, github+route+path, rec.Header().Get(echo.HeaderLocation))
+	}
+}
+
+func TestChangelogRedirect(t *testing.T) {
+	const route = "/Impact/"
+	const path = "changelog"
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "http://foobar.cool"+route+path, nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath(route + "*")
+	err := ImpactRedirect(c)
+
+	if assert.NoError(t, err) {
+		// Expect 301
+		assert.Equal(t, http.StatusMovedPermanently, rec.Code)
+		// Expect the correct target
+		assert.Equal(t, "http://foobar.cool/changelog", rec.Header().Get(echo.HeaderLocation))
 	}
 }

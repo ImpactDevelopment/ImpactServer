@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 )
 
 const github = "https://impactdevelopment.github.io"
@@ -40,6 +41,18 @@ var serveProxy = func(proxy *httputil.ReverseProxy, req *http.Request, res http.
 }
 
 func ImpactRedirect(c echo.Context) error {
-	// 302 non-caching redirect
-	return c.Redirect(http.StatusFound, github+c.Request().RequestURI)
+	path := c.Request().URL.Path
+
+	// Special case: 301 /Impact/changelog → /changelog
+	if path == "/Impact/changelog" {
+		return c.Redirect(http.StatusMovedPermanently, strings.Replace(strings.ToLower(c.Request().URL.String()), "/impact/", "/", 1))
+	}
+
+	// Redirect with the query string intact
+	if query := c.Request().URL.RawQuery; query != "" {
+		path += "?" + query
+	}
+
+	// 302 to github.io
+	return c.Redirect(http.StatusFound, github+path)
 }
