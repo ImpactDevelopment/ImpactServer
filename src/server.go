@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/ImpactDevelopment/ImpactServer/src/lib"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"os"
@@ -27,14 +26,14 @@ func main() {
 	server.Logger.Fatal(StartServer(server, port))
 }
 
-func AddMiddleware(s lib.HttpServer) {
+func AddMiddleware(e *echo.Echo) {
 	// Enforce URL style
 	// We don't need to do any http->https stuff here 'cos cloudflare
-	s.Pre(middleware.NonWWWRedirect())
-	s.Pre(middleware.RemoveTrailingSlash())
+	e.Pre(middleware.NonWWWRedirect())
+	e.Pre(middleware.RemoveTrailingSlash())
 
 	// Fall back to static files
-	s.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
 		Root:   "static", // Root directory from where the static content is served.
 		Browse: false,    // Don't enable directory browsing.
 		HTML5:  false,    // Don't forward everything to root (would allow client-side routing)
@@ -43,12 +42,12 @@ func AddMiddleware(s lib.HttpServer) {
 	// Compression not required because the CDN does that for us
 
 	// Log all the things TODO formatting https://echo.labstack.com/middleware/logger
-	s.Use(middleware.Logger())
+	e.Use(middleware.Logger())
 
 	// Don't crash
-	s.Use(middleware.Recover())
+	e.Use(middleware.Recover())
 }
 
-func StartServer(s lib.HttpServer, port int) error {
-	return s.Start(":" + strconv.FormatInt(int64(port), 10))
+func StartServer(e *echo.Echo, port int) error {
+	return e.Start(":" + strconv.Itoa(port))
 }
