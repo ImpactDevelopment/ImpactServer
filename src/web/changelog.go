@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"strings"
 )
 
 const github = "https://impactdevelopment.github.io"
@@ -41,18 +40,30 @@ var serveProxy = func(proxy *httputil.ReverseProxy, req *http.Request, res http.
 }
 
 func ImpactRedirect(c echo.Context) error {
-	path := c.Request().URL.Path
+	address := c.Request().URL
+
+	// Echo tends to set the Request URL to just the path+query
+	if address.Host == "" {
+		address.Host = c.Request().Host
+	}
+	if address.Scheme == "" {
+		address.Scheme = c.Scheme()
+	}
 
 	// Special case: 301 /Impact/changelog → /changelog
-	if path == "/Impact/changelog" {
-		return c.Redirect(http.StatusMovedPermanently, strings.Replace(strings.ToLower(c.Request().URL.String()), "/impact/", "/", 1))
+	if address.Path == "/Impact/changelog" {
+		address.Path = "/changelog"
+		return c.Redirect(http.StatusMovedPermanently, address.String())
 	}
 
-	// Redirect with the query string intact
-	if query := c.Request().URL.RawQuery; query != "" {
-		path += "?" + query
+	// Pull the bits we need from the github url
+	ghAddr, err := url.Parse(github)
+	if err != nil {
+		return err
 	}
+	address.Scheme = ghAddr.Scheme
+	address.Host = ghAddr.Host
 
 	// 302 to github.io
-	return c.Redirect(http.StatusFound, github+path)
+	return c.Redirect(http.StatusFound, address.String())
 }
