@@ -21,6 +21,7 @@ func main() {
 	// Echo is cool https://echo.labstack.com
 	server := echo.New()
 	AddMiddleware(server)
+	Router(server)
 
 	// Start the server
 	server.Logger.Fatal(StartServer(server, port))

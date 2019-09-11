@@ -20,3 +20,16 @@ func (s *MockServer) Start(address string) error {
 	s.StartAddress = address
 	return nil
 }
+
+// HTTP methods
+func (s *MockServer) Group(prefix string, m ...echo.MiddlewareFunc) (g *echo.Group) {
+	return nil //TODO
+}
+
+func (s *MockServer) Any(path string, handler echo.HandlerFunc, middleware ...echo.MiddlewareFunc) []*echo.Route {
+	return nil //TODO
+}
+
+func (s *MockServer) Match(methods []string, path string, handler echo.HandlerFunc, middleware ...echo.MiddlewareFunc) []*echo.Route {
+	return nil //TODO
+}
