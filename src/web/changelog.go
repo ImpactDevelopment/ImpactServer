@@ -7,12 +7,12 @@ import (
 	"net/url"
 )
 
-const github = "https://impactdevelopment.github.io/Impact/"
+const github = "https://impactdevelopment.github.io"
 
 func Changelog(c echo.Context) error {
 	// Forward to the changelog hosted by github
 
-	target, err := url.Parse(github + "changelog")
+	target, err := url.Parse(github + "/Impact/changelog")
 	if err != nil {
 		return err //wtf
 	}
@@ -41,5 +41,5 @@ var serveProxy = func(proxy *httputil.ReverseProxy, req *http.Request, res http.
 
 func ImpactRedirect(c echo.Context) error {
 	// 302 non-caching redirect
-	return c.Redirect(http.StatusFound, "https://impactdevelopment.github.io"+c.Request().RequestURI)
+	return c.Redirect(http.StatusFound, github+c.Request().RequestURI)
 }
