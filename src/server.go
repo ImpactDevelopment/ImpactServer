@@ -25,6 +25,13 @@ func main() {
 	AddMiddleware(server)
 	Router(server)
 
+	// Fall back to static files, after none of the routes have matched
+	server.Use(middleware.StaticWithConfig(middleware.StaticConfig{
+		Root:   "static", // Root directory from where the static content is served.
+		Browse: false,    // Don't enable directory browsing.
+		HTML5:  false,    // Don't forward everything to root (would allow client-side routing)
+	}))
+
 	// Start the server
 	server.Logger.Fatal(StartServer(server, port))
 }
@@ -35,13 +42,6 @@ func AddMiddleware(e *echo.Echo) {
 	e.Pre(middleware.NonWWWRedirect())
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Pre(mid.RemoveIndexHTML(http.StatusMovedPermanently))
-
-	// Fall back to static files
-	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
-		Root:   "static", // Root directory from where the static content is served.
-		Browse: false,    // Don't enable directory browsing.
-		HTML5:  false,    // Don't forward everything to root (would allow client-side routing)
-	}))
 
 	// Compression not required because the CDN does that for us
 
