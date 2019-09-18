@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -41,7 +42,8 @@ func S3Handle(c echo.Context) error {
 		return err
 	}
 
-	c.Response().Header().Set("Cache-Control", "max-age=300")
+	// https://stackoverflow.com/questions/7071763/max-value-for-cache-control-header-in-http
+	c.Response().Header().Set("Cache-Control", "max-age=31536000")
 
 	doProxy(c, target)
 	return nil
