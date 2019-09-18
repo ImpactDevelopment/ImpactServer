@@ -2,6 +2,7 @@ package web
 
 import (
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -12,8 +13,18 @@ import (
 
 var awsSess = session.Must(session.NewSession(&aws.Config{Region: aws.String("us-east-1")}))
 
-func S3Proxy(c echo.Context) error {
-	file := c.Param("file")
+func S3Proxy(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		hostStr := c.Request().Host
+		if strings.HasPrefix(hostStr, "static.") {
+			return S3Handle(c)
+		}
+		return next(c)
+	}
+}
+
+func S3Handle(c echo.Context) error {
+	file := c.Request().URL.Path
 
 	s3Req, _ := s3.New(awsSess).GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String("impactclient-builds"),
