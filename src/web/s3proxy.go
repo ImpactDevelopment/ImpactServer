@@ -4,7 +4,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -28,7 +27,7 @@ func S3Handle(c echo.Context) error {
 	file := c.Request().URL.Path
 
 	s3Req, _ := s3.New(awsSess).GetObjectRequest(&s3.GetObjectInput{
-		Bucket: aws.String("impactclient-builds"),
+		Bucket: aws.String("impactclient-static"),
 		Key:    aws.String(file),
 	})
 
