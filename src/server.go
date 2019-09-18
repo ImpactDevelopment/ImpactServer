@@ -1,13 +1,14 @@
 package main
 
 import (
+	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
+	"github.com/ImpactDevelopment/ImpactServer/src/s3proxy"
+	"github.com/ImpactDevelopment/ImpactServer/src/web"
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 	"net/http"
 	"os"
 	"strconv"
-
-	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
 )
 
 var port = 3000
@@ -20,36 +21,38 @@ func init() {
 }
 
 func main() {
-	// Echo is cool https://echo.labstack.com
-	server := echo.New()
-	AddMiddleware(server)
-	Router(server)
+	hosts := map[string]*echo.Echo{
+		"impactclient.net":       web.Server(),
+		"files.impactclient.net": s3proxy.Server(),
+	}
 
-	// Fall back to static files, after none of the routes have matched
-	server.Use(middleware.StaticWithConfig(middleware.StaticConfig{
-		Root:   "static", // Root directory from where the static content is served.
-		Browse: false,    // Don't enable directory browsing.
-		HTML5:  false,    // Don't forward everything to root (would allow client-side routing)
-	}))
+	e := echo.New()
 
-	// Start the server
-	server.Logger.Fatal(StartServer(server, port))
-}
-
-func AddMiddleware(e *echo.Echo) {
 	// Enforce URL style
 	// We don't need to do any http->https stuff here 'cos cloudflare
 	e.Pre(middleware.NonWWWRedirect())
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Pre(mid.RemoveIndexHTML(http.StatusMovedPermanently))
 
-	// Compression not required because the CDN does that for us
+	e.Any("/*", func(c echo.Context) (err error) {
+		req := c.Request()
+		res := c.Response()
+		host := hosts[req.Host]
 
-	// Log all the things TODO formatting https://echo.labstack.com/middleware/logger
+		if host == nil {
+			err = echo.ErrNotFound
+		} else {
+			host.ServeHTTP(res, req)
+		}
+
+		return
+	})
+
 	e.Use(middleware.Logger())
-
-	// Don't crash
 	e.Use(middleware.Recover())
+
+	// Start the server
+	e.Logger.Fatal(StartServer(e, port))
 }
 
 func StartServer(e *echo.Echo, port int) error {
