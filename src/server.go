@@ -1,12 +1,13 @@
 package main
 
 import (
-	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
 	"net/http"
 	"os"
 	"strconv"
+
+	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 )
 
 var port = 3000

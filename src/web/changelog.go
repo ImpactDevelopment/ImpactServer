@@ -1,10 +1,11 @@
 package web
 
 import (
-	"github.com/labstack/echo"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+
+	"github.com/labstack/echo"
 )
 
 const github = "https://impactdevelopment.github.io"
@@ -16,7 +17,11 @@ func Changelog(c echo.Context) error {
 	if err != nil {
 		return err //wtf
 	}
+	doProxy(c, target)
+	return nil
+}
 
+func doProxy(c echo.Context, target *url.URL) {
 	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
 			// Change the URL
@@ -31,7 +36,6 @@ func Changelog(c echo.Context) error {
 	}
 
 	serveProxy(proxy, c.Request(), c.Response())
-	return nil
 }
 
 // var func to allow overriding in tests

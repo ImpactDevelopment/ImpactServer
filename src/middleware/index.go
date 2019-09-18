@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"github.com/labstack/echo"
 	"strings"
+
+	"github.com/labstack/echo"
 )
 
 // Redirect trailing index.html's.
