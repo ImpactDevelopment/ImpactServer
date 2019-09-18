@@ -1,4 +1,4 @@
-package web
+package s3proxy
 
 import (
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
