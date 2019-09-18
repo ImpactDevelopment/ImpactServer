@@ -10,6 +10,24 @@ import (
 )
 
 func TestIndexToSlash(t *testing.T) {
+	// Helper func to setup the test
+	setup := func(code int) (e *echo.Echo) {
+		e = echo.New()
+		e.Pre(RemoveIndexHTML(code))
+		e.Any("/*", func(c echo.Context) error {
+			return c.String(http.StatusOK, "Ok cowboy")
+		})
+		return
+	}
+
+	// Helper function to run a request and return the response
+	test := func(s *echo.Echo, url string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodGet, url, nil)
+		rec := httptest.NewRecorder()
+		s.ServeHTTP(rec, req)
+		return rec
+	}
+
 	e := setup(http.StatusMovedPermanently)
 
 	// index.html/ should produce 301
@@ -66,22 +84,4 @@ func TestIndexToSlash(t *testing.T) {
 	assert.Equal(t, http.StatusFound, rec.Code)
 	assert.Equal(t, "http://foobar.net", rec.Header().Get(echo.HeaderLocation))
 	assert.Equal(t, "", rec.Body.String())
-}
-
-// Helper func to setup the test
-func setup(code int) (e *echo.Echo) {
-	e = echo.New()
-	e.Pre(RemoveIndexHTML(code))
-	e.Any("/*", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Ok cowboy")
-	})
-	return
-}
-
-// Helper function to run a request and return the response
-func test(s *echo.Echo, url string) *httptest.ResponseRecorder {
-	req := httptest.NewRequest(http.MethodGet, url, nil)
-	rec := httptest.NewRecorder()
-	s.ServeHTTP(rec, req)
-	return rec
 }
