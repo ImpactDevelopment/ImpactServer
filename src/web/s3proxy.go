@@ -41,9 +41,6 @@ func S3Handle(c echo.Context) error {
 		return err
 	}
 
-	// https://stackoverflow.com/questions/7071763/max-value-for-cache-control-header-in-http
-	c.Response().Header().Set("Cache-Control", "max-age=31536000")
-
 	doProxy(c, target)
 	return nil
 }
