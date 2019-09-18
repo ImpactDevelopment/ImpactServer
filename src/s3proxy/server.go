@@ -30,7 +30,7 @@ func proxyHandler(c echo.Context) error {
 	file := c.Request().URL.Path
 
 	s3Req, _ := s3.New(awsSess).GetObjectRequest(&s3.GetObjectInput{
-		Bucket: aws.String("impactclient-static"),
+		Bucket: aws.String("impactclient-files"),
 		Key:    aws.String(file),
 	})
 
