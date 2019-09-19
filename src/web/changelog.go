@@ -1,9 +1,10 @@
 package web
 
 import (
-	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"net/http"
 	"net/url"
+
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 
 	"github.com/labstack/echo"
 )

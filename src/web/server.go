@@ -1,8 +1,9 @@
 package web
 
 import (
-	"github.com/labstack/echo/middleware"
 	"net/http"
+
+	"github.com/labstack/echo/middleware"
 
 	"github.com/labstack/echo"
 )
@@ -12,6 +13,8 @@ func Server() (e *echo.Echo) {
 
 	e.Match([]string{http.MethodHead, http.MethodGet}, "/changelog", changelog)
 	e.Any("/Impact/*", impactRedirect)
+	e.GET("/prereleases.json", prereleases)
+
 	e.Static("/", "static")
 
 	e.Use(middleware.Logger())

@@ -1,11 +1,12 @@
 package s3proxy
 
 import (
-	"github.com/ImpactDevelopment/ImpactServer/src/util"
-	"github.com/labstack/echo/middleware"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
+	"github.com/labstack/echo/middleware"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -13,7 +14,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-var awsSess = session.Must(session.NewSession(&aws.Config{Region: aws.String("us-east-1")}))
+var AWSSession = session.Must(session.NewSession(&aws.Config{Region: aws.String("us-east-1")}))
 
 func Server() (e *echo.Echo) {
 	e = echo.New()
@@ -29,7 +30,7 @@ func Server() (e *echo.Echo) {
 func proxyHandler(c echo.Context) error {
 	file := c.Request().URL.Path
 
-	s3Req, _ := s3.New(awsSess).GetObjectRequest(&s3.GetObjectInput{
+	s3Req, _ := s3.New(AWSSession).GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String("impactclient-files"),
 		Key:    aws.String(file),
 	})

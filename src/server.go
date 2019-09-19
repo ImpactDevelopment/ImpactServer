@@ -1,14 +1,15 @@
 package main
 
 import (
+	"net/http"
+	"os"
+	"strconv"
+
 	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/ImpactDevelopment/ImpactServer/src/s3proxy"
 	"github.com/ImpactDevelopment/ImpactServer/src/web"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"net/http"
-	"os"
-	"strconv"
 )
 
 var port = 3000
@@ -25,6 +26,8 @@ func main() {
 		"impactclient.net":       web.Server(),
 		"files.impactclient.net": s3proxy.Server(),
 	}
+
+	hosts["localhost:"+strconv.Itoa(port)] = hosts["impactclient.net"]
 
 	e := echo.New()
 

@@ -1,10 +1,11 @@
 package util
 
 import (
-	"github.com/labstack/echo"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+
+	"github.com/labstack/echo"
 )
 
 // var func to allow overriding in tests

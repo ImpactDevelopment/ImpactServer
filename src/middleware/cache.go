@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"github.com/labstack/echo"
 	"strconv"
+
+	"github.com/labstack/echo"
 )
 
 func Cache(maxAge int) echo.MiddlewareFunc {
