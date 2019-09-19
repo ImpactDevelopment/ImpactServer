@@ -1,15 +1,15 @@
 package main
 
 import (
-	"net/http"
-	"os"
-	"strconv"
-
 	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/ImpactDevelopment/ImpactServer/src/s3proxy"
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/ImpactDevelopment/ImpactServer/src/web"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"net/http"
+	"os"
+	"strconv"
 )
 
 var port = 3000
@@ -23,11 +23,9 @@ func init() {
 
 func main() {
 	hosts := map[string]*echo.Echo{
-		"impactclient.net":       web.Server(),
-		"files.impactclient.net": s3proxy.Server(),
+		"":      web.Server(),
+		"files": s3proxy.Server(),
 	}
-
-	hosts["localhost:"+strconv.Itoa(port)] = hosts["impactclient.net"]
 
 	e := echo.New()
 
@@ -37,18 +35,18 @@ func main() {
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Pre(mid.RemoveIndexHTML(http.StatusMovedPermanently))
 
-	e.Any("/*", func(c echo.Context) (err error) {
+	e.Any("/*", func(c echo.Context) error {
 		req := c.Request()
 		res := c.Response()
-		host := hosts[req.Host]
 
-		if host == nil {
-			err = echo.ErrNotFound
-		} else {
-			host.ServeHTTP(res, req)
+		server := hosts[util.GetSubdomains(req.Host)]
+
+		if server == nil {
+			return echo.ErrNotFound
 		}
 
-		return
+		server.ServeHTTP(res, req)
+		return nil
 	})
 
 	e.Use(middleware.Logger())
