@@ -60,7 +60,8 @@ func (version InstallerVersion) incrementGithubDownloadCountButDontActuallyUseTh
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
-		}}
+		}
+	}
 
 	resp, err := client.Get(version.getURL())
 
@@ -186,6 +187,13 @@ func installer(c echo.Context, version InstallerVersion) error {
 	header.Set("Content-Transfer-Encoding", "binary")
 	header.Set("Cache-Control", "max-age=0")
 	res.WriteHeader(http.StatusOK)
+
+	if version == EXE {
+		_, err := res.Write(exeHeader())
+		if err != nil {
+			return err
+		}
+	}
 
 	zipWriter := zip.NewWriter(res)
 	defer zipWriter.Close()
