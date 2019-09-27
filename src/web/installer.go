@@ -60,7 +60,7 @@ func (version InstallerVersion) incrementGithubDownloadCountButDontActuallyUseTh
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
-		}
+		},
 	}
 
 	resp, err := client.Get(version.getURL())
