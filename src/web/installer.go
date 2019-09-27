@@ -161,7 +161,7 @@ func installerForExe(c echo.Context) error {
 	return installer(c, EXE)
 }
 
-func analytics(cid string, version InstallerVersion, user_agent string) {
+func analytics(cid string, version InstallerVersion, c echo.Context) {
 	data := url.Values{}
 	data.Set("v", "1")
 	data.Set("t", "event")
@@ -172,10 +172,16 @@ func analytics(cid string, version InstallerVersion, user_agent string) {
 	data.Set("ea", "download")
 	data.Set("el", version.getEXT())
 
+	forward := strings.Split(c.Request().Header.Get("X-FORWARDED-FOR"), ",")[0]
+	fmt.Println(forward)
+	if forward != "" {
+		data.Set("uip", forward)
+	}
+
 	req, _ := http.NewRequest("POST", "https://www.google-analytics.com/collect", strings.NewReader(data.Encode()))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
-	req.Header.Add("User-Agent", user_agent)
+	req.Header.Add("User-Agent", c.Request().UserAgent())
 
 	resp, err := (&http.Client{}).Do(req)
 	defer resp.Body.Close()
@@ -239,7 +245,7 @@ func installer(c echo.Context, version InstallerVersion) error {
 	if err != nil {
 		return err
 	}
-	go analytics(cid, version, c.Request().UserAgent())
+	go analytics(cid, version, c)
 	go version.incrementGithubDownloadCountButDontActuallyUseTheirS3Bandwidth()
 
 	return nil
