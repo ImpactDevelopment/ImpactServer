@@ -210,6 +210,8 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 func installer(c echo.Context, version InstallerVersion) error {
 	awaitStartup() // in case we get an early request, block until startup is done
 
+	fmt.Println("Referer:", c.Request().Referer())
+
 	res := c.Response()
 	header := res.Header()
 	header.Set(echo.HeaderContentType, echo.MIMEOctetStream)
