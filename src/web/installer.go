@@ -171,6 +171,7 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 	data.Set("ec", "installer")
 	data.Set("ea", "download")
 	data.Set("el", version.getEXT())
+	data.Set("ua", c.Request().UserAgent())
 
 	forward := strings.Split(c.Request().Header.Get("X-FORWARDED-FOR"), ",")[0]
 	fmt.Println(forward)
