@@ -420,10 +420,12 @@
                     document.location.href = url;
                 }
             }, 25);
-            getOutboundLink('download_' + impactPlatform);
         } else {
-            getOutboundLink('download_generic');
+            impactPlatform = "generic";
         }
+        setTimeout(function(){
+            getOutboundLink('download_' + impactPlatform);
+        }, 2000);
     }
 </script>
 </body>
