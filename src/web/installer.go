@@ -167,16 +167,11 @@ func analytics(cid string, version InstallerVersion) {
 	data.Set("ea", "download")
 	data.Set("el", version.getEXT())
 
-	req, _ := http.NewRequest("POST", "https://www.google-analytics.com/debug/collect", strings.NewReader(data.Encode()))
+	req, _ := http.NewRequest("POST", "https://www.google-analytics.com/collect", strings.NewReader(data.Encode()))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 
-	resp, _:=(&http.Client{}).Do(req)
-	defer resp.Body.Close()
-
-	d, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("Finished downloading", string(d))
-
+	(&http.Client{}).Do(req)
 }
 
 func installer(c echo.Context, version InstallerVersion) error {
