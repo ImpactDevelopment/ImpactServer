@@ -3,7 +3,6 @@ package web
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -28,8 +27,13 @@ const (
 	EXE
 )
 
-var installerJar []byte
-var installerExe []byte
+type Entry struct { // can't use zip.Entry since that seeks within the input and decompresses on the fly (slow)
+	name string
+	data []byte
+}
+
+var installerEntries []Entry
+var exeHeader []byte
 
 var ready = make(chan struct{})
 
@@ -82,22 +86,45 @@ func init() {
 }
 
 func startup() {
-	var err error
-	installerJar, err = JAR.fetchFile()
+	installerJar, err := JAR.fetchFile()
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = installerJarReader()
+	zipReader, err := zip.NewReader(bytes.NewReader(installerJar), int64(len(installerJar)))
 	if err != nil {
 		panic(err)
 	}
 
-	installerExe, err = EXE.fetchFile()
+	installerEntries = make([]Entry, 0)
+	for _, file := range zipReader.File {
+		entryReader, err := file.Open()
+		if err != nil {
+			panic(err)
+		}
+		defer entryReader.Close()
+		data, err := ioutil.ReadAll(entryReader)
+		if err != nil {
+			panic(err)
+		}
+		installerEntries = append(installerEntries, Entry{
+			name: file.Name,
+			data: data,
+		})
+	}
+
+	installerExe, err := EXE.fetchFile()
 	if err != nil {
 		panic(err)
 	}
-	sanityCheck()
+
+	exeHeaderLen := len(installerExe) - len(installerJar)
+	for i := 0; i < len(installerJar); i++ {
+		if installerJar[i] != installerExe[exeHeaderLen+i] {
+			panic("invalid installer files")
+		}
+	}
+	exeHeader = installerExe[:exeHeaderLen]
 
 	fmt.Println("Initialized")
 	go func() {
@@ -105,26 +132,6 @@ func startup() {
 			ready <- struct{}{} // we are ready from now on
 		}
 	}()
-}
-
-func exeHeaderLen() int {
-	return len(installerExe) - len(installerJar)
-}
-
-func exeHeader() []byte {
-	return installerExe[:exeHeaderLen()]
-}
-
-func sanityCheck() {
-	for i := 0; i < len(installerJar); i++ {
-		if installerJar[i] != installerExe[exeHeaderLen()+i] {
-			panic("invalid installer files")
-		}
-	}
-}
-
-func installerJarReader() (*zip.Reader, error) {
-	return zip.NewReader(bytes.NewReader(installerJar), int64(len(installerJar)))
 }
 
 func awaitStartup() { // blocks and only returns once startup is done
@@ -202,10 +209,6 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 
 func installer(c echo.Context, version InstallerVersion) error {
 	awaitStartup() // in case we get an early request, block until startup is done
-	reader, err := installerJarReader()
-	if err != nil {
-		panic(err)
-	}
 
 	res := c.Response()
 	header := res.Header()
@@ -216,7 +219,7 @@ func installer(c echo.Context, version InstallerVersion) error {
 	res.WriteHeader(http.StatusOK)
 
 	if version == EXE {
-		_, err := res.Write(exeHeader())
+		_, err := res.Write(exeHeader)
 		if err != nil {
 			return err
 		}
@@ -224,17 +227,12 @@ func installer(c echo.Context, version InstallerVersion) error {
 
 	zipWriter := zip.NewWriter(res)
 	defer zipWriter.Close()
-	for _, file := range reader.File {
-		entryWriter, err := zipWriter.Create(file.Name)
+	for _, entry := range installerEntries {
+		entryWriter, err := zipWriter.Create(entry.name)
 		if err != nil {
 			return err
 		}
-		entryReader, err := file.Open()
-		if err != nil {
-			return err
-		}
-		defer entryReader.Close()
-		_, err = io.Copy(entryWriter, entryReader)
+		_, err = entryWriter.Write(entry.data)
 		if err != nil {
 			return err
 		}
