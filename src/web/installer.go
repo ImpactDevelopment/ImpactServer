@@ -9,7 +9,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/google/uuid"
 
 	"archive/zip"
 
@@ -133,7 +134,11 @@ func extractOrGenerateCID(c echo.Context) string {
 	if cid != "" {
 		return cid
 	}
-	return strconv.FormatInt(time.Now().UnixNano(), 10)
+	uuid, err := uuid.NewUUID()
+	if err != nil {
+		panic(err) // happens when system clock is not set or something dummy like that
+	}
+	return uuid.String()
 }
 
 func extractTrackyTracky(c echo.Context) string {
