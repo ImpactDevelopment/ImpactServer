@@ -21,10 +21,12 @@ const (
 	installerVersion = "0.6.0"
 )
 
-type InstallerVersion bool
+type InstallerVersion int
 
-var JAR InstallerVersion = false
-var EXE InstallerVersion = true
+const (
+	JAR InstallerVersion = iota
+	EXE
+)
 
 var installerJar []byte
 var installerExe []byte
