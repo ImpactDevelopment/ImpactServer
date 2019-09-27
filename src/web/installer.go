@@ -156,7 +156,7 @@ func installerForExe(c echo.Context) error {
 	return installer(c, EXE)
 }
 
-func analytics(cid string) {
+func analytics(cid string, version InstallerVersion) {
 	data := url.Values{}
 	data.Set("v", "1")
 	data.Set("t", "event")
@@ -165,12 +165,18 @@ func analytics(cid string) {
 	data.Set("ds", "backend")
 	data.Set("ec", "installer")
 	data.Set("ea", "download")
+	data.Set("el", version.getEXT())
 
-	req, _ := http.NewRequest("POST", "https://www.google-analytics.com/collect", strings.NewReader(data.Encode()))
+	req, _ := http.NewRequest("POST", "https://www.google-analytics.com/debug/collect", strings.NewReader(data.Encode()))
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 
-	(&http.Client{}).Do(req)
+	resp, _:=(&http.Client{}).Do(req)
+	defer resp.Body.Close()
+
+	d, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("Finished downloading", string(d))
+
 }
 
 func installer(c echo.Context, version InstallerVersion) error {
@@ -221,7 +227,7 @@ func installer(c echo.Context, version InstallerVersion) error {
 	if err != nil {
 		return err
 	}
-	go analytics(cid)
+	go analytics(cid, version)
 	go version.incrementGithubDownloadCountButDontActuallyUseTheirS3Bandwidth()
 
 	return nil
