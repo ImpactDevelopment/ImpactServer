@@ -14,6 +14,8 @@ func Server() (e *echo.Echo) {
 	e.Match([]string{http.MethodHead, http.MethodGet}, "/changelog", changelog)
 	e.Any("/Impact/*", impactRedirect)
 	e.GET("/prereleases.json", prereleases)
+	e.GET("/ImpactInstaller.jar", installerForJar)
+	e.GET("/ImpactInstaller.exe", installerForExe)
 
 	e.Static("/", "static")
 
