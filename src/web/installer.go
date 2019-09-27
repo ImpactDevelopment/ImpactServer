@@ -182,6 +182,7 @@ func analytics(cid string, version InstallerVersion) {
 		fmt.Println(err)
 		fmt.Println(string(data))
 	}
+	fmt.Println("Analytics success")
 }
 
 func installer(c echo.Context, version InstallerVersion) error {
