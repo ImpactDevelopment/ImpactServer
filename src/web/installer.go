@@ -171,7 +171,17 @@ func analytics(cid string, version InstallerVersion) {
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 
-	(&http.Client{}).Do(req)
+	resp, err := (&http.Client{}).Do(req)
+	defer resp.Body.Close()
+	if err != nil {
+		fmt.Println("Analytics error", err)
+	}
+	if resp.StatusCode != 200 {
+		fmt.Println("Analytics bad status code", resp.StatusCode)
+		data, err := ioutil.ReadAll(resp.Body)
+		fmt.Println(err)
+		fmt.Println(string(data))
+	}
 }
 
 func installer(c echo.Context, version InstallerVersion) error {
