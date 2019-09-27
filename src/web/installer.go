@@ -217,7 +217,6 @@ func installer(c echo.Context, version InstallerVersion) error {
 	header.Set(echo.HeaderContentType, echo.MIMEOctetStream)
 	header.Set(echo.HeaderContentDisposition, "attachment; filename=ImpactInstaller-"+installerVersion+"."+version.getEXT())
 	header.Set("Content-Transfer-Encoding", "binary")
-	header.Set("Cache-Control", "max-age=0")
 	res.WriteHeader(http.StatusOK)
 
 	if version == EXE {
