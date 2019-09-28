@@ -1,0 +1,14 @@
+{
+  "premium": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/premium.txt",
+  "developer": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/developer.txt",
+  "pepsi": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/pepsi.txt",
+  "staff": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/staff.txt",
+  "version": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/versions.json",
+  "motd": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/motd.txt",
+  "donate": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/donate.txt",
+  "credits": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/credits.json",
+  "custom": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/custom.json",
+  "changelog": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/changelog.md",
+  "backgrounds": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/backgrounds.json",
+  "assets": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/assets.json"
+}
