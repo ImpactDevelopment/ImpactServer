@@ -410,22 +410,17 @@
 <script type="text/javascript">
     if (window.location.search.indexOf("brady-money-grubbing-completed") != -1) {
         jQuery('#download-complete-modal').modal('open');
-        setTimeout(function(){
-            if (impactPlatform) {
-                getOutboundLink('download_' + impactPlatform);
-                var url = "/ImpactInstaller." + impactPlatform;
-                var w = window.open(url);
-                setTimeout(function(){
-                    if ((!w || (typeof w) == 'undefined') || (w && (w.closed || w.test || w.outerHeight == 0))) {
-                        // pop up was blocked
-                        // sadly they will not get the install info from the modal, since we need to redirect to make the download work =(
-                        document.location.href = url;
-                    }
-                }, 25);
-            } else {
-                getOutboundLink('download_generic');
-            }
-        }, 500);
+        if (impactPlatform) {
+            var url = "/ImpactInstaller." + impactPlatform;
+            var w = window.open(url);
+            setTimeout(function(){
+                if ((!w || (typeof w) == 'undefined') || (w && (w.closed || w.test || w.outerHeight == 0))) {
+                    // pop up was blocked
+                    // sadly they will not get the install info from the modal, since we need to redirect to make the download work =(
+                    document.location.href = url;
+                }
+            }, 25);
+        }
     }
 </script>
 </body>
