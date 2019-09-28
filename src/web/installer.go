@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	installerVersion = "0.6.0"
+	installerVersion = "0.7.0"
 )
 
 type InstallerVersion int
