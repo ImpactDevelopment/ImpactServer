@@ -210,7 +210,11 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 func installer(c echo.Context, version InstallerVersion) error {
 	awaitStartup() // in case we get an early request, block until startup is done
 
-	fmt.Println("Referer:", c.Request().Referer())
+	referer := c.Request().Referer()
+	if referer != "" && !strings.Contains(referer, "brady-money-grubbing-completed") {
+		fmt.Println("BLOCKING referer", referer)
+		return echo.NewHTTPError(http.StatusUnauthorized, "no hotlinking >:(")
+	}
 
 	res := c.Response()
 	header := res.Header()
