@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/ImpactDevelopment/ImpactServer/src/cloudflare"
 	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/ImpactDevelopment/ImpactServer/src/s3proxy"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
@@ -53,6 +54,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	go cloudflare.Purge()
 	// Start the server
 	e.Logger.Fatal(StartServer(e, port))
 }
