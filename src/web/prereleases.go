@@ -56,7 +56,7 @@ func prereleases(c echo.Context) error {
 		resp = append(resp, Release{
 			TagName:    tagName,
 			Draft:      strings.Contains(tagName, "dev"),
-			Prerelease: true,
+			Prerelease: !strings.Contains(tagName, "release"),
 			Assets: []Asset{
 				Asset{
 					Name: fileName,
