@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -126,6 +127,13 @@ func releases(c echo.Context) error {
 
 	for _, elem := range releaseSources {
 		go func(source ReleaseSource) {
+			defer func() {
+				if r := recover(); r != nil {
+					// apparently you can pass ANY value to panic, so r can be any type at all
+					// so we gotta format it into a string then make an error of that lol
+					errCh <- errors.New(fmt.Sprintf("%v", r))
+				}
+			}()
 			data, err := source()
 			if err != nil {
 				errCh <- err
