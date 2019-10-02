@@ -28,6 +28,8 @@ type Release struct {
 	Assets     []Asset `json:"assets"`
 }
 
+type ReleaseSource func() ([]Release, error)
+
 func init() {
 	githubToken = os.Getenv("GITHUB_ACCESS_TOKEN")
 	if githubToken == "" {
@@ -70,7 +72,9 @@ func s3Releases() ([]Release, error) {
 		Prefix: aws.String("artifacts/Impact/"),
 	})
 	if err != nil {
-		return nil, err
+		fmt.Println("s3 error but let's not break the client for everyone since this only affects premium")
+		fmt.Println(err)
+		return make([]Release, 0), nil
 	}
 
 	keys := make(map[string]bool)
@@ -114,17 +118,31 @@ func s3Releases() ([]Release, error) {
 	return resp, nil
 }
 
+var releaseSources = []ReleaseSource{githubReleases, s3Releases}
+
 func releases(c echo.Context) error {
-	resp, err := githubReleases()
-	if err != nil {
-		return err
+	errCh := make(chan error)
+	dataCh := make(chan []Release)
+
+	for _, elem := range releaseSources {
+		go func(source ReleaseSource) {
+			data, err := source()
+			if err != nil {
+				errCh <- err
+				return
+			}
+			dataCh <- data
+		}(elem)
 	}
-	s3, err := s3Releases()
-	if err != nil {
-		fmt.Println("s3 error but let's not break the client for everyone since this only affects premium")
-		fmt.Println(err)
-	} else {
-		resp = append(resp, s3...)
+
+	resp := make([]Release, 0)
+	for _ = range releaseSources {
+		select {
+		case data := <-dataCh:
+			resp = append(resp, data...)
+		case err := <-errCh:
+			return err
+		}
 	}
 
 	return c.JSON(http.StatusOK, resp)
