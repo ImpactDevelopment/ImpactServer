@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
-	"github.com/labstack/echo/middleware"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -20,9 +19,6 @@ func Server() (e *echo.Echo) {
 	e = echo.New()
 
 	e.Match([]string{http.MethodHead, http.MethodGet}, "/*", proxyHandler)
-
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
 
 	return
 }

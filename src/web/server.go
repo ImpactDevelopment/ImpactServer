@@ -3,8 +3,6 @@ package web
 import (
 	"net/http"
 
-	"github.com/labstack/echo/middleware"
-
 	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/labstack/echo"
 )
@@ -14,7 +12,7 @@ func Server() (e *echo.Echo) {
 
 	e.Match([]string{http.MethodHead, http.MethodGet}, "/changelog", changelog)
 	e.Any("/Impact/*", impactRedirect)
-	e.GET("/prereleases.json", prereleases, mid.Cache(3600))
+	e.GET("/releases.json", releases, mid.Cache(3600))
 
 	e.GET("/ImpactInstaller.jar", installerForJar, mid.Cache(0))
 	e.GET("/ImpactInstaller.exe", installerForExe, mid.Cache(0))
@@ -26,9 +24,6 @@ func Server() (e *echo.Echo) {
 		staticEcho.ServeHTTP(c.Response(), c.Request())
 		return nil
 	})
-
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
 
 	return
 }

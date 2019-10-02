@@ -1,7 +1,11 @@
 package web
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/s3proxy"
@@ -9,6 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/labstack/echo"
 )
+
+var githubToken string
 
 type Asset struct {
 	Name string `json:"name"`
@@ -22,13 +28,49 @@ type Release struct {
 	Assets     []Asset `json:"assets"`
 }
 
-func prereleases(c echo.Context) error {
+func init() {
+	githubToken = os.Getenv("GITHUB_ACCESS_TOKEN")
+	if githubToken == "" {
+		fmt.Println("WARNING: No GitHub access token to bypass ratelimiting!")
+	}
+}
+
+func githubReleases() ([]Release, error) {
+	// not strictly necessary given that we won't be querying all that often
+	// but we have no idea who else is on this IP (shared host from heroku)
+	// so to guard against posssible "noisy neighbors" who are spamming github's api
+	// we provoide an authorization token so that we get our own rate limit regardless of IP
+	req, err := http.NewRequest("GET", "https://api.github.com/repos/ImpactDevelopment/ImpactReleases/releases?per_page=100", nil)
+	if githubToken != "" {
+		req.Header.Set("Authorization", "Basic "+githubToken)
+	}
+	req.Header.Set("Accept", "application/json")
+	resp, err := (&http.Client{}).Do(req)
+	if err != nil {
+		fmt.Println("Github error", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	releasesData := make([]Release, 0)
+	err = json.Unmarshal(body, &releasesData)
+	if err != nil {
+		fmt.Println("Github returned invalid json reply!!")
+		fmt.Println(err)
+		fmt.Println(string(body))
+		return nil, err
+	}
+	return releasesData, nil
+}
+
+func s3Releases() ([]Release, error) {
 	objs, err := s3.New(s3proxy.AWSSession).ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: aws.String("impactclient-files"),
 		Prefix: aws.String("artifacts/Impact/"),
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	keys := make(map[string]bool)
@@ -68,7 +110,22 @@ func prereleases(c echo.Context) error {
 				},
 			},
 		})
-
 	}
+	return resp, nil
+}
+
+func releases(c echo.Context) error {
+	resp, err := githubReleases()
+	if err != nil {
+		return err
+	}
+	s3, err := s3Releases()
+	if err != nil {
+		fmt.Println("s3 error but let's not break the client for everyone since this only affects premium")
+		fmt.Println(err)
+	} else {
+		resp = append(resp, s3...)
+	}
+
 	return c.JSON(http.StatusOK, resp)
 }
