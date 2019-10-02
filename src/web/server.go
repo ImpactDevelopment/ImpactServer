@@ -13,6 +13,7 @@ func Server() (e *echo.Echo) {
 	e.Match([]string{http.MethodHead, http.MethodGet}, "/changelog", changelog)
 	e.Any("/Impact/*", impactRedirect)
 	e.GET("/releases.json", releases, mid.Cache(3600))
+	e.GET("/references.json", references, mid.Cache(3600))
 
 	e.GET("/ImpactInstaller.jar", installerForJar, mid.Cache(0))
 	e.GET("/ImpactInstaller.exe", installerForExe, mid.Cache(0))
