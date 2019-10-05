@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/ImpactDevelopment/ImpactServer/src/api"
 	"net/http"
 	"os"
 	"strconv"
@@ -27,6 +28,7 @@ func main() {
 	hosts := map[string]*echo.Echo{
 		"":      web.Server(),
 		"files": s3proxy.Server(),
+		"api":   api.Server(),
 	}
 
 	e := echo.New()
