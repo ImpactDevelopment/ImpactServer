@@ -66,6 +66,8 @@ func getLegacyUuidLists() (lists map[string][]string, err error) {
 			fmt.Println("Error getting", key, err.Error())
 			continue
 		}
+		defer res.Body.Close()
+
 		if res.StatusCode != http.StatusOK {
 			// wtf
 			fmt.Println("Error getting", key, res.StatusCode)
