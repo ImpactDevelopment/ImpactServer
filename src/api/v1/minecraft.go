@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"bufio"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -47,7 +46,7 @@ func hashUUID(uuid string) string {
 }
 
 // Get each of the legacy uuid lists as a map of role -> list
-func getLegacyUuidLists() (lists map[string]string, err error) {
+func getLegacyUuidLists() (lists map[string][]string, err error) {
 	urls := map[string]string{
 		"developer": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/developer.txt",
 		"staff":     "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/staff.txt",
@@ -56,7 +55,7 @@ func getLegacyUuidLists() (lists map[string]string, err error) {
 	}
 
 	// Make a map the same length as urls
-	lists = make(map[string]string, len(urls))
+	lists = make(map[string][]string, len(urls))
 
 	// Dump the response from each url into the lists map
 	for key, url := range urls {
@@ -73,13 +72,13 @@ func getLegacyUuidLists() (lists map[string]string, err error) {
 		}
 
 		body, _ := ioutil.ReadAll(res.Body)
-		lists[key] = string(body)
+		lists[key] = strings.Split(string(body), "\n")
 	}
 	return
 }
 
-// Convert a [roleID]uuidList map to a [hashedUUID]role map
-func mapLegacyListsToUserInfoList(lists map[string]string) (info map[string]*userInfo) {
+// Convert a [roleID][]uuid map to a [hashedUUID]role map
+func mapLegacyListsToUserInfoList(lists map[string][]string) (info map[string]*userInfo) {
 	defaults := map[string]userInfo{
 		"developer": {
 			Roles: []role{{ID: "developer", Rank: 0}},
@@ -100,9 +99,9 @@ func mapLegacyListsToUserInfoList(lists map[string]string) (info map[string]*use
 		},
 	}
 
-	info = make(map[string]*userInfo, sumLines(lists))
+	info = make(map[string]*userInfo, sumLists(lists))
 	for key := range lists {
-		forEachLine(lists[key], func(line string) {
+		for _, line := range lists[key] {
 			// Send a hash of the uuid, not the uuid itself
 			// to make it harder to just bulk-ban users
 			hash := hashUUID(line)
@@ -128,18 +127,15 @@ func mapLegacyListsToUserInfoList(lists map[string]string) (info map[string]*use
 					}
 				}
 			}
-
-		})
+		}
 	}
 	return
 }
 
-func sumLines(m map[string]string) (sum int) {
+func sumLists(m map[string][]string) (sum int) {
 	sum = 0
 	for key := range m {
-		forEachLine(m[key], func(line string) {
-			sum++
-		})
+		sum += len(m[key])
 	}
 	return
 }
@@ -151,13 +147,6 @@ func contains(s []role, e role) bool {
 		}
 	}
 	return false
-}
-
-func forEachLine(lines string, f func(line string)) {
-	scanner := bufio.NewScanner(strings.NewReader(lines))
-	for scanner.Scan() {
-		f(scanner.Text())
-	}
 }
 
 // Add a role to a userInfo.
