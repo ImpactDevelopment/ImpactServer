@@ -74,7 +74,12 @@ func getLegacyUuidLists() (lists map[string][]string, err error) {
 			continue
 		}
 
-		body, _ := ioutil.ReadAll(res.Body)
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			fmt.Println("Error reading response for", key, err.Error())
+			continue
+		}
+
 		lists[key] = strings.Split(string(body), "\n")
 	}
 	return
