@@ -108,8 +108,8 @@ func mapLegacyListsToUserInfoList(lists map[string][]string) (info map[string]*u
 	}
 
 	info = make(map[string]*userInfo, sumLists(lists))
-	for key := range lists {
-		for _, line := range lists[key] {
+	for key, list := range lists {
+		for _, line := range list {
 			// Send a hash of the uuid, not the uuid itself
 			// to make it harder to just bulk-ban users
 			hash := hashUUID(line)
@@ -146,8 +146,8 @@ func mapLegacyListsToUserInfoList(lists map[string][]string) (info map[string]*u
 
 func sumLists(m map[string][]string) (sum int) {
 	sum = 0
-	for key := range m {
-		sum += len(m[key])
+	for _, list := range m {
+		sum += len(list)
 	}
 	return
 }
