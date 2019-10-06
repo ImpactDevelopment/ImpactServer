@@ -58,11 +58,11 @@ func githubReleases() ([]Release, error) {
 
 	releasesData := make([]Release, 0)
 	err = json.Unmarshal(body, &releasesData)
-	if err != nil {
+	if err != nil || len(releasesData) == 0 {
 		fmt.Println("Github returned invalid json reply!!")
 		fmt.Println(err)
 		fmt.Println(string(body))
-		return nil, err
+		return releasesData, err
 	}
 	return releasesData, nil
 }
