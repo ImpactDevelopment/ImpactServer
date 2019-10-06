@@ -9,6 +9,6 @@ import (
 func API(api *echo.Group) {
 	// TODO API Doc
 
-	api.GET("/motd", getMotd, middleware.Cache(60*10))
-	api.GET("/minecraft/user/info", getUserInfo, middleware.Cache(60*10))
+	api.GET("/motd", getMotd, middleware.Cache(60*30))
+	api.GET("/minecraft/user/info", getUserInfo, middleware.Cache(60*30))
 }
