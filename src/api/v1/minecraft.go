@@ -3,6 +3,7 @@ package v1
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/labstack/echo"
 	"io/ioutil"
@@ -111,19 +112,23 @@ func mapLegacyListsToUserInfoList(lists map[string][]string) (info map[string]*u
 				defaultInfo := defaults[key]
 				info[hash] = &defaultInfo
 			} else {
-				// Existing user, add role
-				role := defaults[key].Roles[0]
-				info[hash].AddRole(role)
-
-				// If this role outranks the others, override capes and icons
-				if info[hash].IsHighest(role) {
-					cape := defaults[key].Cape
-					icon := defaults[key].Icon
-					if cape != "" {
-						info[hash].SetCape(cape)
+				// Existing user, add roles
+				for _, role := range defaults[key].Roles {
+					err := info[hash].AddRole(role)
+					if err != nil {
+						continue
 					}
-					if icon != "" {
-						info[hash].SetIcon(icon)
+
+					// If this role outranks the others, override capes and icons
+					if info[hash].IsHighest(role) {
+						cape := defaults[key].Cape
+						icon := defaults[key].Icon
+						if cape != "" {
+							info[hash].SetCape(cape)
+						}
+						if icon != "" {
+							info[hash].SetIcon(icon)
+						}
 					}
 				}
 			}
@@ -140,9 +145,16 @@ func sumLists(m map[string][]string) (sum int) {
 	return
 }
 
-func contains(s []role, e role) bool {
+// True if the role, or a conflicting role, is in the slice
+func containsMatch(s []role, e role) bool {
 	for _, a := range s {
 		if a == e {
+			return true
+		}
+		if a.Rank == e.Rank {
+			return true
+		}
+		if a.ID == e.ID {
 			return true
 		}
 	}
@@ -150,15 +162,13 @@ func contains(s []role, e role) bool {
 }
 
 // Add a role to a userInfo.
-func (info *userInfo) AddRole(r role) {
-	if contains(info.Roles, r) {
-		return
+func (info *userInfo) AddRole(r role) error {
+	if containsMatch(info.Roles, r) {
+		return errors.New("userInfo.AddRole: conflicting role already exists")
 	}
 
 	info.Roles = append(info.Roles, r)
-	sort.Slice(info.Roles, func(i, j int) bool {
-		return info.Roles[i].Rank < info.Roles[j].Rank
-	})
+	return nil
 }
 
 func (info *userInfo) SetCape(cape string) {
@@ -170,6 +180,9 @@ func (info *userInfo) SetIcon(icon string) {
 }
 
 func (info userInfo) IsHighest(r role) bool {
-	// Assume sorted
-	return info.Roles[0] == r
+	roles := info.Roles
+	sort.Slice(roles, func(i, j int) bool {
+		return roles[i].Rank < roles[j].Rank
+	})
+	return roles[0] == r
 }
