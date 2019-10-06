@@ -9,8 +9,6 @@ import (
 )
 
 func references(c echo.Context) error {
-	// Forward to the changelog hosted by github
-
 	target, err := url.Parse("https://impactdevelopment.github.io/Resources/data/references.json")
 	if err != nil {
 		return err //wtf
