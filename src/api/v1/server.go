@@ -5,8 +5,10 @@ import (
 	"github.com/labstack/echo"
 )
 
-// TODO API Doc
+// API configures the Group to implement v1 of the API
 func API(api *echo.Group) {
+	// TODO API Doc
+
 	api.GET("/motd", getMotd)
 	api.GET("/minecraft/user/info", getUserInfo)
 

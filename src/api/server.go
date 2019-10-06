@@ -5,6 +5,7 @@ import (
 	"github.com/labstack/echo"
 )
 
+// Server returns an echo server that handles api requests for each version
 func Server() (e *echo.Echo) {
 	e = echo.New()
 

@@ -31,7 +31,7 @@ type (
 
 // API Handler
 func getUserInfo(c echo.Context) error {
-	lists, err := getLegacyUuidLists()
+	lists, err := getLegacyUUIDLists()
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func hashUUID(uuid string) string {
 }
 
 // Get each of the legacy uuid lists as a map of role -> list
-func getLegacyUuidLists() (lists map[string][]string, err error) {
+func getLegacyUUIDLists() (lists map[string][]string, err error) {
 	urls := map[string]string{
 		"developer": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/developer.txt",
 		"staff":     "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/staff.txt",
