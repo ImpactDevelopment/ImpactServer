@@ -1,16 +1,18 @@
 package v1
 
 import (
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/labstack/echo"
-	"net/http"
+	"net/url"
 )
 
-var motdText = "testing123"
+const motdUrl = "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/motd.txt"
 
-func init() {
-	// TODO load motd text from github
-}
-
-func motd(c echo.Context) error {
-	return c.String(http.StatusOK, motdText)
+func getMotd(c echo.Context) error {
+	target, err := url.Parse(motdUrl)
+	if err != nil {
+		return err //wtf
+	}
+	util.Proxy(c, target)
+	return nil
 }
