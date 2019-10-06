@@ -12,24 +12,25 @@ import (
 	"strings"
 )
 
-type role struct {
-	// Role id, e.g. "developer"
-	ID string `json:"id"`
-	// Role rank, lower is better
-	Rank int
-}
-
-type userinfo struct {
-	// A list of roles applicable to this user
-	Roles []role `json:"roles"`
-	// Icon to display next to this user
-	Icon string `json:"icon,omitempty"`
-	// Cape this user should wear
-	Cape string `json:"cape,omitempty"`
-}
+type (
+	role struct {
+		// Role id, e.g. "developer"
+		ID string `json:"id"`
+		// Role rank, lower is better
+		Rank int
+	}
+	userInfo struct {
+		// A list of roles applicable to this user
+		Roles []role `json:"roles"`
+		// Icon to display next to this user
+		Icon string `json:"icon,omitempty"`
+		// Cape this user should wear
+		Cape string `json:"cape,omitempty"`
+	}
+)
 
 // API Handler
-func userInfo(c echo.Context) error {
+func getUserInfo(c echo.Context) error {
 	res, err := getFromLegacy()
 	if err != nil {
 		return err
@@ -43,14 +44,14 @@ func hashUUID(uuid string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func getFromLegacy() (info map[string]*userinfo, err error) {
+func getFromLegacy() (info map[string]*userInfo, err error) {
 	urls := map[string]string{
 		"developer": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/developer.txt",
 		"staff":     "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/staff.txt",
 		"pepsi":     "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/pepsi.txt",
 		"premium":   "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/premium.txt",
 	}
-	defaults := map[string]userinfo{
+	defaults := map[string]userInfo{
 		"developer": {
 			Roles: []role{{ID: "developer", Rank: 0}},
 			Cape:  "http://i.imgur.com/X9NYKct.png",
@@ -86,7 +87,7 @@ func getFromLegacy() (info map[string]*userinfo, err error) {
 		lists[key] = string(body)
 	}
 
-	info = make(map[string]*userinfo, sumLines(lists))
+	info = make(map[string]*userInfo, sumLines(lists))
 
 	for key := range lists {
 		forEachLine(lists[key], func(line string) {
@@ -137,10 +138,10 @@ func forEachLine(lines string, f func(line string)) {
 	}
 }
 
-// Add a role to a userinfo.
+// Add a role to a userInfo.
 // If the role is the highest, also set the cape and icon.
 // Cape and icon will each only be set if not empty
-func (info *userinfo) AddRole(r role, cape, icon string) {
+func (info *userInfo) AddRole(r role, cape, icon string) {
 	if contains(info.Roles, r) {
 		fmt.Println("Warning tried adding role", r.ID, "to user twice")
 		return
