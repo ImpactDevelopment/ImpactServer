@@ -31,12 +31,14 @@ type (
 
 // API Handler
 func getUserInfo(c echo.Context) error {
-	res, err := getFromLegacy()
+	lists, err := getLegacyUuidLists()
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, res)
+	legacyUsers := mapLegacyListsToUserInfoList(lists)
+
+	return c.JSON(http.StatusOK, legacyUsers)
 }
 
 func hashUUID(uuid string) string {
@@ -44,13 +46,40 @@ func hashUUID(uuid string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func getFromLegacy() (info map[string]*userInfo, err error) {
+// Get each of the legacy uuid lists as a map of role -> list
+func getLegacyUuidLists() (lists map[string]string, err error) {
 	urls := map[string]string{
 		"developer": "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/developer.txt",
 		"staff":     "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/staff.txt",
 		"pepsi":     "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/pepsi.txt",
 		"premium":   "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/users/premium.txt",
 	}
+
+	// Make a map the same length as urls
+	lists = make(map[string]string, len(urls))
+
+	// Dump the response from each url into the lists map
+	for key, url := range urls {
+		res, err := http.Get(url)
+		if err != nil {
+			// Hm, error getting one of the urls
+			fmt.Println("Error getting", key, err.Error())
+			continue
+		}
+		if res.StatusCode != http.StatusOK {
+			// wtf
+			fmt.Println("Error getting", key, res.StatusCode)
+			continue
+		}
+
+		body, _ := ioutil.ReadAll(res.Body)
+		lists[key] = string(body)
+	}
+	return
+}
+
+// Convert a [roleID]uuidList map to a [hashedUUID]role map
+func mapLegacyListsToUserInfoList(lists map[string]string) (info map[string]*userInfo) {
 	defaults := map[string]userInfo{
 		"developer": {
 			Roles: []role{{ID: "developer", Rank: 0}},
@@ -70,41 +99,34 @@ func getFromLegacy() (info map[string]*userInfo, err error) {
 			Cape:  "http://i.imgur.com/fc8gsyN.png",
 		},
 	}
-	lists := make(map[string]string, len(urls))
-	for key, url := range urls {
-		res, err := http.Get(url)
-		if err != nil {
-			// Hm, error getting one of the urls
-			fmt.Println("Error getting", key, err.Error())
-			continue
-		}
-		if res.StatusCode != http.StatusOK {
-			// wtf
-			fmt.Println("Error getting", key, res.StatusCode)
-			continue
-		}
-		body, _ := ioutil.ReadAll(res.Body)
-		lists[key] = string(body)
-	}
 
 	info = make(map[string]*userInfo, sumLines(lists))
-
 	for key := range lists {
 		forEachLine(lists[key], func(line string) {
 			// Send a hash of the uuid, not the uuid itself
 			// to make it harder to just bulk-ban users
 			hash := hashUUID(line)
 
-			if _, ok := info[hash]; ok {
-				// Existing user, add role and override cape/icon
-				role := defaults[key].Roles[0]
-				cape := defaults[key].Cape
-				icon := defaults[key].Icon
-				info[hash].AddRole(role, cape, icon)
-			} else {
+			if _, ok := info[hash]; !ok {
 				// New user, copy the default info for this key
 				defaultInfo := defaults[key]
 				info[hash] = &defaultInfo
+			} else {
+				// Existing user, add role
+				role := defaults[key].Roles[0]
+				info[hash].AddRole(role)
+
+				// If this role outranks the others, override capes and icons
+				if info[hash].IsHighest(role) {
+					cape := defaults[key].Cape
+					icon := defaults[key].Icon
+					if cape != "" {
+						info[hash].SetCape(cape)
+					}
+					if icon != "" {
+						info[hash].SetIcon(icon)
+					}
+				}
 			}
 
 		})
@@ -139,27 +161,26 @@ func forEachLine(lines string, f func(line string)) {
 }
 
 // Add a role to a userInfo.
-// If the role is the highest, also set the cape and icon.
-// Cape and icon will each only be set if not empty
-func (info *userInfo) AddRole(r role, cape, icon string) {
+func (info *userInfo) AddRole(r role) {
 	if contains(info.Roles, r) {
-		fmt.Println("Warning tried adding role", r.ID, "to user twice")
 		return
 	}
-	info.Roles = append(info.Roles, r)
 
-	// Sort roles by rank
+	info.Roles = append(info.Roles, r)
 	sort.Slice(info.Roles, func(i, j int) bool {
 		return info.Roles[i].Rank < info.Roles[j].Rank
 	})
+}
 
-	// If we just added the highest role, also set cape and icon
-	if info.Roles[0] == r {
-		if cape != "" {
-			info.Cape = cape
-		}
-		if icon != "" {
-			info.Icon = icon
-		}
-	}
+func (info *userInfo) SetCape(cape string) {
+	info.Cape = cape
+}
+
+func (info *userInfo) SetIcon(icon string) {
+	info.Icon = icon
+}
+
+func (info userInfo) IsHighest(r role) bool {
+	// Assume sorted
+	return info.Roles[0] == r
 }
