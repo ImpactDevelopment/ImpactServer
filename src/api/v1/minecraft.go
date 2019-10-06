@@ -16,7 +16,7 @@ type (
 		// Role id, e.g. "developer"
 		ID string `json:"id"`
 		// Role rank, lower is better
-		Rank int
+		Rank int `json:"-"`
 	}
 	userInfo struct {
 		// A list of roles applicable to this user
