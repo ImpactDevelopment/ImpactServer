@@ -25,4 +25,8 @@ func TestGetSubdomain(t *testing.T) {
 	// Don't break if a port is included
 	assert.Equal(t, "", GetSubdomains("example.com:3000"))
 	assert.Equal(t, "", GetSubdomains("localhost:321"))
+	assert.Equal(t, "abc", GetSubdomains("abc.example.com:3000"))
+	assert.Equal(t, "abc", GetSubdomains("abc.localhost:321"))
+	assert.Equal(t, "abc.def", GetSubdomains("abc.def.example.com:3000"))
+	assert.Equal(t, "abc.def", GetSubdomains("abc.def.localhost:321"))
 }
