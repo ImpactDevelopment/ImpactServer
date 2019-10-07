@@ -5,11 +5,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/labstack/echo"
 	"io/ioutil"
 	"net/http"
 	"sort"
 	"strings"
+
+	"github.com/labstack/echo"
 )
 
 type (

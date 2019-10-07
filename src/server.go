@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/ImpactDevelopment/ImpactServer/src/api"
 	"net/http"
 	"os"
 	"strconv"
+
+	"github.com/ImpactDevelopment/ImpactServer/src/api"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/cloudflare"
 	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"

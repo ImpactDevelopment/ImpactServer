@@ -1,9 +1,10 @@
 package v1
 
 import (
+	"net/url"
+
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/labstack/echo"
-	"net/url"
 )
 
 const motdURL = "https://impactdevelopment.github.io/Resources/data/motd.txt"
