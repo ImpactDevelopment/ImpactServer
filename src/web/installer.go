@@ -211,7 +211,7 @@ func installer(c echo.Context, version InstallerVersion) error {
 	awaitStartup() // in case we get an early request, block until startup is done
 
 	referer := c.Request().Referer()
-	if referer != "" && !strings.Contains(referer, "impactclient.net") && !strings.Contains(referer, "brady-money-grubbing-completed") {
+	if referer != "" && !strings.HasPrefix(referer, "https://impactclient.net/") && !strings.Contains(referer, "brady-money-grubbing-completed") {
 		fmt.Println("BLOCKING referer", referer)
 		return echo.NewHTTPError(http.StatusUnauthorized, "no hotlinking >:(")
 	}
