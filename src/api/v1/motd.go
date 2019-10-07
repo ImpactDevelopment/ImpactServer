@@ -6,7 +6,7 @@ import (
 	"net/url"
 )
 
-const motdURL = "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/data/motd.txt"
+const motdURL = "https://impactdevelopment.github.io/Resources/data/motd.txt"
 
 func getMotd(c echo.Context) error {
 	target, err := url.Parse(motdURL)
