@@ -18,7 +18,7 @@ func TestGetThemes(t *testing.T) {
 			Background: background{URL: "hello, world"},
 		},
 	}
-	expected := `{"theme-one":{"background":{},"default_font":{"color":16711884},"title_font":{"color":0},"motd_font":{"color":0}},"theme-two":{"background":{"url":"hello, world"},"default_font":{"color":0},"title_font":{"color":0},"motd_font":{"color":0}}}`
+	expected := `{"theme-one":{"background":{},"default_font":{"color":16711884},"title_font":{},"motd_font":{}},"theme-two":{"background":{"url":"hello, world"},"default_font":{},"title_font":{},"motd_font":{}}}`
 
 	e := getServer()
 	res := test(e, "/v1/themes")
