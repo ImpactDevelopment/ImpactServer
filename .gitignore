@@ -17,3 +17,7 @@
 /ImpactServer
 
 .DS_Store
+
+/bin
+
+/src/src
