@@ -8,7 +8,7 @@ import (
 )
 
 func dbTest(c echo.Context) error {
-	var value string
+	var value int
 	err := database.DB.QueryRow("SELECT test FROM test").Scan(&value)
 	if err != nil {
 		return err
