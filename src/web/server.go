@@ -15,11 +15,11 @@ func Server() (e *echo.Echo) {
 	e.GET("/releases.json", releases, mid.Cache(3600))
 	e.GET("/references.json", references, mid.Cache(3600))
 
-	e.GET("/ImpactInstaller.jar", installerForJar, mid.Cache(0))
-	e.GET("/ImpactInstaller.exe", installerForExe, mid.Cache(0))
+	e.GET("/ImpactInstaller.jar", installerForJar, mid.NoCache())
+	e.GET("/ImpactInstaller.exe", installerForExe, mid.NoCache())
 
 	staticEcho := echo.New()
-	staticEcho.Use(mid.Cache(86400))
+	staticEcho.Use(mid.CacheUntilRestart(604800)) // 1 week
 	staticEcho.Static("/", "static")
 	e.Any("/*", func(c echo.Context) error {
 		staticEcho.ServeHTTP(c.Response(), c.Request())
