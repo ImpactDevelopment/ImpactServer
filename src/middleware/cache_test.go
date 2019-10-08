@@ -26,9 +26,9 @@ func TestCache(t *testing.T) {
 	// Cache-Control header should equal max-age=[age]
 	rec := test(200)
 	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Equal(t, "max-age=200", rec.Header().Get("Cache-Control"))
+	assert.Equal(t, "public, max-age=200", rec.Header().Get("Cache-Control"))
 
 	rec = test(150)
 	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Equal(t, "max-age=150", rec.Header().Get("Cache-Control"))
+	assert.Equal(t, "public, max-age=150", rec.Header().Get("Cache-Control"))
 }
