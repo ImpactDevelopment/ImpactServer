@@ -18,7 +18,7 @@ type (
 		URL string `json:"url,omitempty"`
 	}
 	font struct {
-		Color uint32 `json:"color"`
+		Color uint32 `json:"color,omitempty"`
 	}
 )
 
