@@ -12,13 +12,13 @@ func TestGetThemes(t *testing.T) {
 	// Override the returned themes
 	themes = map[string]theme{
 		"theme-one": {
-			DefaultFont: font{Color: 0xff00cc},
+			DefaultFont: &font{Color: 0xff00cc},
 		},
 		"theme-two": {
-			Background: background{URL: "hello, world"},
+			Background: &background{URL: "hello, world"},
 		},
 	}
-	expected := `{"theme-one":{"background":{},"default_font":{"color":16711884},"title_font":{},"motd_font":{}},"theme-two":{"background":{"url":"hello, world"},"default_font":{},"title_font":{},"motd_font":{}}}`
+	expected := `{"theme-one":{"default_font":{"color":16711884}},"theme-two":{"background":{"url":"hello, world"}}}`
 
 	e := getServer()
 	res := test(e, "/v1/themes")
