@@ -2,24 +2,12 @@ package v1
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
-
-var loginData map[string]*userInfo
-
-func init() {
-	lists, err := getLegacyUUIDLists()
-	if err != nil {
-		panic(err)
-	}
-
-	loginData = mapLegacyListsToUserInfoList(lists)
-}
 
 func mojangLogin(c echo.Context) error {
 	uuidStr, err := util.HasJoinedServer(c.QueryParam("username"), c.QueryParam("hash"))

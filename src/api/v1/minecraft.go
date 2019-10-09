@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo"
 )
@@ -30,16 +32,40 @@ type (
 	}
 )
 
-// API Handler
-func getUserInfo(c echo.Context) error {
+var loginData map[string]*userInfo
+
+func init() {
+	err := updateData()
+	if err != nil {
+		panic(err)
+	}
+	go updatePeriodically()
+}
+
+func updatePeriodically() {
+	ticker := time.NewTicker(5 * time.Minute)
+	for range ticker.C {
+		err := updateData()
+		if err != nil {
+			log.Println("ERROR", err)
+		}
+	}
+}
+
+func updateData() error {
 	lists, err := getLegacyUUIDLists()
 	if err != nil {
 		return err
 	}
+	loginData = mapLegacyListsToUserInfoList(lists)
+	// TODO if new data != old data, tell cloudflare to purge this URL lmao
+	// unironic btw
+	return nil
+}
 
-	legacyUsers := mapLegacyListsToUserInfoList(lists)
-
-	return c.JSON(http.StatusOK, legacyUsers)
+// API Handler
+func getUserInfo(c echo.Context) error {
+	return c.JSON(http.StatusOK, loginData)
 }
 
 func hashUUID(uuid string) string {
