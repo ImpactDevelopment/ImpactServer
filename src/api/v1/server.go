@@ -13,4 +13,5 @@ func API(api *echo.Group) {
 	api.GET("/themes", getThemes, middleware.CacheUntilRestart(60*60*24 /*1day*/))
 	api.GET("/minecraft/user/info", getUserInfo, middleware.Cache(60*30))
 	api.GET("/dbtest", dbTest, middleware.NoCache())
+	api.GET("/minecraft/login", mojangLogin, middleware.NoCache())
 }

@@ -1,9 +1,10 @@
 package v1
 
 import (
-	"github.com/labstack/echo"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/labstack/echo"
 )
 
 func getServer() (e *echo.Echo) {

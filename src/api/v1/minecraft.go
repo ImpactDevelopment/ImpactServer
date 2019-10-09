@@ -81,7 +81,7 @@ func getLegacyUUIDLists() (lists map[string][]string, err error) {
 			continue
 		}
 
-		lists[key] = strings.Split(string(body), "\n")
+		lists[key] = strings.Split(strings.TrimSpace(string(body)), "\n")
 	}
 	return
 }

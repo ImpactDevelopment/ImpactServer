@@ -1,11 +1,12 @@
 package v1
 
 import (
-	"github.com/aws/aws-sdk-go/private/util"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/aws/aws-sdk-go/private/util"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetThemes(t *testing.T) {

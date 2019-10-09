@@ -3,8 +3,8 @@ package v1
 import (
 	"net/http"
 
-	"github.com/labstack/echo"
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
+	"github.com/labstack/echo"
 )
 
 func dbTest(c echo.Context) error {
