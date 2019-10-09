@@ -188,7 +188,6 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 	data.Set("ua", c.Request().UserAgent())
 
 	forward := strings.Split(c.Request().Header.Get("X-FORWARDED-FOR"), ",")[0]
-	fmt.Println(forward)
 	if forward != "" {
 		data.Set("uip", forward)
 	}
@@ -209,7 +208,6 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 		fmt.Println(err)
 		fmt.Println(string(data))
 	}
-	fmt.Println("Analytics success")
 }
 
 func installer(c echo.Context, version InstallerVersion) error {
