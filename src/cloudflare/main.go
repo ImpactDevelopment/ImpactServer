@@ -12,7 +12,7 @@ func Purge() {
 	zone := os.Getenv("CLOUDFLARE_ZONE_IDENTIFIER")
 	key := os.Getenv("CLOUDFLARE_API_KEY")
 	if zone == "" || key == "" {
-		fmt.Println("NOT purging cloudflare cache since I don't have an API key!")
+		fmt.Println("WARNING: Not purging cloudflare cache since I don't have an API key!")
 		return
 	}
 	fmt.Println("Purging cloudflare cache")

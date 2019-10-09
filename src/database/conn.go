@@ -2,7 +2,7 @@ package database
 
 import (
 	"database/sql"
-	"log"
+	"fmt"
 	"os"
 
 	_ "github.com/lib/pq"
@@ -13,7 +13,7 @@ var DB *sql.DB
 func init() {
 	url := os.Getenv("DATABASE_URL")
 	if url == "" {
-		log.Println("There will be no postgres")
+		fmt.Println("WARNING: No database url specified, not connecting to postgres!")
 		return
 	}
 	var err error

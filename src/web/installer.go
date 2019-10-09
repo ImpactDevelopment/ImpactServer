@@ -2,10 +2,12 @@ package web
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 
@@ -16,9 +18,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-const (
-	installerVersion = "0.7.2"
-)
+var installerVersion string
 
 type InstallerVersion int
 
@@ -81,6 +81,11 @@ func (version InstallerVersion) incrementGithubDownloadCountButDontActuallyUseTh
 }
 
 func init() {
+	installerVersion = os.Getenv("INSTALLER_VERSION")
+	if installerVersion == "" {
+		fmt.Println("WARNING: Installer version not specified, download will not work!")
+		return
+	}
 	// fetch the files on startup, but don't block init on it :brain:
 	go startup()
 }
@@ -208,6 +213,9 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 }
 
 func installer(c echo.Context, version InstallerVersion) error {
+	if installerVersion == "" {
+		return errors.New("Installer version not specified")
+	}
 	awaitStartup() // in case we get an early request, block until startup is done
 
 	referer := c.Request().Referer()
