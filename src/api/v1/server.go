@@ -14,4 +14,5 @@ func API(api *echo.Group) {
 	api.GET("/minecraft/user/info", getUserInfo, middleware.Cache(60*30))
 	api.GET("/dbtest", dbTest, middleware.NoCache())
 	api.GET("/minecraft/login", mojangLogin, middleware.NoCache())
+	api.GET("/emailtest", emailTest, middleware.NoCache())
 }
