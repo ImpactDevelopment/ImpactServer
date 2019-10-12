@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
@@ -22,5 +21,5 @@ func mojangLogin(c echo.Context) error {
 	if ok && data != nil && len(data.Roles) > 0 {
 		return c.JSON(http.StatusOK, data)
 	}
-	return errors.New("no data")
+	return c.JSON(http.StatusForbidden, []struct{}{})
 }
