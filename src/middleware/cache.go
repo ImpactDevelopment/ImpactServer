@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo"
 )
 
+// instruct the browser and cloudflare to cache for this amount of time
 func Cache(maxAge int) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -15,6 +16,17 @@ func Cache(maxAge int) echo.MiddlewareFunc {
 	}
 }
 
+// override an existing max-age header (e.g. from github) with a s-maxage that only cloudflare will respect instead
+func CacheCloudflare(cloudflareMaxAge int) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Response().Header().Set("Cache-Control", "public, s-maxage="+strconv.Itoa(cloudflareMaxAge)+", max-age="+strconv.Itoa(cloudflareMaxAge))
+			return next(c)
+		}
+	}
+}
+
+// cache indefinitely in cloudflare (until this server restarts and purges cloudflare), and for the defined amount of time in the browser
 func CacheUntilRestart(browserMaxAge int) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -26,6 +38,7 @@ func CacheUntilRestart(browserMaxAge int) echo.MiddlewareFunc {
 	}
 }
 
+// do not cache anywhere
 func NoCache() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
