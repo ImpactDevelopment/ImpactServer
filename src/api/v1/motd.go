@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -18,24 +19,22 @@ func init() {
 	var err error
 	motd, err = fetchMotd()
 	if err != nil {
-		panic(err)
+		log.Println("MOTD ERROR", err)
+		motd = "Ok, so our MOTD service may or may not be semi-broken right now..."
 	}
-	go func() {
-		ticker := time.NewTicker(3 * time.Minute)
-		for range ticker.C {
-			newer, err := fetchMotd()
-			if err != nil {
-				log.Println("MOTD ERROR", err)
-			}
-			newMotd(newer)
+	util.DoRepeatedly(3*time.Minute, func() {
+		newer, err := fetchMotd()
+		if err != nil {
+			log.Println("MOTD ERROR", err)
 		}
-	}()
+		newMotd(newer)
+	})
 }
 
 func newMotd(newer string) {
 	if newer != motd {
-		motd = newer
 		log.Println("MOTD UPDATE from", motd, "to", newer)
+		motd = newer
 		cloudflare.PurgeURLs([]string{"https://api.impactclient.net/v1/motd"})
 	}
 }

@@ -55,14 +55,4 @@ func TestMapLegacyListsToUserInfoList(t *testing.T) {
 	for _, role := range fred.Roles {
 		assert.Contains(t, fredRoleIDs, role.ID)
 	}
-
-}
-
-func hasRole(info *userInfo, id string) bool {
-	for _, role := range info.Roles {
-		if role.ID == id {
-			return true
-		}
-	}
-	return false
 }

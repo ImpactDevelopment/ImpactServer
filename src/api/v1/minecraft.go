@@ -5,9 +5,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/ImpactDevelopment/ImpactServer/src/cloudflare"
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -35,30 +38,34 @@ type (
 var loginData map[string]*userInfo
 
 func init() {
-	err := updateData()
+	_, err := updateData()
 	if err != nil {
 		panic(err)
 	}
-	go func() {
-		ticker := time.NewTicker(5 * time.Minute)
-		for range ticker.C {
-			err := updateData()
-			if err != nil {
-				log.Println("MC ERROR", err)
-			}
+	util.DoRepeatedly(5*time.Minute, func() {
+		updated, err := updateData()
+		if err != nil {
+			log.Println("MC ERROR", err)
 		}
-	}()
+		if updated {
+			log.Println("MC UPDATE: Updated user info")
+			cloudflare.PurgeURLs([]string{"https://api.impactclient.net/v1/minecraft/user/info"})
+		}
+	})
 }
 
-func updateData() error {
+func updateData() (updated bool, err error) {
 	lists, err := getLegacyUUIDLists()
 	if err != nil {
-		return err
+		return
 	}
-	loginData = mapLegacyListsToUserInfoList(lists)
-	// TODO if new data != old data, tell cloudflare to purge this URL lmao
-	// unironic btw
-	return nil
+	newLoginData := mapLegacyListsToUserInfoList(lists)
+	// reflect.DeepEqual is slow, especially since this map is big
+	if loginData != nil && !reflect.DeepEqual(newLoginData, loginData) {
+		loginData = newLoginData
+		updated = true
+	}
+	return
 }
 
 // API Handler
