@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -210,6 +212,16 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 	}
 }
 
+func makeEntry(zipWriter *zip.Writer, name string) (io.Writer, error) {
+	// make an entry with a valid last modified time so as to not crash java 12 reeee
+	header := &zip.FileHeader{
+		Name:     name,
+		Method:   zip.Deflate,
+		Modified: time.Now(),
+	}
+	return zipWriter.CreateHeader(header)
+}
+
 func installer(c echo.Context, version InstallerVersion) error {
 	if installerVersion == "" {
 		return errors.New("Installer version not specified")
@@ -239,7 +251,7 @@ func installer(c echo.Context, version InstallerVersion) error {
 	zipWriter := zip.NewWriter(res)
 	defer zipWriter.Close()
 	for _, entry := range installerEntries {
-		entryWriter, err := zipWriter.Create(entry.name)
+		entryWriter, err := makeEntry(zipWriter, entry.name)
 		if err != nil {
 			return err
 		}
@@ -249,7 +261,7 @@ func installer(c echo.Context, version InstallerVersion) error {
 		}
 	}
 	cid := extractOrGenerateCID(c)
-	writer, err := zipWriter.Create("impact_cid.txt")
+	writer, err := makeEntry(zipWriter, "impact_cid.txt")
 	if err != nil {
 		return err
 	}
