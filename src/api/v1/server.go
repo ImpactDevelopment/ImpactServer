@@ -9,8 +9,8 @@ import (
 func API(api *echo.Group) {
 	// TODO API Doc
 
-	api.GET("/motd", getMotd, middleware.CacheCloudflare(3600))
-	api.GET("/themes", getThemes, middleware.CacheUntilRestart(60*60*24 /*1day*/))
+	api.GET("/motd", getMotd, middleware.CacheUntilPurge())
+	api.GET("/themes", getThemes, middleware.CacheUntilPurge())
 	api.GET("/minecraft/user/info", getUserInfo, middleware.Cache(3600))
 	api.GET("/dbtest", dbTest, middleware.NoCache())
 	api.GET("/minecraft/login", mojangLogin, middleware.NoCache())

@@ -38,6 +38,11 @@ func CacheUntilRestart(browserMaxAge int) echo.MiddlewareFunc {
 	}
 }
 
+// cache indefinitely (until a cache purge)
+func CacheUntilPurge() echo.MiddlewareFunc {
+	return CacheUntilRestart(31536000)
+}
+
 // do not cache anywhere
 func NoCache() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {

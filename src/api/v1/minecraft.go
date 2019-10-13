@@ -39,17 +39,15 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	go updatePeriodically()
-}
-
-func updatePeriodically() {
-	ticker := time.NewTicker(5 * time.Minute)
-	for range ticker.C {
-		err := updateData()
-		if err != nil {
-			log.Println("ERROR", err)
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+		for range ticker.C {
+			err := updateData()
+			if err != nil {
+				log.Println("MC ERROR", err)
+			}
 		}
-	}
+	}()
 }
 
 func updateData() error {
