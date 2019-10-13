@@ -54,7 +54,11 @@ func main() {
 		return nil
 	})
 
-	e.Use(middleware.Logger())
+	if os.Getenv("APP_ENV") != "HEROKU" {
+		// there is already equivalent request logging done by heroku
+		// this just spams our log files, tripling their size with duplicated data sadly
+		e.Use(middleware.Logger())
+	}
 	e.Use(middleware.Recover())
 
 	go cloudflare.Purge()
