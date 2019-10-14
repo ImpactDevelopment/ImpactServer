@@ -32,6 +32,9 @@ func init() {
 			fmt.Println("WARNING: Unable to load JWT_KEY from the environment", err)
 		}
 	}
+
+	// TODO perhaps this should instead be the static https://api.impactclient.net/v1 when APP_ENV is heroku
+	// and otherwise, http://api.localhost:PORT/? idk
 	jwtIssuerURL = os.Getenv("JWT_ISSUER_URL")
 	if jwtIssuerURL == "" {
 		fmt.Println("WARNING: JWT_ISSUER_URL is empty, all tokens will be invalid!")
