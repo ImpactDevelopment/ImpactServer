@@ -32,6 +32,9 @@ func (user legacyGithubUser) UserInfo() (info UserInfo) {
 		// catgorl override pasted from Nametags.java
 		info.TextColor = "LIGHT_PURPLE"
 	}
+	if user.uuid.String() == "51dcd870-d33b-40e9-9fc1-aecdcff96081" {
+		info.TextColor = "RED"
+	}
 	return
 }
 
