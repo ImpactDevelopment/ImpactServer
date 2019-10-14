@@ -28,6 +28,10 @@ func (user legacyGithubUser) UserInfo() (info UserInfo) {
 	for _, role := range getRolesSorted(user.Roles()) { // go in order from highest priority to least (aka numerically lowest to highest)
 		role.applyDefaults(&info)
 	}
+	if user.uuid.String() == "2c3174fc-0c6b-4cfb-bb2b-0069bf7294d1" {
+		// catgorl override pasted from Nametags.java
+		info.TextColor = "LIGHT_PURPLE"
+	}
 	return
 }
 

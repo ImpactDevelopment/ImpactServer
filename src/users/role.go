@@ -20,8 +20,11 @@ var defaultRoleTemplates = map[string]UserInfo{
 		Cape: "http://i.imgur.com/uh6QcuF.png",
 	},
 	"pepsi": {
-		Icon: "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/textures/Pepsi_32.png",
-		Cape: "http://i.imgur.com/SKjRGbH.png",
+		Icon:            "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/textures/Pepsi_32.png",
+		Cape:            "http://i.imgur.com/SKjRGbH.png",
+		TextColor:       "BLUE",
+		BackgroundColor: "1358954495",
+		BorderColor:     "-1761673216",
 	},
 	"premium": {
 		Cape: "http://i.imgur.com/fc8gsyN.png",
@@ -36,10 +39,19 @@ func (role Role) applyDefaults(info *UserInfo) {
 		return
 	}
 	if template.Icon != "" && info.Icon == "" {
-		info.SetIcon(template.Icon)
+		info.Icon = template.Icon
 	}
 	if template.Cape != "" && info.Cape == "" {
-		info.SetCape(template.Cape)
+		info.Cape = template.Cape
+	}
+	if template.TextColor != "" && info.TextColor == "" {
+		info.TextColor = template.TextColor
+	}
+	if template.BackgroundColor != "" && info.BackgroundColor == "" {
+		info.BackgroundColor = template.BackgroundColor
+	}
+	if template.BorderColor != "" && info.BorderColor == "" {
+		info.BorderColor = template.BorderColor
 	}
 }
 
