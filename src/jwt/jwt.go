@@ -94,7 +94,7 @@ func createJWT(user users.User, subject string, mcUuid *uuid.UUID, hwid string) 
 			Issuer:         jwtIssuerURL,
 			Subject:        subject,
 			ExpirationTime: jwt.NumericDate(now.Add(24 * time.Hour)),
-			IssuedAt:       jwt.NumericDate(now),
+			IssuedAt:       jwt.NumericDate(now.Add(-1 * time.Minute)), // sometimes people's clocks are slow
 		},
 		Roles:  rolesArr,
 		MCUUID: mcUuidStr,
