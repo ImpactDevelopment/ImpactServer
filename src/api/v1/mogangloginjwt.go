@@ -3,6 +3,7 @@ package v1
 import (
 	"net/http"
 
+	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/google/uuid"
@@ -20,7 +21,7 @@ func mojangLoginJWT(c echo.Context) error {
 	}
 	user := users.LookupUserByUUID(uuidVal)
 	if user != nil && len(user.Roles()) > 0 {
-		return c.JSONBlob(http.StatusOK, createJWT(user, uuidVal.String()))
+		return c.JSONBlob(http.StatusOK, jwt.CreateJWT(user, uuidVal.String()))
 	}
 	return c.JSON(http.StatusForbidden, []struct{}{})
 }

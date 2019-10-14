@@ -1,4 +1,4 @@
-package v1
+package jwt
 
 import (
 	"crypto/rsa"
@@ -63,7 +63,7 @@ func init() {
 //  the client would verify that that is their hwid
 // auth cannot be the same as their impact account identifier since they won't already know it
 // (like they can't check its value against something they already know)
-func createJWT(user users.User, auth string) []byte {
+func CreateJWT(user users.User, auth string) []byte {
 	now := time.Now()
 	roles := user.Roles()
 	rolesArr := make([]string, len(roles))
