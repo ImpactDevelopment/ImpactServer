@@ -20,7 +20,9 @@ func mojangLoginLegacy(c echo.Context) error {
 	}
 	user := users.LookupUserByUUID(uuidVal)
 	if user != nil && len(user.Roles()) > 0 {
-		return c.JSON(http.StatusOK, user.Roles())
+		return c.JSON(http.StatusOK, struct {
+			Roles []users.Role `json:"roles"`
+		}{Roles: user.Roles()})
 	}
 	return c.JSON(http.StatusForbidden, []struct{}{})
 }
