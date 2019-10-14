@@ -25,7 +25,7 @@ func (user legacyGithubUser) Roles() []Role {
 
 func (user legacyGithubUser) UserInfo() (info UserInfo) {
 	info = UserInfo{}
-	for _, role := range getRolesSorted(user.Roles()) {
+	for _, role := range getRolesSorted(user.Roles()) { // go in order from highest priority to least (aka numerically lowest to highest)
 		role.applyDefaults(&info)
 	}
 	return

@@ -44,7 +44,9 @@ func (role Role) applyDefaults(info *UserInfo) {
 }
 
 func getRolesSorted(roles []Role) (sorted []Role) {
-	sorted = roles // don't mutate
+	// needed so that higher priority roles set cape and icon instead of lower priority ones
+	// copying slices via = is by reference, so this mutates no matter what
+	sorted = roles
 	sort.Slice(sorted, func(i, j int) bool {
 		return sorted[i].rank < sorted[j].rank
 	})
