@@ -3,8 +3,7 @@ package mailgun
 import (
 	"os"
 
-	"github.com/mailgun/mailgun-go/v3"
+	mailgun "github.com/mailgun/mailgun-go/v3"
 )
-
 
 var MG = mailgun.NewMailgun(os.Getenv("MAILGUN_DOMAIN_IDENTIFIER"), os.Getenv("MAILGUN_API_KEY"))

@@ -3,12 +3,13 @@ package v1
 import (
 	"net/http"
 
+	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
-func mojangLogin(c echo.Context) error {
+func mojangLoginLegacy(c echo.Context) error {
 	uuidStr, err := util.HasJoinedServer(c.QueryParam("username"), c.QueryParam("hash"))
 	if err != nil {
 		return err
@@ -17,9 +18,9 @@ func mojangLogin(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	data, ok := loginData[hashUUID(uuidVal.String())]
-	if ok && data != nil && len(data.Roles) > 0 {
-		return c.JSON(http.StatusOK, data)
+	user := users.LookupUserByUUID(uuidVal)
+	if user != nil && len(user.Roles()) > 0 {
+		return c.JSON(http.StatusOK, user.Roles())
 	}
 	return c.JSON(http.StatusForbidden, []struct{}{})
 }

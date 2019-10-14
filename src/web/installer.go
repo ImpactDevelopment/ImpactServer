@@ -215,8 +215,8 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 func makeEntry(zipWriter *zip.Writer, name string, exe bool) (io.Writer, error) {
 	// make an entry with a valid last modified time so as to not crash java 12 reeee
 	header := &zip.FileHeader{
-		Name:     name,
-		Method:   zip.Deflate,
+		Name:   name,
+		Method: zip.Deflate,
 	}
 	if !exe {
 		header.Modified = time.Now()

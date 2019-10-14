@@ -3,8 +3,9 @@ package util
 import (
 	"encoding/asn1"
 	"encoding/base64"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // Integration test

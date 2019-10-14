@@ -7,13 +7,21 @@ import (
 	"encoding/base64"
 )
 
-func GenerateRsa() (*rsa.PrivateKey) {
+func GenerateRsa() *rsa.PrivateKey {
 	// Should never error
 	key, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		panic(err)
 	}
 	return key
+}
+
+func RsaPubToStr(key *rsa.PublicKey) string {
+	bytes, err := x509.MarshalPKIXPublicKey(key)
+	if err != nil {
+		panic(err)
+	}
+	return base64.StdEncoding.EncodeToString(bytes)
 }
 
 func RsaToStr(key *rsa.PrivateKey) string {

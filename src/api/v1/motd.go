@@ -1,11 +1,12 @@
 package v1
 
 import (
-	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/cloudflare"
 	"github.com/labstack/echo"
