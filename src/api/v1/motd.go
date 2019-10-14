@@ -26,6 +26,7 @@ func init() {
 		newer, err := fetchMotd()
 		if err != nil {
 			log.Println("MOTD ERROR", err)
+			return
 		}
 		newMotd(newer)
 	})

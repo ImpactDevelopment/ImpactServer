@@ -23,10 +23,10 @@ func TestDoLater(t *testing.T) {
 	for i = 1; i < 100; i++ {
 		// Give each iteration its own time.Now() just in case this loop crosses into a new ms
 		// Use an offset delay so they don't all run at once
-		offsetDelay := time.Duration(i*delay.Milliseconds()) * time.Millisecond
+		offsetDelay := time.Duration(i*ms(delay)) * time.Millisecond
 		DoLater(offsetDelay, callback(t, time.Now(), delay, &runs))
 	}
-	time.Sleep(time.Duration(i*delay.Milliseconds()) * time.Millisecond)
+	time.Sleep(time.Duration(i*ms(delay)) * time.Millisecond)
 	assert.Equal(t, i-1, int64(runs), "Expected the number of runs to match the number of loop iterations")
 }
 
@@ -73,8 +73,14 @@ func TestDoRepeatedly(t *testing.T) {
 func callback(t *testing.T, start time.Time, interval time.Duration, runs *int) func() {
 	return func() {
 		*runs++
-		delay := time.Now().Sub(start).Milliseconds()
-		expect := int64(*runs) * interval.Milliseconds()
+		delay := ms(time.Now().Sub(start))
+		expect := int64(*runs) * ms(interval)
 		assert.Equal(t, expect, delay, "Expected %d delay after %d runs", expect, *runs)
 	}
+}
+
+// ms returns the duration as an integer millisecond count.
+// taken from go 1.13, https://go-review.googlesource.com/c/go/+/167387/2/src/time/time.go
+func ms(d time.Duration) int64 {
+	return int64(d) / 1e6
 }

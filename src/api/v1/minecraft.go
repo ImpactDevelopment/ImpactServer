@@ -61,7 +61,7 @@ func updateData() (updated bool, err error) {
 	}
 	newLoginData := mapLegacyListsToUserInfoList(lists)
 	// reflect.DeepEqual is slow, especially since this map is big
-	if loginData != nil && !reflect.DeepEqual(newLoginData, loginData) {
+	if loginData == nil || !reflect.DeepEqual(newLoginData, loginData) {
 		loginData = newLoginData
 		updated = true
 	}

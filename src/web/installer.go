@@ -212,12 +212,14 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 	}
 }
 
-func makeEntry(zipWriter *zip.Writer, name string) (io.Writer, error) {
+func makeEntry(zipWriter *zip.Writer, name string, exe bool) (io.Writer, error) {
 	// make an entry with a valid last modified time so as to not crash java 12 reeee
 	header := &zip.FileHeader{
 		Name:     name,
 		Method:   zip.Deflate,
-		Modified: time.Now(),
+	}
+	if !exe {
+		header.Modified = time.Now()
 	}
 	return zipWriter.CreateHeader(header)
 }
@@ -251,7 +253,7 @@ func installer(c echo.Context, version InstallerVersion) error {
 	zipWriter := zip.NewWriter(res)
 	defer zipWriter.Close()
 	for _, entry := range installerEntries {
-		entryWriter, err := makeEntry(zipWriter, entry.name)
+		entryWriter, err := makeEntry(zipWriter, entry.name, version == EXE)
 		if err != nil {
 			return err
 		}
@@ -261,7 +263,7 @@ func installer(c echo.Context, version InstallerVersion) error {
 		}
 	}
 	cid := extractOrGenerateCID(c)
-	writer, err := makeEntry(zipWriter, "impact_cid.txt")
+	writer, err := makeEntry(zipWriter, "impact_cid.txt", version == EXE)
 	if err != nil {
 		return err
 	}
