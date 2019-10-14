@@ -34,6 +34,7 @@ func (user legacyGithubUser) UserInfo() (info UserInfo) {
 	}
 	if user.uuid.String() == "51dcd870-d33b-40e9-9fc1-aecdcff96081" {
 		info.TextColor = "RED"
+		info.Icon = "https://i.imgur.com/KX6kIva.png"
 	}
 	return
 }
