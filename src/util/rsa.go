@@ -7,10 +7,13 @@ import (
 	"encoding/base64"
 )
 
-func GenerateRsa() (key *rsa.PrivateKey) {
+func GenerateRsa() (*rsa.PrivateKey) {
 	// Should never error
-	key, _ = rsa.GenerateKey(rand.Reader, 4096)
-	return
+	key, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		panic(err)
+	}
+	return key
 }
 
 func RsaToStr(key *rsa.PrivateKey) string {
