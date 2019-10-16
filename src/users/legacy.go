@@ -15,6 +15,18 @@ type legacyGithubUser struct {
 	roles []Role
 }
 
+var specialCases = map[uuid.UUID]UserInfo{
+	// catgorl
+	uuid.MustParse("2c3174fc-0c6b-4cfb-bb2b-0069bf7294d1"): {
+		TextColor: "LIGHT_PURPLE",
+	},
+	// leijurv
+	uuid.MustParse("51dcd870-d33b-40e9-9fc1-aecdcff96081"): {
+		TextColor: "RED",
+		Icon:      "https://i.imgur.com/KX6kIva.png",
+	},
+}
+
 func (user legacyGithubUser) MinecraftIDs() []uuid.UUID {
 	return []uuid.UUID{user.uuid}
 }
@@ -25,17 +37,15 @@ func (user legacyGithubUser) Roles() []Role {
 
 func (user legacyGithubUser) UserInfo() (info UserInfo) {
 	info = UserInfo{}
+
+	if special, ok := specialCases[user.uuid]; ok {
+		info = special
+	}
+
 	for _, role := range getRolesSorted(user.Roles()) { // go in order from highest priority to least (aka numerically lowest to highest)
 		role.applyDefaults(&info)
 	}
-	if user.uuid.String() == "2c3174fc-0c6b-4cfb-bb2b-0069bf7294d1" {
-		// catgorl override pasted from Nametags.java
-		info.TextColor = "LIGHT_PURPLE"
-	}
-	if user.uuid.String() == "51dcd870-d33b-40e9-9fc1-aecdcff96081" {
-		info.TextColor = "RED"
-		info.Icon = "https://i.imgur.com/KX6kIva.png"
-	}
+
 	return
 }
 
@@ -97,6 +107,12 @@ func generateLegacyData() (map[uuid.UUID][]Role, error) {
 	for roleName, uuids := range roleToUsers {
 		for _, uuid := range uuids {
 			data[uuid] = append(data[uuid], rolesData[roleName]) // <-- unironically beautiful
+		}
+	}
+	for uuid, _ := range specialCases {
+		// putIfAbsent
+		if _, ok := data[uuid]; !ok {
+			data[uuid] = []Role{}
 		}
 	}
 	return data, nil
