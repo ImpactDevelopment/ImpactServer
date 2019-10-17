@@ -93,14 +93,15 @@ func s3Releases() ([]Release, error) {
 			continue
 		}
 
-		tagName := parts[len(parts)-2]    // dev-856f3ad-1.13.2
-		jsonFile := k[:len(k)-3] + "json" // artifacts/Impact/dev/dev-856f3ad-1.13.2/Impact-dev-856f3ad-1.13.2.json
-		if _, ok := keys[jsonFile]; !ok {
+		tagName := parts[len(parts)-2]             // dev-856f3ad-1.13.2
+		fullPath := k[:len(k)-3]                   // artifacts/Impact/dev/dev-856f3ad-1.13.2/Impact-dev-856f3ad-1.13.2.
+		internalName := fileName[:len(fileName)-3] // Impact-dev-856f3ad-1.13.2.
+
+		if _, ok := keys[fullPath+"json"]; !ok {
 			continue
 		}
-		jsonFileName := fileName[:len(fileName)-3] + "json" // Impact-dev-856f3ad-1.13.2.json
 
-		resp = append(resp, Release{
+		rel := Release{
 			TagName:    tagName,
 			Draft:      strings.Contains(tagName, "dev"),
 			Prerelease: !strings.Contains(tagName, "release"),
@@ -110,11 +111,20 @@ func s3Releases() ([]Release, error) {
 					URL:  "https://files.impactclient.net/" + k,
 				},
 				Asset{
-					Name: jsonFileName,
-					URL:  "https://files.impactclient.net/" + jsonFile,
+					Name: internalName + "json",
+					URL:  "https://files.impactclient.net/" + fullPath + "json",
 				},
 			},
-		})
+		}
+
+		if _, ok := keys[fullPath+"json.asc"]; ok {
+			rel.Assets = append(rel.Assets, Asset{
+				Name: internalName + "json.asc",
+				URL:  "https://files.impactclent.net/" + fullPath + "json.asc",
+			})
+		}
+
+		resp = append(resp, rel)
 	}
 	return resp, nil
 }
