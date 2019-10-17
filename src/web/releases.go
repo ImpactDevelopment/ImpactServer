@@ -120,7 +120,7 @@ func s3Releases() ([]Release, error) {
 		if _, ok := keys[fullPath+"json.asc"]; ok {
 			rel.Assets = append(rel.Assets, Asset{
 				Name: internalName + "json.asc",
-				URL:  "https://files.impactclent.net/" + fullPath + "json.asc",
+				URL:  "https://files.impactclient.net/" + fullPath + "json.asc",
 			})
 		}
 
