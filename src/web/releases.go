@@ -45,7 +45,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	util.DoRepeatedly(15*time.Second, func() {
+	util.DoRepeatedly(15*time.Minute, func() {
 		newRel, err := allReleases()
 		if err != nil {
 			log.Println("RELEASES ERROR", err)
