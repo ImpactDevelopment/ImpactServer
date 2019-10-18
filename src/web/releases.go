@@ -2,18 +2,24 @@ package web
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"strings"
+	"time"
 
+	"github.com/ImpactDevelopment/ImpactServer/src/cloudflare"
 	"github.com/ImpactDevelopment/ImpactServer/src/s3proxy"
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/labstack/echo"
 )
+
+var rels map[string]Release
 
 var githubToken string
 
@@ -29,16 +35,53 @@ type Release struct {
 	Assets     []Asset `json:"assets"`
 }
 
-type ReleaseSource func() ([]Release, error)
-
 func init() {
 	githubToken = os.Getenv("GITHUB_ACCESS_TOKEN")
 	if githubToken == "" {
 		fmt.Println("WARNING: No GitHub access token to bypass ratelimiting!")
 	}
+	var err error
+	rels, err = allReleases()
+	if err != nil {
+		panic(err)
+	}
+	util.DoRepeatedly(15*time.Second, func() {
+		newRel, err := allReleases()
+		if err != nil {
+			log.Println("RELEASES ERROR", err)
+			return
+		}
+		if !reflect.DeepEqual(rels, newRel) {
+			rels = newRel
+
+			cloudflare.PurgeURLs([]string{"http://impactclient.net/releases.json"})
+		}
+	})
 }
 
-func githubReleases() ([]Release, error) {
+func releases(c echo.Context) error {
+	relsCopy := rels // vague multithreading protection idk lmao
+	resp := make([]Release, 0, len(rels))
+	for _, v := range relsCopy {
+		resp = append(resp, v)
+	}
+	return c.JSON(http.StatusOK, rels)
+}
+
+func allReleases() (map[string]Release, error) {
+	resp := make(map[string]Release)
+	err := githubReleases(resp)
+	if err != nil {
+		return nil, err
+	}
+	err = s3Releases(resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func githubReleases(rels map[string]Release) error {
 	// not strictly necessary given that we won't be querying all that often
 	// but we have no idea who else is on this IP (shared host from heroku)
 	// so to guard against posssible "noisy neighbors" who are spamming github's api
@@ -51,7 +94,7 @@ func githubReleases() ([]Release, error) {
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
 		fmt.Println("Github error", err)
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
@@ -62,12 +105,16 @@ func githubReleases() ([]Release, error) {
 		fmt.Println("Github returned invalid json reply!!")
 		fmt.Println(err)
 		fmt.Println(string(body))
-		return releasesData, err
+		return err
 	}
-	return releasesData, nil
+
+	for _, rel := range releasesData {
+		rels[rel.TagName] = rel
+	}
+	return nil
 }
 
-func s3Releases() ([]Release, error) {
+func s3Releases(resp map[string]Release) error {
 	objs, err := s3.New(s3proxy.AWSSession).ListObjectsV2(&s3.ListObjectsV2Input{
 		Bucket: aws.String("impactclient-files"),
 		Prefix: aws.String("artifacts/Impact/"),
@@ -75,7 +122,7 @@ func s3Releases() ([]Release, error) {
 	if err != nil {
 		fmt.Println("s3 error but let's not break the client for everyone since this only affects premium")
 		fmt.Println(err)
-		return make([]Release, 0), nil
+		return nil
 	}
 
 	keys := make(map[string]bool)
@@ -84,7 +131,6 @@ func s3Releases() ([]Release, error) {
 		keys[*item.Key] = true
 	}
 
-	resp := make([]Release, 0)
 	for k, _ := range keys {
 		// e.g. artifacts/Impact/dev/dev-856f3ad-1.13.2/Impact-dev-856f3ad-1.13.2.jar
 		parts := strings.Split(k, "/")
@@ -123,45 +169,7 @@ func s3Releases() ([]Release, error) {
 				URL:  "https://files.impactclient.net/" + fullPath + "json.asc",
 			})
 		}
-
-		resp = append(resp, rel)
+		resp[tagName] = rel
 	}
-	return resp, nil
-}
-
-var releaseSources = []ReleaseSource{githubReleases, s3Releases}
-
-func releases(c echo.Context) error {
-	errCh := make(chan error)
-	dataCh := make(chan []Release)
-
-	for _, elem := range releaseSources {
-		go func(source ReleaseSource) {
-			defer func() {
-				if r := recover(); r != nil {
-					// apparently you can pass ANY value to panic, so r can be any type at all
-					// so we gotta format it into a string then make an error of that lol
-					errCh <- errors.New(fmt.Sprintf("%v", r))
-				}
-			}()
-			data, err := source()
-			if err != nil {
-				errCh <- err
-				return
-			}
-			dataCh <- data
-		}(elem)
-	}
-
-	resp := make([]Release, 0)
-	for _ = range releaseSources {
-		select {
-		case data := <-dataCh:
-			resp = append(resp, data...)
-		case err := <-errCh:
-			return err
-		}
-	}
-
-	return c.JSON(http.StatusOK, resp)
+	return nil
 }
