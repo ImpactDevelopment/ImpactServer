@@ -65,7 +65,7 @@ func releases(c echo.Context) error {
 	for _, v := range relsCopy {
 		resp = append(resp, v)
 	}
-	return c.JSON(http.StatusOK, rels)
+	return c.JSON(http.StatusOK, resp)
 }
 
 func allReleases() (map[string]Release, error) {
