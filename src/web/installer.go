@@ -216,7 +216,7 @@ func makeEntry(zipWriter *zip.Writer, name string, exe bool) (io.Writer, error) 
 	// make an entry with a valid last modified time so as to not crash java 12 reeee
 	header := &zip.FileHeader{
 		Name:   name,
-		Method: zip.Deflate,
+		Method: zip.Store,
 	}
 	if !exe {
 		header.Modified = time.Now()
