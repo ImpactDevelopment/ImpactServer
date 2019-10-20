@@ -40,6 +40,8 @@ func main() {
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Pre(mid.RemoveIndexHTML(http.StatusMovedPermanently))
 
+	e.Use(middleware.BodyLimit("1M"))
+
 	e.Any("/*", func(c echo.Context) error {
 		req := c.Request()
 		res := c.Response()
