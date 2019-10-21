@@ -48,16 +48,15 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-
       gtag('config', 'UA-143397381-1');
         
-      var getOutboundLink = function(label) {
+      var getOutboundLink = label => {
         gtag('event', 'click', {
             'event_category': 'outbound',
             'event_label': label,
             'transport_type': 'beacon'
         });
-      }
+      };
     </script>
 
 </head>
@@ -66,10 +65,8 @@
 <!-- Pre Loader -->
 <div id="loader-wrapper">
     <div id="loader"></div>
-
     <div class="loader-section section-left"></div>
     <div class="loader-section section-right"></div>
-
 </div>
 
 <!--Navigation/Header-->
@@ -99,21 +96,17 @@
 </header>
 
 <!-- about section -->
-<div id="about" class="section scrollspy">
-    <div class="container">
-        <div class="row">
-            <p class="col s12 center large_text">
-                The Impact client is an <b>advanced</b> utility mod for Minecraft, it is based on <b>ClientAPI</b> and includes a large number of <b>useful mods</b>
-            </p>
-            <p class="col s12 center med_text">
-                You can view a list of past and upcoming changes <a href="/changelog" target="_blank">here</a>.
-                <p style="font-size:11px;text-align:center"><br/>Proudly built with <a href="https://gitlab.com/vessels/vessels" onclick="getOutboundLink('vessels'); return true;">Vessels</a>. Sponsored by <a href="https://www.2b2t.online/" onclick="getOutboundLink('2b2tonline'); return true;">2b2t.online</a>.</p>
-            </p>
-        </div>
-    </div>
+<div id="about" class="section scrollspy container row">
+    <p class="col s12 center large_text">
+        The Impact client is an <b>advanced</b> utility mod for Minecraft, it is based on <b>ClientAPI</b> and includes a large number of <b>useful mods</b>
+    </p>
+    <p class="col s12 center med_text">
+        You can view a list of past and upcoming changes <a href="/changelog" target="_blank">here</a>.
+        <p style="font-size:11px;text-align:center"><br>Proudly built with <a href="https://gitlab.com/vessels/vessels" onclick="getOutboundLink('vessels'); return true;">Vessels</a>. Sponsored by <a href="https://www.2b2t.online/" onclick="getOutboundLink('2b2tonline'); return true;">2b2t.online</a>.</p>
+    </p>
 </div>
 
-<script type="text/javascript">
+<script>
     window.impactPlatform = window.location.search.split("platform=")[1];
 </script>
 
@@ -129,8 +122,7 @@
         <p>
             <div style="font-size: 15px;float: left;font-weight: bold">Having trouble installing or setting up Impact? There's almost certainly a solution in the&nbsp;</div>
             <a target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Setup-FAQ" onclick="getOutboundLink('faq_setup'); return true;">Setup / Install FAQ</a>
-            <br />
-            <br />
+            <br><br>
             <a target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Usage-FAQ" onclick="getOutboundLink('faq_usage'); return true;">Usage FAQ</a>
         </p>
         <p id="mac-moment">
@@ -141,22 +133,17 @@
             On Windows, you may run into the following issue with missing Java on opening the Installer. This is normal; Java can be downloaded from <a target="_blank" href="https://www.java.com/download/">here</a>.<br />
             <img src="img/nojava.png" style="width: 50%">
         </p>
-        <script type="text/javascript">
+        <script>
             function delet(id) {
                 var elem = document.getElementById(id);
-                if (elem)
-                    elem.parentNode.removeChild(elem);
+                if (elem) elem.parentNode.removeChild(elem);
             }
-            if (navigator.platform.toUpperCase().indexOf('MAC') == -1) { // if NOT on Mac OS X
-                delet("mac-moment"); // then delete the mac info
-            } else {
-                delet("exe-moment"); // big brain: if on mac, delete the big exe meme
-            }
+            if (navigator.platform.toUpperCase().indexOf('MAC') == -1) delet("mac-moment"); // if NOT mac os, then delete the mac info
+            else delet("exe-moment"); // big brain: if on mac, delete the big exe meme
             if (impactPlatform) {
                 delet("bothPlatforms");
-                if (impactPlatform == "exe") {
-                    delet("jarOnly");
-                } else {
+                if (impactPlatform == "exe") delet("jarOnly");
+                else {
                     delet("exeOnly");
                     delet("exe-moment");
                 }
@@ -175,11 +162,9 @@
 <div id="download" class="section scrollspy">
     <div class="container">
         <div class="row">
-            <div class="col s12">
-              <div class="center promo promo-example">
+            <div class="col s12 center promo promo-example">
                 <h2>Downloads</h2>
                 Impact supports Minecraft 1.14.4, 1.13.2, 1.12.2, 1.12.1, 1.12, and 1.11.2.
-              </div>
             </div>
             <div class="center col s12 l4 offset-l2">
                 <a href="http://evassmat.com/K4AN" onclick="getOutboundLink('adfly_exe'); return true;" id="adfly-link-exe">
@@ -210,9 +195,9 @@
                     <div class="card-panel waves-effect z-depth-2 hoverable">
                         <h5 class="black-text">
                             Impact Installer
-                            <br />
+                            <br>
                             for non-Windows
-                            <br />
+                            <br>
                             <div style="font-size: 10px"></div>
                         </h5>
                         <h6 class="black-text">
@@ -220,9 +205,9 @@
                         </h6>
                         <div>
                             <img class="large" src="img/java-icon.png" height=128/>
-                            <br />
+                            <br>
                             Download
-                            <br />
+                            <br>
                             <span style="font-height: 10px" class="black-text">
                                 ImpactInstaller.jar
                             </span>
@@ -230,18 +215,16 @@
                     </div>
                 </a>
             </div>
-            <script type="text/javascript">
+            <script>
                 // analytics says almost half of firefox users never come back from the adfly
                 // probably a really aggressive adblocker
                 // so... just let them straight through lmao
-                if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
-                    document.getElementById("adfly-link-jar").href = "/?brady-money-grubbing-completed=true&platform=jar";
-                    document.getElementById("adfly-link-exe").href = "/?brady-money-grubbing-completed=true&platform=exe";
-                }
+                // I've almost gotten viruses from ur adfly. I say almost bc I have an anti-virus. ಠ益ಠ
+                if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) document.getElementById("adfly-link-jar").href = "/?brady-money-grubbing-completed=true&platform=jar", document.getElementById("adfly-link-exe").href = "/?brady-money-grubbing-completed=true&platform=exe";
             </script>
             <div class="col s12">
               <div class="center promo promo-example">
-                <br />
+                <br>
                 <a target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Setup-FAQ" onclick="getOutboundLink('faq_download'); return true;">Download/Setup FAQ</a>
               </div>
             </div>
@@ -261,12 +244,12 @@
         <div class="row">
             <div class="col s12 l4 push-l4">
                 <div class="card card-avatar z-depth-2">
-                    <br/>
+                    <br>
                     <div class="center">
                         <img src="https://avatars0.githubusercontent.com/u/24485393">
                     </div>
                     <div class="card-content">
-                        <span class="card-title grey-text text-darken-4">Brady <br/>
+                        <span class="card-title grey-text text-darken-4">Brady <br>
                             <small><em class="red-text text-darken-1">Head Developer</em></small>
                         </span>
                     </div>
@@ -274,12 +257,12 @@
             </div>
             <div class="col s12 l4 pull-l4">
                 <div class="card card-avatar z-depth-2">
-                    <br/>
+                    <br>
                     <div class="center">
                         <img src="https://avatars1.githubusercontent.com/u/23565638">
                     </div>
                     <div class="card-content">
-                        <span class="card-title grey-text text-darken-4">LeafHacker<br/>
+                        <span class="card-title grey-text text-darken-4">LeafHacker<br>
                             <small><em class="red-text text-darken-1">Developer</em></small>
                         </span>
                     </div>
@@ -287,13 +270,13 @@
             </div>
             <div class="col s12 l4">
                 <div class="card card-avatar z-depth-2">
-                    <br/>
+                    <br>
                     <div class="center">
                         <img src="https://avatars1.githubusercontent.com/u/3837873" style="opacity:0.5;position:absolute;">
                         <img src="https://i.imgur.com/n00Fnw8.jpg" style="opacity:0.5;">
                     </div>
                     <div class="card-content">
-                        <span class="card-title grey-text text-darken-4">leijurv<br/>
+                        <span class="card-title grey-text text-darken-4">leijurv<br>
                             <small><em class="red-text text-darken-1">Developer</em></small>
                         </span>
                     </div>
@@ -304,49 +287,33 @@
 </div>
 
 <!--Donate-->
-<div class="section scrollspy" id="donate">
+<div class="section scrollspy container row col s12" id="donate">
+    <h3 class="center">You can <a id="donate_link" href="#donate">donate</a> to help support Brady with Impact Development.</h3>
     <div class="container">
-        <div class="row">
-            <div class="col s12">
-                <h3 class="center">You can <a id="donate_link" href="#donate">donate</a> to help support Brady with Impact Development.</h3>
-                <div class="container">
-                    <p>
-                        If you donate <b>$5 USD or more</b> (and enter your Minecraft username),
-                        you will recieve a few small rewards such as <b>early access</b> to upcoming releases through nightly builds, <b>premium mods</b> (currently Ignite),
-                        a <b>cape</b> visible to other Impact users, and a gold colored name in the
-                        <a href="https://discord.gg/YFhR2Ab" target="_blank" onclick="getOutboundLink('discord'); return true;">Impact Discord Server</a>.
-                    </p>
-                    <p>
-                        Before making a payment, <b>ensure that your Minecraft Username or UUID is specified in the payment note and Discord
-                        Username#XXXX if you would like the roles in our server.</b> Payments may take up to <b>72 hours</b> to process.
-                    </p>
-                    <p>
-                        In order to <b>access nightly builds</b> you must <a href="https://discord.gg/YFhR2Ab" target="_blank" onclick="getOutboundLink('discord'); return true;">join the Discord server</a> and provide proof of payment, or when you make
-                        the payment specify your Discord account.
-                    </p>
-                    <div class="row">
-                        <div class="col s12 center">
-                            <a href="https://www.paypal.me/BradyHahn" onclick="getOutboundLink('paypal'); return true;">
-                                <img src="/img/paypal.png" alt="PayPal. The safer, easier way to pay online."/>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <p>
+            If you donate <b>$5 USD or more</b> (and enter your Minecraft username),
+            you will recieve a few small rewards such as <b>early access</b> to upcoming releases through nightly builds, <b>premium mods</b> (currently Ignite),
+            a <b>cape</b> visible to other Impact users, and a gold colored name in the
+            <a href="https://discord.gg/YFhR2Ab" target="_blank" onclick="getOutboundLink('discord'); return true;">Impact Discord Server</a>.
+        </p>
+        <p>
+            Before making a payment, <b>ensure that your Minecraft Username or UUID is specified in the payment note and Discord
+            Username#XXXX if you would like the roles in our server.</b> Payments may take up to <b>72 hours</b> to process.
+        </p>
+        <p>
+            In order to <b>access nightly builds</b> you must <a href="https://discord.gg/YFhR2Ab" target="_blank" onclick="getOutboundLink('discord'); return true;">join the Discord server</a> and provide proof of payment, or when you make
+            the payment specify your Discord account.
+        </p>
+        <div class="row col s12 center">
+            <a href="https://www.paypal.me/BradyHahn" onclick="getOutboundLink('paypal'); return true;">
+                <img src="/img/paypal.png" alt="PayPal. The safer, easier way to pay online."/>
+            </a>
         </div>
     </div>
 </div>
 
-<div class="section scrollspy">
-    <div class="container">
-        <div class="row">
-            <div class="col s12">
-                <div class="container center">
-                    Impact is not a hack client, a cheat client, or a hacked client, it is a utility mod (like OptiFine). Please bear in mind that utility mods like Impact can be against the rules on some servers. 😉
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="section scrollspy container row col s12 container center">
+    Impact is not a hack client, a cheat client, or a hacked client, it is a utility mod (like OptiFine). Please bear in mind that utility mods like Impact can be against the rules on some servers. 😉
 </div>
 
 <!--Footer-->
@@ -392,8 +359,8 @@
             © 2016 - 2019 Impact Development - Website based on a <a class="white-text" href="https://github.com/joashp/material-design-template">template</a> by <a class="white-text" href="http://joashpereira.com">Joash Pereira</a>.
             <div>Icons made by <a class="white-text" target="_blank" rel='noreferrer noopener' href="https://www.flaticon.com/authors/dave-gandy" title="Dave Gandy">Dave Gandy</a> from <a rel='noreferrer noopener' class="white-text" target="_blank" href="https://www.flaticon.com/"                 title="Flaticon">www.flaticon.com</a> is licensed by <a rel='noreferrer noopener' class="white-text" target="_blank" href="http://creativecommons.org/licenses/by/3.0/"              title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
             <div>Icons made by <a rel='noreferrer noopener' class="white-text" target="_blank" href="https://www.freepik.com/" title="Freepik">Freepik</a> from <a rel='noreferrer noopener' class="white-text" target="_blank" href="https://www.flaticon.com/"              title="Flaticon">www.flaticon.com</a> is licensed by <a rel='noreferrer noopener' class="white-text" target="_blank" href="http://creativecommons.org/licenses/by/3.0/"              title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
-            <br /> All credits for the on hover animations go to <a rel='noreferrer noopener' target="_blank" href="https://github.com/joerez/" class="white-text">joerez</a>. <a rel='noreferrer noopener' target="_blank" href="https://github.com/ImpactDevelopment/impactdevelopment.github.io/commits?author=joerez" class="white-text">Commits</a>. <a rel='noreferrer noopener' target="_blank" href="http://www.joerezendes.com/" class="white-text">Portfolio</a>.
-            <br /> GDPR: contact us 
+            <br> All credits for the on hover animations go to <a rel='noreferrer noopener' target="_blank" href="https://github.com/joerez/" class="white-text">joerez</a>. <a rel='noreferrer noopener' target="_blank" href="https://github.com/ImpactDevelopment/impactdevelopment.github.io/commits?author=joerez" class="white-text">Commits</a>. <a rel='noreferrer noopener' target="_blank" href="http://www.joerezendes.com/" class="white-text">Portfolio</a>.
+            <br> GDPR: contact us 
         </div>
     </div>
 </footer>
@@ -408,14 +375,9 @@
     if (window.location.search.indexOf("brady-money-grubbing-completed") != -1) {
         jQuery('#download-complete-modal').modal('open');
         if (impactPlatform) {
-            var url = "/ImpactInstaller." + impactPlatform;
-            var w = window.open(url);
-            setTimeout(function(){
-                if ((!w || (typeof w) == 'undefined') || (w && (w.closed || w.test || w.outerHeight == 0))) {
-                    // pop up was blocked
-                    // sadly they will not get the install info from the modal, since we need to redirect to make the download work =(
-                    document.location.href = url;
-                }
+            var url = "/ImpactInstaller." + impactPlatform, w = window.open(url);
+            setTimeout(() => {
+                if ((!w || (typeof w) == 'undefined') || (w && (w.closed || w.test || w.outerHeight == 0))) document.location.href = url; // pop up was blocked; sadly they will not get the install info from the modal, since we need to redirect to make the download work =(
             }, 25);
         }
     }
