@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"strings"
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/labstack/echo"
 )
@@ -51,14 +52,24 @@ func deleteEmpty(s []string) []string {
 func EnforceHTTPS(code int) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			for name, headers := range c.Request().Header {
-				for _, h := range headers {
-					fmt.Printf("%v: %v\n", name, h)
-				}
+			// we CANNOT use X-Forwarded-Proto
+			// reason: while user -> cloudflare results in cloudflare -> heroku having the correct X-Forwarded-Proto
+			// heroku overwrites this header to the scheme used in the cloudflare -> heroku hop, which is http
+			visitorStr := c.Request().Header.Get("Cf-Visitor")
+			if visitorStr == "" {
+				// perhaps this is local dev on localhost
+				// regardless of how it happened, this ain't cloudflare
+				return next(c)
 			}
-			if c.Request().Header.Get("X-Forwarded-Proto") != "http" {
-				// this header is set by cloudflare
-				// it won't be set on localhost
+			var visitor struct {
+				Scheme string `json:"scheme"`
+			}
+			err := json.Unmarshal([]byte(visitorStr), &visitor)
+			if err != nil {
+				fmt.Println("Cloudflare sent unparseable Cf-Visitor header??", visitorStr)
+				return next(c)
+			}
+			if visitor.Scheme != "http" {
 				return next(c)
 			}
 			// it is http
@@ -69,8 +80,7 @@ func EnforceHTTPS(code int) echo.MiddlewareFunc {
 			}
 			addr.Scheme = "https"
 			addr.Host = c.Request().Host
-			//return c.Redirect(code, addr.String())
-			return next(c)
+			return c.Redirect(code, addr.String())
 		}
 	}
 }
