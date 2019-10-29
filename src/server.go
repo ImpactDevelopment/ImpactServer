@@ -35,10 +35,10 @@ func main() {
 	e := echo.New()
 
 	// Enforce URL style
-	// We don't need to do any http->https stuff here 'cos cloudflare
 	e.Pre(middleware.NonWWWRedirect())
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Pre(mid.RemoveIndexHTML(http.StatusMovedPermanently))
+	e.Pre(mid.EnforceHTTPS(http.StatusMovedPermanently))
 
 	e.Use(middleware.BodyLimit("1M"))
 

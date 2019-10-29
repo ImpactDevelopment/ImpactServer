@@ -46,3 +46,24 @@ func deleteEmpty(s []string) []string {
 	}
 	return r
 }
+
+func EnforceHTTPS(code int) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if c.Request().Header.Get("X-Forwarded-Proto") != "http" {
+				// this header is set by cloudflare
+				// it won't be set on localhost
+				return next(c)
+			}
+			// it is http
+			addr := c.Request().URL
+			if addr.Path == "/releases.json" {
+				// don't break 4.7 and 4.8 update checker
+				return next(c)
+			}
+			addr.Scheme = "https"
+			addr.Host = c.Request().Host
+			return c.Redirect(code, addr.String())
+		}
+	}
+}
