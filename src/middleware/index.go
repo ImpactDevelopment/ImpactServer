@@ -80,6 +80,7 @@ func EnforceHTTPS(code int) echo.MiddlewareFunc {
 			}
 			addr.Scheme = "https"
 			addr.Host = c.Request().Host
+			c.Response().Header().Set("Cache-Control", "private, max-age=0")
 			return c.Redirect(code, addr.String())
 		}
 	}
