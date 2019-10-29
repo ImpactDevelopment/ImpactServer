@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"strings"
+	"fmt"
 
 	"github.com/labstack/echo"
 )
@@ -50,6 +51,11 @@ func deleteEmpty(s []string) []string {
 func EnforceHTTPS(code int) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			for name, headers := range c.Request().Header {
+				for _, h := range headers {
+					fmt.Printf("%v: %v\n", name, h)
+				}
+			}
 			if c.Request().Header.Get("X-Forwarded-Proto") != "http" {
 				// this header is set by cloudflare
 				// it won't be set on localhost
@@ -63,7 +69,8 @@ func EnforceHTTPS(code int) echo.MiddlewareFunc {
 			}
 			addr.Scheme = "https"
 			addr.Host = c.Request().Host
-			return c.Redirect(code, addr.String())
+			//return c.Redirect(code, addr.String())
+			return next(c)
 		}
 	}
 }
