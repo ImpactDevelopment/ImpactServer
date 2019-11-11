@@ -2,8 +2,8 @@ package util
 
 import (
 	"fmt"
-	"log"
 	"github.com/logrusorgru/aurora"
+	"log"
 )
 
 func LogError(msg interface{}) {
