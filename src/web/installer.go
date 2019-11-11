@@ -3,7 +3,7 @@ package web
 import (
 	"bytes"
 	"errors"
-	"fmt"
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -52,16 +52,21 @@ func (version InstallerVersion) getURL() string {
 
 func (version InstallerVersion) fetchFile() ([]byte, error) {
 	url := version.getURL()
-	fmt.Println("Downloading", url)
+	util.LogInfo("Downloading " + url)
 
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err = resp.Body.Close()
+		if err != nil {
+			util.LogWarn("Error closing body. " + err.Error())
+		}
+	}()
 
 	data, err := ioutil.ReadAll(resp.Body)
-	fmt.Println("Finished downloading", url, "length is", len(data))
+	util.LogSuccess("Finished downloading " + url + " length is " + string(len(data)))
 	return data, err
 }
 
@@ -75,17 +80,18 @@ func (version InstallerVersion) incrementGithubDownloadCountButDontActuallyUseTh
 	resp, err := client.Get(version.getURL())
 
 	if err != nil {
-		fmt.Println(err)
+		util.LogWarn("Unable to get version, " + err.Error())
+		return // prevent fallthrough, lines below wouldn't work if err isn't nil
 	}
 	if resp.StatusCode != 302 {
-		fmt.Println("GitHub did not accept the request")
+		util.LogInfo("GitHub did not accept the request")
 	}
 }
 
 func init() {
 	installerVersion = os.Getenv("INSTALLER_VERSION")
 	if installerVersion == "" {
-		fmt.Println("WARNING: Installer version not specified, download will not work!")
+		util.LogWarn("Installer version not specified, download will not work!")
 		return
 	}
 	// fetch the files on startup, but don't block init on it :brain:
@@ -133,7 +139,7 @@ func startup() {
 	}
 	exeHeader = installerExe[:exeHeaderLen]
 
-	fmt.Println("Initialized")
+	util.LogSuccess("Initialized")
 	go func() {
 		for {
 			ready <- struct{}{} // we are ready from now on
@@ -200,15 +206,21 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 	req.Header.Add("User-Agent", c.Request().UserAgent())
 
 	resp, err := (&http.Client{}).Do(req)
-	defer resp.Body.Close()
+	defer func() {
+		err = resp.Body.Close()
+		if err != nil {
+			util.LogWarn("Unable to close body " + err.Error())
+		}
+	}()
 	if err != nil {
-		fmt.Println("Analytics error", err)
+		util.LogWarn("Analytics error" + err.Error())
+		return // resp.StatusCode will be nil if err != nil
 	}
 	if resp.StatusCode != 200 {
-		fmt.Println("Analytics bad status code", resp.StatusCode)
+		util.LogWarn("Analytics bad status code " + string(resp.StatusCode))
 		data, err := ioutil.ReadAll(resp.Body)
-		fmt.Println(err)
-		fmt.Println(string(data))
+		util.LogWarn(err)
+		util.LogWarn(data)
 	}
 }
 
@@ -232,7 +244,7 @@ func installer(c echo.Context, version InstallerVersion) error {
 
 	referer := c.Request().Referer()
 	if referer != "" && !strings.HasPrefix(referer, "https://impactclient.net/") && !strings.Contains(referer, "brady-money-grubbing-completed") {
-		fmt.Println("BLOCKING referer", referer)
+		util.LogInfo("BLOCKING referer " + referer)
 		return echo.NewHTTPError(http.StatusUnauthorized, "no hotlinking >:(")
 	}
 

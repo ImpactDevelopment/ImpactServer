@@ -38,7 +38,7 @@ type Release struct {
 func init() {
 	githubToken = os.Getenv("GITHUB_ACCESS_TOKEN")
 	if githubToken == "" {
-		fmt.Println("WARNING: No GitHub access token to bypass ratelimiting!")
+		util.LogWarn("No GitHub access token to bypass ratelimiting!")
 	}
 	var err error
 	rels, err = allReleases()
@@ -48,7 +48,7 @@ func init() {
 	util.DoRepeatedly(15*time.Minute, func() {
 		newRel, err := allReleases()
 		if err != nil {
-			log.Println("RELEASES ERROR", err)
+			util.LogError("RELEASES ERROR " + err.Error())
 			return
 		}
 		if !reflect.DeepEqual(rels, newRel) {
@@ -93,7 +93,7 @@ func githubReleases(rels map[string]Release) error {
 	req.Header.Set("Accept", "application/json")
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
-		fmt.Println("Github error", err)
+		util.LogError("Github error " + err.Error())
 		return err
 	}
 	defer resp.Body.Close()
@@ -102,9 +102,9 @@ func githubReleases(rels map[string]Release) error {
 	releasesData := make([]Release, 0)
 	err = json.Unmarshal(body, &releasesData)
 	if err != nil || len(releasesData) == 0 {
-		fmt.Println("Github returned invalid json reply!!")
-		fmt.Println(err)
-		fmt.Println(string(body))
+		util.LogError("Github returned invalid json reply!!")
+		util.LogError(err)
+		util.LogError(body)
 		return err
 	}
 
@@ -120,8 +120,8 @@ func s3Releases(resp map[string]Release) error {
 		Prefix: aws.String("artifacts/Impact/"),
 	})
 	if err != nil {
-		fmt.Println("s3 error but let's not break the client for everyone since this only affects premium")
-		fmt.Println(err)
+		util.LogWarn("s3 error but let's not break the client for everyone since this only affects premium")
+		util.LogWarn(err)
 		return nil
 	}
 

@@ -3,7 +3,6 @@ package v1
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"log"
 	"net/http"
 	"reflect"
 	"time"
@@ -31,11 +30,11 @@ func init() {
 	util.DoRepeatedly(5*time.Minute, func() {
 		updated, err := updateData()
 		if err != nil {
-			log.Println("MC ERROR", err)
+			util.LogWarn("MC ERROR" + err.Error())
 			return
 		}
 		if updated {
-			log.Println("MC UPDATE: Updated user info")
+			util.LogInfo("MC UPDATE: Updated user info")
 			cloudflare.PurgeURLs([]string{"https://api.impactclient.net/v1/minecraft/user/info"})
 		}
 	})

@@ -1,7 +1,7 @@
 package users
 
 import (
-	"fmt"
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -79,7 +79,7 @@ func LookupUserByUUID(uuid uuid.UUID) User {
 }
 
 func UpdateLegacyData() error {
-	fmt.Println("Fetching legacy data from github")
+	util.LogInfo("Fetching legacy data from github")
 	legacyGithubDataLock.Lock()
 	defer legacyGithubDataLock.Unlock()
 
@@ -88,7 +88,7 @@ func UpdateLegacyData() error {
 		return err
 	}
 	legacyGithubData = data
-	fmt.Println("Fetched", len(data), "legacy users from github")
+	util.LogInfo("Fetched " + string(len(data)) + " legacy users from github")
 	return nil
 }
 
@@ -135,20 +135,20 @@ func getLegacyUUIDLists() (map[string][]uuid.UUID, error) {
 		res, err := http.Get(url)
 		if err != nil {
 			// Hm, error getting one of the urls
-			fmt.Println("Error getting", key, err.Error())
+			util.LogError("Error getting " + key + " " + err.Error())
 			return nil, err
 		}
 		defer res.Body.Close()
 
 		if res.StatusCode != http.StatusOK {
 			// wtf
-			fmt.Println("Error getting", key, res.StatusCode)
+			util.LogError("Error getting " + key + " " + string(res.StatusCode))
 			return nil, err
 		}
 
 		body, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			fmt.Println("Error reading response for", key, err.Error())
+			util.LogError("Error reading response for " + key + " " + err.Error())
 			return nil, err
 		}
 
@@ -157,9 +157,9 @@ func getLegacyUUIDLists() (map[string][]uuid.UUID, error) {
 		for _, uuidStr := range uuidStrs {
 			uuid, err := uuid.Parse(strings.TrimSpace(uuidStr))
 			if err != nil {
-				fmt.Println("Invalid line from github, ignoring!")
-				fmt.Println(uuidStr)
-				fmt.Println(err)
+				util.LogInfo("Invalid line from github, ignoring!")
+				util.LogInfo(uuidStr)
+				util.LogInfo(err)
 				continue
 			}
 			uuids = append(uuids, uuid)

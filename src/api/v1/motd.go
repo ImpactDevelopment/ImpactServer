@@ -2,7 +2,6 @@ package v1
 
 import (
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
 
@@ -20,13 +19,13 @@ func init() {
 	var err error
 	motd, err = fetchMotd()
 	if err != nil {
-		log.Println("MOTD ERROR", err)
+		util.LogError("MOTD ERROR " + err.Error())
 		motd = "Ok, so our MOTD service may or may not be semi-broken right now..."
 	}
 	util.DoRepeatedly(3*time.Minute, func() {
 		newer, err := fetchMotd()
 		if err != nil {
-			log.Println("MOTD ERROR", err)
+			util.LogError("MOTD ERROR " + err.Error())
 			return
 		}
 		newMotd(newer)
@@ -35,7 +34,7 @@ func init() {
 
 func newMotd(newer string) {
 	if newer != motd {
-		log.Println("MOTD UPDATE from", motd, "to", newer)
+		util.LogError("MOTD UPDATE from " + motd + " to " + newer)
 		motd = newer
 		cloudflare.PurgeURLs([]string{"https://api.impactclient.net/v1/motd"})
 	}

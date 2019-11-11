@@ -2,7 +2,6 @@ package jwt
 
 import (
 	"crypto/rsa"
-	"fmt"
 	"os"
 	"time"
 
@@ -31,7 +30,7 @@ func init() {
 		var err error
 		key, err = util.StrToRsa(env)
 		if err != nil {
-			fmt.Println("WARNING: Unable to load JWT_KEY from the environment", err)
+			util.LogWarn("WARNING: Unable to load JWT_KEY from the environment " + err.Error())
 		}
 	}
 
@@ -39,18 +38,18 @@ func init() {
 	// and otherwise, http://api.localhost:PORT/? idk
 	jwtIssuerURL = os.Getenv("JWT_ISSUER_URL")
 	if jwtIssuerURL == "" {
-		fmt.Println("WARNING: JWT_ISSUER_URL is empty, all tokens will be invalid!")
+		util.LogWarn("WARNING: JWT_ISSUER_URL is empty, all tokens will be invalid!")
 	}
-	fmt.Println("JWT Issuer URL is", jwtIssuerURL)
+	util.LogInfo("JWT Issuer URL is " + jwtIssuerURL)
 
 	if key == nil {
-		fmt.Println("WARNING: JWT_KEY not specified, generating a temporary one")
+		util.LogWarn("WARNING: JWT_KEY not specified, generating a temporary one")
 		key = util.GenerateRsa()
-		fmt.Println("Printing private key since this is temporary")
-		fmt.Println("Private key is", util.RsaToStr(key))
+		util.LogWarn("Printing private key since this is temporary")
+		util.LogWarn("Private key is " + util.RsaToStr(key))
 	}
 
-	fmt.Println("Public key is", util.RsaPubToStr(&key.PublicKey))
+	util.LogInfo("Public key is " + util.RsaPubToStr(&key.PublicKey))
 
 	// rs512 can be used to sign and verify tokens, e.g. jtw.Sign(payload []byte, rs512 Algorithm)
 	rs512 = jwt.NewRS512(jwt.RSAPrivateKey(key), jwt.RSAPublicKey(&key.PublicKey))

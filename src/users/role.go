@@ -1,7 +1,7 @@
 package users
 
 import (
-	"fmt"
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"sort"
 )
 
@@ -34,7 +34,7 @@ var defaultRoleTemplates = map[string]UserInfo{
 func (role Role) applyDefaults(info *UserInfo) {
 	template, ok := defaultRoleTemplates[role.ID]
 	if !ok {
-		fmt.Println("ERROR idk how to apply", role.ID)
+		util.LogWarn("idk how to apply " + role.ID)
 		// No default template to apply
 		return
 	}

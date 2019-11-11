@@ -3,7 +3,7 @@ package cloudflare
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -16,19 +16,20 @@ func init() {
 	zone = os.Getenv("CLOUDFLARE_ZONE_IDENTIFIER")
 	key = os.Getenv("CLOUDFLARE_API_KEY")
 	if zone == "" || key == "" {
-		fmt.Println("WARNING: Not purging cloudflare cache since I don't have an API key!")
+		util.LogWarn("Not purging cloudflare cache since I don't have an API key!")
 	}
 }
 
 func Purge() {
-	fmt.Println("Purging cloudflare cache of everything")
+	util.LogInfo("Purging cloudflare cache of everything")
 	purgeWithData(struct {
 		PurgeEverything bool `json:"purge_everything"`
 	}{true})
 }
 
 func PurgeURLs(urls []string) {
-	fmt.Println("Purging cloudflare cache of URLs", urls)
+	util.LogInfo("Purging cloudflare cache of URLs ")
+	util.LogInfo(urls)
 	purgeWithData(struct {
 		Files []string `json:"files"`
 	}{urls})
@@ -38,20 +39,26 @@ func purgeWithData(jsonData interface{}) {
 	url := "https://api.cloudflare.com/client/v4/zones/" + zone + "/purge_cache"
 	data, err := json.Marshal(jsonData)
 	if err != nil {
-		fmt.Println("Cloudflare marshal error", err)
+		util.LogWarn("Cloudflare marshal error " + err.Error())
 		return
 	}
-	fmt.Println("Cloudflare purging data:", string(data))
+	util.LogInfo("Cloudflare purging data:" + string(data))
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
+	// shouldn't you be error handling here?!
 	req.Header.Set("Authorization", "Bearer "+key)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
-		fmt.Println("Cloudflare purge error", err)
+		util.LogWarn("Cloudflare purge error " + err.Error())
 		return
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err = resp.Body.Close()
+		if err != nil {
+			util.LogWarn("Error closing body. " + err.Error())
+		}
+	}()
 	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("Cloudflare response body:", string(body))
+	util.LogInfo("Cloudflare response body: " + string(body))
 }

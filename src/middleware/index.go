@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"strings"
 
 	"github.com/labstack/echo"
@@ -66,7 +66,7 @@ func EnforceHTTPS(code int) echo.MiddlewareFunc {
 			}
 			err := json.Unmarshal([]byte(visitorStr), &visitor)
 			if err != nil {
-				fmt.Println("Cloudflare sent unparseable Cf-Visitor header??", visitorStr)
+				util.LogError("Cloudflare sent unparseable Cf-Visitor header?? " + visitorStr)
 				return next(c)
 			}
 			if visitor.Scheme != "http" {
