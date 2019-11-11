@@ -106,6 +106,5 @@ func createJWT(user users.User, subject string, mcUuid *uuid.UUID, hwid string) 
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(string(token))
 	return token
 }
