@@ -22,9 +22,9 @@ var defaultRoleTemplates = map[string]UserInfo{
 	"pepsi": {
 		Icon:            "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/textures/Pepsi_32.png",
 		Cape:            "http://i.imgur.com/SKjRGbH.png",
-		TextColor:       "BLUE",
-		BackgroundColor: "1358954495",
-		BorderColor:     "-1761673216",
+		TextColor:       "BLUE", // #FF004B93 is the official pepsi blue
+		BackgroundColor: "#50FFFFFF",
+		BorderColor:     "#FFC9002B",
 	},
 	"premium": {
 		Cape: "http://i.imgur.com/fc8gsyN.png",
