@@ -23,7 +23,7 @@ var specialCases = map[uuid.UUID]UserInfo{
 	// leijurv
 	uuid.MustParse("51dcd870-d33b-40e9-9fc1-aecdcff96081"): {
 		TextColor: "RED",
-		Icon:      "https://files.impactclient.net/speckles32.png",
+		Icon:      "https://files.impactclient.net/img/texture/speckles32.png",
 	},
 }
 
