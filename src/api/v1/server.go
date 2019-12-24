@@ -9,6 +9,7 @@ import (
 func API(api *echo.Group) {
 	// TODO API Doc
 
+	api.GET("/thealtening/info", getTheAlteningInfo, middleware.NoCache())
 	api.GET("/motd", getMotd, middleware.CacheUntilPurge())
 	api.GET("/themes", getThemes, middleware.CacheUntilPurge())
 	api.GET("/minecraft/user/info", getUserInfo, middleware.CacheUntilPurge())
