@@ -21,7 +21,7 @@ var alteningInfoStruct = TheAlteningInfo{
 
 type TheAlteningInfo struct {
 	Generator *Generator `json:"generate,omitempty"`
-	Promos    *[]Promo   `json:"promo_code,omitempty"`
+	Promos    *[]Promo   `json:"promotions,omitempty"`
 	Enabled   bool       `json:"enabled"`
 }
 
