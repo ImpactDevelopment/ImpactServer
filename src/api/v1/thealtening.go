@@ -6,6 +6,10 @@ import (
 )
 
 var alteningInfoStruct = TheAlteningInfo{
+	Dashboard: &Dashboard{
+		GenerateUrl: "https://panel.thealtening.com/#generator?ref=" + "impact",
+		AccountUrl:  "https://panel.thealtening.com/#account?ref=" + "impact",
+	},
 	Generator: &Generator{
 		FreeUrl: "https://thealtening.com/free/free-minecraft-alt?ref=" + "impact",
 		PaidUrl: "https://panel.thealtening.com/#generator?ref=" + "impact",
@@ -20,9 +24,15 @@ var alteningInfoStruct = TheAlteningInfo{
 }
 
 type TheAlteningInfo struct {
+	Dashboard *Dashboard `json:"dashboard,omitempty"`
 	Generator *Generator `json:"generate,omitempty"`
 	Promos    *[]Promo   `json:"promotions,omitempty"`
 	Enabled   bool       `json:"enabled"`
+}
+
+type Dashboard struct {
+	GenerateUrl string `json:"generate,omitempty"`
+	AccountUrl  string `json:"account,omitempty"`
 }
 
 type Generator struct {
