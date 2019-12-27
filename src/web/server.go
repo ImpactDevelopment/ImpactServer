@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 func Server() (e *echo.Echo) {

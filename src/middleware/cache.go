@@ -3,7 +3,7 @@ package middleware
 import (
 	"strconv"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 // instruct the browser and cloudflare to cache for this amount of time

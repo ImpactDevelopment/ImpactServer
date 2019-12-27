@@ -17,7 +17,7 @@ import (
 
 	"archive/zip"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 var installerVersion string

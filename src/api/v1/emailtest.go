@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/mailgun"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 func emailTest(c echo.Context) error {

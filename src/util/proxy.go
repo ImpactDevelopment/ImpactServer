@@ -5,7 +5,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 // var func to allow overriding in tests

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 // Redirect trailing index.html's.

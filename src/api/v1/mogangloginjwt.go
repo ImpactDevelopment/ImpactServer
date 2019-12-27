@@ -7,7 +7,7 @@ import (
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/google/uuid"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 func mojangLoginJWT(c echo.Context) error {

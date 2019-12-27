@@ -13,8 +13,8 @@ import (
 	"github.com/ImpactDevelopment/ImpactServer/src/s3proxy"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/ImpactDevelopment/ImpactServer/src/web"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 var port = 3000

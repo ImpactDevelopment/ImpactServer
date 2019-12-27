@@ -2,11 +2,11 @@ package newWeb
 
 import (
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"net/url"
 
 	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
-	"github.com/labstack/echo"
 )
 
 func Server() (e *echo.Echo) {

@@ -9,7 +9,7 @@ import (
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/cloudflare"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 const motdURL = "https://impactdevelopment.github.io/Resources/data/motd.txt"

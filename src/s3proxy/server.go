@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 var AWSSession = session.Must(session.NewSession(&aws.Config{Region: aws.String("us-east-1")}))

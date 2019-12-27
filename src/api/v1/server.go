@@ -2,7 +2,7 @@ package v1
 
 import (
 	"github.com/ImpactDevelopment/ImpactServer/src/middleware"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 // API configures the Group to implement v1 of the API

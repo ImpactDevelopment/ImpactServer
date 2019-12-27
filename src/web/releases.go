@@ -16,7 +16,7 @@ import (
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 var rels map[string]Release

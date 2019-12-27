@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 func dbTest(c echo.Context) error {

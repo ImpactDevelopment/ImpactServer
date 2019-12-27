@@ -6,7 +6,7 @@ import (
 
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 const github = "https://impactdevelopment.github.io"

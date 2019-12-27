@@ -13,7 +13,7 @@ import (
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/google/uuid"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 var userData map[string]users.UserInfo
