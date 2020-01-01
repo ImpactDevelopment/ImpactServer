@@ -35,6 +35,14 @@ func PurgeURLs(urls []string) {
 }
 
 func purgeWithData(jsonData interface{}) {
+	if zone == "" {
+		fmt.Println("WARNING: Not purging cloudflare cache since a zone is not specified!")
+		return
+	}
+	if key == "" {
+		fmt.Println("WARNING: Not purging cloudflare cache since a key is not specified!")
+		return
+	}
 	url := "https://api.cloudflare.com/client/v4/zones/" + zone + "/purge_cache"
 	data, err := json.Marshal(jsonData)
 	if err != nil {
