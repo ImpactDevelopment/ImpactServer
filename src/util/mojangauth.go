@@ -15,15 +15,13 @@ type ResponseHasJoined struct {
 }
 
 func HasJoinedServer(username, hash string) (string, error) {
-	req, err := http.NewRequest("GET", urlHasJoined, nil)
+	req, err := GetRequest(urlHasJoined)
 	if err != nil {
 		return "", err
 	}
 
-	query := req.URL.Query()
-	query.Add("username", username)
-	query.Add("serverId", "0"+hash)
-	req.URL.RawQuery = query.Encode()
+	SetQuery(req.URL, "username", username)
+	SetQuery(req.URL, "serverId", "0"+hash)
 
 	client := http.Client{}
 	response, err := client.Do(req)

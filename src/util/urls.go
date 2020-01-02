@@ -1,6 +1,16 @@
 package util
 
-import "strings"
+import (
+	"net/url"
+	"strings"
+)
+
+// SetQuery changes the query parameters on the given url
+func SetQuery(address *url.URL, key, value string) {
+	query := address.Query()
+	query.Set(key, value)
+	address.RawQuery = query.Encode()
+}
 
 // GetSubdomains tries to return the subdomain part from a host or hostname using ugly hacks.
 func GetSubdomains(host string) string {

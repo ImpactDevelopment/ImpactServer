@@ -1,9 +1,8 @@
 package cloudflare
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -44,15 +43,12 @@ func purgeWithData(jsonData interface{}) {
 		return
 	}
 	url := "https://api.cloudflare.com/client/v4/zones/" + zone + "/purge_cache"
-	data, err := json.Marshal(jsonData)
+	req, err := util.JSONRequest(url, jsonData)
 	if err != nil {
-		fmt.Println("Cloudflare marshal error", err)
+		fmt.Println("Cloudflare error building request", err)
 		return
 	}
-	fmt.Println("Cloudflare purging data:", string(data))
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
 	req.Header.Set("Authorization", "Bearer "+key)
-	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {

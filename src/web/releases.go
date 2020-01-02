@@ -86,11 +86,17 @@ func githubReleases(rels map[string]Release) error {
 	// but we have no idea who else is on this IP (shared host from heroku)
 	// so to guard against posssible "noisy neighbors" who are spamming github's api
 	// we provoide an authorization token so that we get our own rate limit regardless of IP
-	req, err := http.NewRequest("GET", "https://api.github.com/repos/ImpactDevelopment/ImpactReleases/releases?per_page=100", nil)
+	req, err := util.GetRequest("https://api.github.com/repos/ImpactDevelopment/ImpactReleases/releases")
+	if err != nil {
+		fmt.Println("Github error building request", err)
+		return err
+	}
+	util.SetQuery(req.URL, "per_page", "100")
+	util.Accept(req, util.JSON)
 	if githubToken != "" {
 		req.Header.Set("Authorization", "Basic "+githubToken)
 	}
-	req.Header.Set("Accept", "application/json")
+
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
 		fmt.Println("Github error", err)

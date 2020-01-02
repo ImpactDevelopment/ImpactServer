@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -178,26 +177,24 @@ func installerForExe(c echo.Context) error {
 }
 
 func analytics(cid string, version InstallerVersion, c echo.Context) {
-	data := url.Values{}
-	data.Set("v", "1")
-	data.Set("t", "event")
-	data.Set("tid", "UA-143397381-1")
-	data.Set("cid", cid)
-	data.Set("ds", "backend")
-	data.Set("ec", "installer")
-	data.Set("ea", "download")
-	data.Set("el", version.getEXT())
-	data.Set("ua", c.Request().UserAgent())
-
 	forward := strings.Split(c.Request().Header.Get("X-FORWARDED-FOR"), ",")[0]
-	if forward != "" {
-		data.Set("uip", forward)
+	req, err := util.FormRequest("https://www.google-analytics.com/collect", map[string]string{
+		"v":   "1",
+		"t":   "event",
+		"tid": "UA-143397381-1",
+		"cid": cid,
+		"ds":  "backend",
+		"ec":  "installer",
+		"ea":  "download",
+		"el":  version.getEXT(),
+		"ua":  c.Request().UserAgent(),
+		"uip": forward,
+	})
+	if err != nil {
+		fmt.Println("Analytics failed to build request", err)
+		return
 	}
-
-	req, _ := http.NewRequest("POST", "https://www.google-analytics.com/collect", strings.NewReader(data.Encode()))
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
-	req.Header.Add("User-Agent", c.Request().UserAgent())
+	req.Header.Set("User-Agent", c.Request().UserAgent())
 
 	resp, err := (&http.Client{}).Do(req)
 	defer resp.Body.Close()
