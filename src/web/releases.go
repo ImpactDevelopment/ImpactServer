@@ -3,7 +3,7 @@ package web
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ImpactDevelopment/ImpactServer/src/util/mime"
+	"github.com/ImpactDevelopment/ImpactServer/src/util/mediatype"
 	"log"
 	"net/http"
 	"os"
@@ -92,7 +92,7 @@ func githubReleases(rels map[string]Release) error {
 		return err
 	}
 	req.SetQuery("per_page", "100")
-	req.Accept(mime.JSON)
+	req.Accept(mediatype.JSON)
 	if githubToken != "" {
 		req.Authorization("Basic", githubToken)
 	}

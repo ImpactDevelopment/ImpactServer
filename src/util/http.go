@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
-	"github.com/ImpactDevelopment/ImpactServer/src/util/mime"
+	"github.com/ImpactDevelopment/ImpactServer/src/util/mediatype"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -12,27 +12,29 @@ import (
 	"strings"
 )
 
-// HttpRequest wraps http.Request so that we can provide custom methods
-type HttpRequest struct {
+// HTTPRequest wraps http.Request so that we can provide custom methods
+type HTTPRequest struct {
 	Req *http.Request
 }
 
-// HttpResponse wraps http.Response so that we can provide custom methods
-type HttpResponse struct {
+// HTTPResponse wraps http.Response so that we can provide custom methods
+type HTTPResponse struct {
 	Resp *http.Response
 }
 
-func GetRequest(address string) (*HttpRequest, error) {
+// GetRequest returns a HTTPRequest using method GET with no body
+func GetRequest(address string) (*HTTPRequest, error) {
 	req, err := http.NewRequest(http.MethodGet, address, nil)
 	if err != nil {
 		return nil, err
 	}
-	request := &HttpRequest{req}
+	request := &HTTPRequest{req}
 
 	return request, nil
 }
 
-func JSONRequest(address string, body interface{}) (*HttpRequest, error) {
+// JSONRequest returns a HTTPRequest using method POST with a JSON marshalled body
+func JSONRequest(address string, body interface{}) (*HTTPRequest, error) {
 	post, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -42,110 +44,142 @@ func JSONRequest(address string, body interface{}) (*HttpRequest, error) {
 	if err != nil {
 		return nil, err
 	}
-	request := &HttpRequest{req}
+	request := &HTTPRequest{req}
 
-	request.setContentType(mime.JSON)
+	request.setContentType(mediatype.JSON)
 	request.setLength(len(post))
 
 	return request, nil
 }
 
-func FormRequest(address string, form map[string]string) (*HttpRequest, error) {
-	post := formValues(form)
+// XMLRequest returns a HTTPRequest using method POST with an XML marshalled body
+func XMLRequest(address string, body interface{}) (*HTTPRequest, error) {
+	post, err := xml.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, address, bytes.NewReader(post))
+	if err != nil {
+		return nil, err
+	}
+	request := &HTTPRequest{req}
+
+	request.setContentType(mediatype.XML)
+	request.setLength(len(post))
+
+	return request, nil
+}
+
+// FormRequest returns a HTTPRequest using method POST with a x-www-form-urlencoded marshalled body
+func FormRequest(address string, form map[string]string) (*HTTPRequest, error) {
+	post := urlValues(form).Encode()
 
 	req, err := http.NewRequest(http.MethodPost, address, strings.NewReader(post))
 	if err != nil {
 		return nil, err
 	}
-	request := &HttpRequest{req}
+	request := &HTTPRequest{req}
 
-	request.setContentType(mime.Form)
+	request.setContentType(mediatype.Form)
 	request.setLength(len(post))
 
 	return request, nil
 }
 
-func (r HttpRequest) URL() *url.URL {
+// URL returns the url.URL associated with this HTTPRequest
+func (r HTTPRequest) URL() *url.URL {
 	return r.Req.URL
 }
 
-func (r *HttpRequest) SetQuery(key, value string) {
+// SetQuery sets a url query value on the HTTPRequest's URL
+func (r *HTTPRequest) SetQuery(key, value string) {
 	SetQuery(r.URL(), key, value)
 }
 
-func (r *HttpRequest) SetHeader(key, value string) {
+// SetHeader sets a header on the HTTPRequest
+func (r *HTTPRequest) SetHeader(key, value string) {
 	r.Req.Header.Set(key, value)
 }
 
-func (r *HttpRequest) setLength(length int) {
+func (r *HTTPRequest) setLength(length int) {
 	r.SetHeader("Content-Length", strconv.Itoa(length))
 }
 
-func (r *HttpRequest) setContentType(mimeType mime.MimeType) {
-	r.SetHeader("Content-Type", mimeType.String())
+func (r *HTTPRequest) setContentType(mediaType mediatype.MediaType) {
+	r.SetHeader("Content-Type", mediaType.String())
 }
 
-func (r *HttpRequest) Accept(mimeType mime.MimeType) {
-	r.SetHeader("Accept", mimeType.String())
+// Accept sets the Accept header on the HTTPRequest to indicate what content-type we expect
+func (r *HTTPRequest) Accept(mediaType mediatype.MediaType) {
+	r.SetHeader("Accept", mediaType.String())
 }
 
-func (r *HttpRequest) Authorization(authType string, authKey string) {
+// Authorization sets the Authorization header on the HTTPRequest for token-based auth
+// e.g. request.Authorization("Bearer", token)
+func (r *HTTPRequest) Authorization(authType string, authKey string) {
 	r.SetHeader("Authorization", authType+" "+authKey)
 }
 
-func (r *HttpRequest) Do() (*HttpResponse, error) {
+// Do does a request and returns the response, as a HTTPResponse
+func (r *HTTPRequest) Do() (*HTTPResponse, error) {
 	resp, err := http.DefaultClient.Do(r.Req)
-	return &HttpResponse{resp}, err
+	return &HTTPResponse{resp}, err
 }
 
-func (r HttpResponse) Ok() bool {
+// Ok returns true if the status code is "200 OK"
+func (r HTTPResponse) Ok() bool {
 	return r.Code() == http.StatusOK
 }
 
-func (r HttpResponse) Code() int {
+// Code returns the status code as an int
+func (r HTTPResponse) Code() int {
 	return r.Resp.StatusCode
 }
 
-// Returns the full status string, e.g. "400 Bad Request"
-func (r HttpResponse) Status() string {
+// Status returns the full status string, e.g. "400 Bad Request"
+func (r HTTPResponse) Status() string {
 	code := r.Code()
 	return strconv.Itoa(code) + " " + http.StatusText(code)
 }
 
-func (r HttpResponse) GetHeader(key string) string {
+// GetHeader returns the value of the given header key
+func (r HTTPResponse) GetHeader(key string) string {
 	return r.Resp.Header.Get(key)
 }
 
-func (r HttpResponse) ContentType() mime.MimeType {
-	return mime.MimeType(r.GetHeader("Content-Type"))
+// ContentType returns the MediaType of the response body, according to the Content-Type header
+func (r HTTPResponse) ContentType() mediatype.MediaType {
+	return mediatype.MediaType(r.GetHeader("Content-Type"))
 }
 
-// Returns the body as a string
-func (r *HttpResponse) String() (string, error) {
+// String returns the body as a string
+func (r *HTTPResponse) String() (string, error) {
 	defer r.Resp.Body.Close()
 
 	str, err := ioutil.ReadAll(r.Resp.Body)
 	return string(str), err
 }
 
-// Decodes the body into the provided interface{}
-func (r *HttpResponse) JSON(v interface{}) error {
+// JSON decodes the body into the provided interface{}
+func (r *HTTPResponse) JSON(v interface{}) error {
 	defer r.Resp.Body.Close()
 
 	return json.NewDecoder(r.Resp.Body).Decode(v)
 }
 
-// Decodes the body into the provided interface{}
-func (r *HttpResponse) XML(v interface{}) error {
+// XML decodes the body into the provided interface{}
+func (r *HTTPResponse) XML(v interface{}) error {
 	defer r.Resp.Body.Close()
 
 	return xml.NewDecoder(r.Resp.Body).Decode(v)
 }
 
-func formValues(v map[string]string) string {
-	values := &url.Values{}
-	for key, value := range v {
-		values.Set(key, value)
+// urlValues converts a map of strings to url Values for use in forms or query strings
+func urlValues(values map[string]string) *url.Values {
+	v := &url.Values{}
+	for key, value := range values {
+		v.Set(key, value)
 	}
-	return values.Encode()
+	return v
 }
