@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ImpactDevelopment/ImpactServer/src/util/mime"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -103,15 +102,15 @@ func githubReleases(rels map[string]Release) error {
 		fmt.Println("Github error", err)
 		return err
 	}
-	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
 
+	// FIXME Somehow this fails when decoding the Reader via resp.JSON(), but works when unmarshalling a byte array :/
+	body, _ := resp.String()
 	releasesData := make([]Release, 0)
-	err = json.Unmarshal(body, &releasesData)
+	err = json.Unmarshal([]byte(body), &releasesData)
 	if err != nil || len(releasesData) == 0 {
 		fmt.Println("Github returned invalid json reply!!")
 		fmt.Println(err)
-		fmt.Println(string(body))
+		fmt.Println(body)
 		return err
 	}
 

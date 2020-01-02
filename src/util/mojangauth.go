@@ -1,7 +1,6 @@
 package util
 
 import (
-	"encoding/json"
 	"errors"
 	"strings"
 )
@@ -28,7 +27,7 @@ func HasJoinedServer(username, hash string) (string, error) {
 	}
 
 	data := ResponseHasJoined{}
-	err = json.NewDecoder(response.Body).Decode(&data)
+	err = response.JSON(data)
 	if err != nil {
 		return "", err
 	}

@@ -201,12 +201,11 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 		fmt.Println("Analytics error", err)
 		return
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		fmt.Println("Analytics bad status code", resp.StatusCode)
-		data, err := ioutil.ReadAll(resp.Body)
+	if !resp.Ok() {
+		fmt.Println("Analytics bad status code", resp.Status())
+		data, err := resp.String()
 		fmt.Println(err)
-		fmt.Println(string(data))
+		fmt.Println(data)
 	}
 }
 

@@ -3,7 +3,6 @@ package cloudflare
 import (
 	"fmt"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
-	"io/ioutil"
 	"os"
 )
 
@@ -55,7 +54,12 @@ func purgeWithData(jsonData interface{}) {
 		fmt.Println("Cloudflare purge error", err)
 		return
 	}
-	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("Cloudflare response body:", string(body))
+
+	body, err := resp.String()
+	if err != nil {
+		fmt.Println("Cloudflare error reading body", err)
+		return
+	}
+
+	fmt.Println("Cloudflare: code: "+resp.Status()+", body: ", body)
 }
