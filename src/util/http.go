@@ -26,31 +26,34 @@ func GetRequest(address string) (*HttpRequest, error) {
 }
 
 func JSONRequest(address string, body interface{}) (*HttpRequest, error) {
-	data := jsonData(body)
+	post, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest(http.MethodPost, address, bytes.NewReader(data))
+	req, err := http.NewRequest(http.MethodPost, address, bytes.NewReader(post))
 	if err != nil {
 		return nil, err
 	}
 	request := &HttpRequest{req}
 
 	request.setContentType(mime.JSON)
-	request.setLength(len(data))
+	request.setLength(len(post))
 
 	return request, nil
 }
 
 func FormRequest(address string, form map[string]string) (*HttpRequest, error) {
-	data := formData(form)
+	post := formValues(form)
 
-	req, err := http.NewRequest(http.MethodPost, address, strings.NewReader(data))
+	req, err := http.NewRequest(http.MethodPost, address, strings.NewReader(post))
 	if err != nil {
 		return nil, err
 	}
 	request := &HttpRequest{req}
 
 	request.setContentType(mime.Form)
-	request.setLength(len(data))
+	request.setLength(len(post))
 
 	return request, nil
 }
@@ -87,20 +90,10 @@ func (r *HttpRequest) Do() (*http.Response, error) {
 	return http.DefaultClient.Do(r.Req)
 }
 
-func jsonData(v interface{}) []byte {
-	byteData, err := json.Marshal(v)
-	if err != nil {
-		return nil
-	}
-
-	return byteData
-}
-
-func formData(v map[string]string) string {
+func formValues(v map[string]string) string {
 	values := &url.Values{}
 	for key, value := range v {
 		values.Set(key, value)
 	}
-
 	return values.Encode()
 }
