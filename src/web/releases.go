@@ -3,6 +3,7 @@ package web
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ImpactDevelopment/ImpactServer/src/util/mime"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -91,13 +92,13 @@ func githubReleases(rels map[string]Release) error {
 		fmt.Println("Github error building request", err)
 		return err
 	}
-	util.SetQuery(req.URL, "per_page", "100")
-	util.Accept(req, util.JSON)
+	req.SetQuery("per_page", "100")
+	req.Accept(mime.JSON)
 	if githubToken != "" {
-		req.Header.Set("Authorization", "Basic "+githubToken)
+		req.Authorization("Basic", githubToken)
 	}
 
-	resp, err := (&http.Client{}).Do(req)
+	resp, err := req.Do()
 	if err != nil {
 		fmt.Println("Github error", err)
 		return err

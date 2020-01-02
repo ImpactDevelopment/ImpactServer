@@ -3,61 +3,88 @@ package util
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/ImpactDevelopment/ImpactServer/src/util/mime"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 )
 
-type MimeType string
-
-const (
-	JSON MimeType = "application/json"
-	Form MimeType = "application/x-www-form-urlencoded"
-)
-
-func (t MimeType) String() string {
-	return string(t)
+// HttpRequest wraps http.Request so that we can provide custom methods
+type HttpRequest struct {
+	Req *http.Request
 }
 
-func GetRequest(address string) (*http.Request, error) {
+func GetRequest(address string) (*HttpRequest, error) {
 	req, err := http.NewRequest(http.MethodGet, address, nil)
 	if err != nil {
 		return nil, err
 	}
-	return req, nil
+	request := &HttpRequest{req}
+
+	return request, nil
 }
 
-func JSONRequest(address string, body interface{}) (*http.Request, error) {
+func JSONRequest(address string, body interface{}) (*HttpRequest, error) {
 	data := jsonData(body)
 
 	req, err := http.NewRequest(http.MethodPost, address, bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
+	request := &HttpRequest{req}
 
-	req.Header.Set("Content-Type", JSON.String())
-	req.Header.Add("Content-Length", strconv.Itoa(len(data)))
+	request.setContentType(mime.JSON)
+	request.setLength(len(data))
 
-	return req, nil
+	return request, nil
 }
 
-func FormRequest(address string, form map[string]string) (*http.Request, error) {
+func FormRequest(address string, form map[string]string) (*HttpRequest, error) {
 	data := formData(form)
 
 	req, err := http.NewRequest(http.MethodPost, address, strings.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
+	request := &HttpRequest{req}
 
-	req.Header.Set("Content-Type", Form.String())
-	req.Header.Add("Content-Length", strconv.Itoa(len(data)))
+	request.setContentType(mime.Form)
+	request.setLength(len(data))
 
-	return req, nil
+	return request, nil
 }
 
-func Accept(request *http.Request, mimeType MimeType) {
-	request.Header.Set("Content-Type", JSON.String())
+func (r HttpRequest) URL() *url.URL {
+	return r.Req.URL
+}
+
+func (r *HttpRequest) SetQuery(key, value string) {
+	SetQuery(r.URL(), key, value)
+}
+
+func (r *HttpRequest) SetHeader(key, value string) {
+	r.Req.Header.Set(key, value)
+}
+
+func (r *HttpRequest) setLength(length int) {
+	r.SetHeader("Content-Length", strconv.Itoa(length))
+}
+
+func (r *HttpRequest) setContentType(mimeType mime.MimeType) {
+	r.SetHeader("Content-Type", mimeType.String())
+}
+
+func (r *HttpRequest) Accept(mimeType mime.MimeType) {
+	r.SetHeader("Accept", mimeType.String())
+}
+
+func (r *HttpRequest) Authorization(authType string, authKey string) {
+	r.SetHeader("Authorization", authType+" "+authKey)
+}
+
+func (r *HttpRequest) Do() (*http.Response, error) {
+	return http.DefaultClient.Do(r.Req)
 }
 
 func jsonData(v interface{}) []byte {

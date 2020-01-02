@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"io/ioutil"
-	"net/http"
 	"os"
 )
 
@@ -42,15 +41,16 @@ func purgeWithData(jsonData interface{}) {
 		fmt.Println("WARNING: Not purging cloudflare cache since a key is not specified!")
 		return
 	}
+
 	url := "https://api.cloudflare.com/client/v4/zones/" + zone + "/purge_cache"
 	req, err := util.JSONRequest(url, jsonData)
 	if err != nil {
 		fmt.Println("Cloudflare error building request", err)
 		return
 	}
-	req.Header.Set("Authorization", "Bearer "+key)
+	req.Authorization("Bearer", key)
 
-	resp, err := (&http.Client{}).Do(req)
+	resp, err := req.Do()
 	if err != nil {
 		fmt.Println("Cloudflare purge error", err)
 		return

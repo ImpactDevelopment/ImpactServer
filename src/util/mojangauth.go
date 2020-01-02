@@ -3,7 +3,6 @@ package util
 import (
 	"encoding/json"
 	"errors"
-	"net/http"
 	"strings"
 )
 
@@ -20,11 +19,10 @@ func HasJoinedServer(username, hash string) (string, error) {
 		return "", err
 	}
 
-	SetQuery(req.URL, "username", username)
-	SetQuery(req.URL, "serverId", "0"+hash)
+	req.SetQuery("username", username)
+	req.SetQuery("serverId", "0"+hash)
 
-	client := http.Client{}
-	response, err := client.Do(req)
+	response, err := req.Do()
 	if err != nil {
 		return "", err
 	}

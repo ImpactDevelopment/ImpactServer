@@ -194,13 +194,14 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 		fmt.Println("Analytics failed to build request", err)
 		return
 	}
-	req.Header.Set("User-Agent", c.Request().UserAgent())
+	req.SetHeader("User-Agent", c.Request().UserAgent())
 
-	resp, err := (&http.Client{}).Do(req)
-	defer resp.Body.Close()
+	resp, err := req.Do()
 	if err != nil {
 		fmt.Println("Analytics error", err)
+		return
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		fmt.Println("Analytics bad status code", resp.StatusCode)
 		data, err := ioutil.ReadAll(resp.Body)
