@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"github.com/ImpactDevelopment/ImpactServer/src/util/mediatype"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -15,6 +16,11 @@ import (
 // HTTPRequest wraps http.Request so that we can provide custom methods
 type HTTPRequest struct {
 	Req *http.Request
+
+	// client is the http.Client which will do the request
+	//
+	// it is set here so it can be overridden by tests
+	client *http.Client
 }
 
 // HTTPResponse wraps http.Response so that we can provide custom methods
@@ -22,15 +28,24 @@ type HTTPResponse struct {
 	Resp *http.Response
 }
 
-// GetRequest returns a HTTPRequest using method GET with no body
-func GetRequest(address string) (*HTTPRequest, error) {
-	req, err := http.NewRequest(http.MethodGet, address, nil)
+// NewRequest wraps http.NewRequest but returns HTTPRequest instead of http.Request
+//
+// You probably want to use one of its wrappers like GetRequest or JSONRequest instead
+func NewRequest(method, url string, body io.Reader) (*HTTPRequest, error) {
+	request, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
 	}
-	request := &HTTPRequest{req}
 
-	return request, nil
+	return &HTTPRequest{
+		Req:    request,
+		client: http.DefaultClient,
+	}, nil
+}
+
+// GetRequest returns a HTTPRequest using method GET with no body
+func GetRequest(address string) (*HTTPRequest, error) {
+	return NewRequest(http.MethodGet, address, nil)
 }
 
 // JSONRequest returns a HTTPRequest using method POST with a JSON marshalled body
@@ -40,11 +55,10 @@ func JSONRequest(address string, body interface{}) (*HTTPRequest, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, address, bytes.NewReader(post))
+	request, err := NewRequest(http.MethodPost, address, bytes.NewReader(post))
 	if err != nil {
 		return nil, err
 	}
-	request := &HTTPRequest{req}
 
 	request.setContentType(mediatype.JSON)
 	request.setLength(len(post))
@@ -59,11 +73,10 @@ func XMLRequest(address string, body interface{}) (*HTTPRequest, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, address, bytes.NewReader(post))
+	request, err := NewRequest(http.MethodPost, address, bytes.NewReader(post))
 	if err != nil {
 		return nil, err
 	}
-	request := &HTTPRequest{req}
 
 	request.setContentType(mediatype.XML)
 	request.setLength(len(post))
@@ -75,11 +88,10 @@ func XMLRequest(address string, body interface{}) (*HTTPRequest, error) {
 func FormRequest(address string, form map[string]string) (*HTTPRequest, error) {
 	post := urlValues(form).Encode()
 
-	req, err := http.NewRequest(http.MethodPost, address, strings.NewReader(post))
+	request, err := NewRequest(http.MethodPost, address, strings.NewReader(post))
 	if err != nil {
 		return nil, err
 	}
-	request := &HTTPRequest{req}
 
 	request.setContentType(mediatype.Form)
 	request.setLength(len(post))
@@ -123,14 +135,8 @@ func (r *HTTPRequest) Authorization(authType string, authKey string) {
 
 // Do does a request and returns the response, as a HTTPResponse
 func (r *HTTPRequest) Do() (*HTTPResponse, error) {
-	resp, err := httpClient().Do(r.Req)
+	resp, err := r.client.Do(r.Req)
 	return &HTTPResponse{resp}, err
-}
-
-// httpClient gets the http.Client to use
-// var func to allow tests to override
-var httpClient = func() *http.Client {
-	return http.DefaultClient
 }
 
 // Ok returns true if the status code is "200 OK"

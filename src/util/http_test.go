@@ -22,24 +22,34 @@ func testClient(roundTripFunc testRoundTripper) *http.Client {
 	}
 }
 
-func TestGetRequest(t *testing.T) {
-	// Override httpClient()
-	httpClient = func() *http.Client {
-		return testClient(func(req *http.Request) *http.Response {
-			// Test request parameters
-			assert.Equal(t, req.URL.String(), "http://example.com/some/path")
-			assert.Equal(t, req.Method, http.MethodGet)
-
-			return &http.Response{
-				StatusCode: http.StatusOK,
-				Body:       ioutil.NopCloser(bytes.NewBufferString(`OK`)),
-				Header:     make(http.Header), // Must be set to non-nil value or it panics
-			}
-		})
+// testResponse reduces some of the boilerplate needed in a testClient's testRoundTripper callback
+func testResponse(status int, body string, headers map[string]string) *http.Response {
+	h := http.Header{}
+	if headers != nil {
+		for key, value := range headers {
+			h.Set(key, value)
+		}
 	}
 
+	return &http.Response{
+		StatusCode: status,
+		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+		Header:     h,
+	}
+}
+
+func TestGetRequest(t *testing.T) {
 	request, err := GetRequest("http://example.com/some/path")
 	assert.NoError(t, err)
+
+	// Override client to avoid actually sending request
+	request.client = testClient(func(req *http.Request) *http.Response {
+		// Test request parameters
+		assert.Equal(t, req.URL.String(), "http://example.com/some/path")
+		assert.Equal(t, req.Method, http.MethodGet)
+
+		return testResponse(http.StatusOK, "OK", nil)
+	})
 
 	response, err := request.Do()
 	assert.NoError(t, err)
