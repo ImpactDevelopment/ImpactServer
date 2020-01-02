@@ -123,8 +123,14 @@ func (r *HTTPRequest) Authorization(authType string, authKey string) {
 
 // Do does a request and returns the response, as a HTTPResponse
 func (r *HTTPRequest) Do() (*HTTPResponse, error) {
-	resp, err := http.DefaultClient.Do(r.Req)
+	resp, err := httpClient().Do(r.Req)
 	return &HTTPResponse{resp}, err
+}
+
+// httpClient gets the http.Client to use
+// var func to allow tests to override
+var httpClient = func() *http.Client {
+	return http.DefaultClient
 }
 
 // Ok returns true if the status code is "200 OK"
