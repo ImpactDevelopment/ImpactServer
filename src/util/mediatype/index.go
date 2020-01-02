@@ -6,6 +6,7 @@ type MediaType string
 // Default MediaType constants
 const (
 	JSON MediaType = "application/json"
+	XML  MediaType = "application/xml"
 	Form MediaType = "application/x-www-form-urlencoded"
 )
 
