@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"testing"
 )
 
@@ -92,6 +93,11 @@ func TestJSON(t *testing.T) {
 		assert.Equal(t, req.Method, http.MethodPost)
 		assert.Equal(t, `{"it":"Hello, world"}`, body)
 
+		assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
+		length, err := strconv.Atoi(req.Header.Get("Content-Length"))
+		assert.NoError(t, err)
+		assert.Equal(t, len(body), length)
+
 		return testResponse(http.StatusOK, `{"that":"thing"}`, nil)
 	})
 
@@ -120,6 +126,11 @@ func TestXML(t *testing.T) {
 		assert.Equal(t, req.URL.String(), "http://example.com/some/other/path")
 		assert.Equal(t, req.Method, http.MethodPost)
 		assert.Equal(t, `<?xml version="1.0" encoding="UTF-8"?>`+"\n"+`<testStruct1><it>Hello, world</it></testStruct1>`, body)
+
+		assert.Equal(t, "application/xml", req.Header.Get("Content-Type"))
+		length, err := strconv.Atoi(req.Header.Get("Content-Length"))
+		assert.NoError(t, err)
+		assert.Equal(t, len(body), length)
 
 		return testResponse(http.StatusOK, `<?xml version="1.0" encoding="UTF-8"?>`+"\n"+`<testStruct2><that>thing</that></testStruct2>`, nil)
 	})
