@@ -13,6 +13,8 @@ import (
 	"strings"
 )
 
+const userAgent = "ImpactServer"
+
 // HTTPRequest wraps http.Request so that we can provide custom methods
 type HTTPRequest struct {
 	Req *http.Request
@@ -28,7 +30,7 @@ type HTTPResponse struct {
 	Resp *http.Response
 }
 
-// NewRequest wraps http.NewRequest but returns HTTPRequest instead of http.Request
+// NewRequest wraps http.NewRequest but returns HTTPRequest instead of http.Request. The ImpactServer User Agent is automatically added
 //
 // You probably want to use one of its wrappers like GetRequest or JSONRequest instead
 func NewRequest(method, url string, body io.Reader) (*HTTPRequest, error) {
@@ -36,6 +38,8 @@ func NewRequest(method, url string, body io.Reader) (*HTTPRequest, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	request.Header.Set("User-Agent", userAgent)
 
 	return &HTTPRequest{
 		Req:    request,

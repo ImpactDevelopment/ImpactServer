@@ -63,6 +63,9 @@ func TestGet(t *testing.T) {
 		assert.Equal(t, req.Method, http.MethodGet)
 		assert.Empty(t, body)
 
+		assert.Equal(t, "ImpactServer", req.UserAgent())
+		assert.Equal(t, "ImpactServer", req.Header.Get("User-Agent"))
+
 		return testResponse(http.StatusOK, "OK", nil)
 	})
 
@@ -93,6 +96,7 @@ func TestJSON(t *testing.T) {
 		assert.Equal(t, req.Method, http.MethodPost)
 		assert.Equal(t, `{"it":"Hello, world"}`, body)
 
+		assert.Equal(t, "ImpactServer", req.UserAgent())
 		assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
 		length, err := strconv.Atoi(req.Header.Get("Content-Length"))
 		assert.NoError(t, err)
@@ -127,6 +131,7 @@ func TestXML(t *testing.T) {
 		assert.Equal(t, req.Method, http.MethodPost)
 		assert.Equal(t, `<?xml version="1.0" encoding="UTF-8"?>`+"\n"+`<testStruct1><it>Hello, world</it></testStruct1>`, body)
 
+		assert.Equal(t, "ImpactServer", req.UserAgent())
 		assert.Equal(t, "application/xml", req.Header.Get("Content-Type"))
 		length, err := strconv.Atoi(req.Header.Get("Content-Length"))
 		assert.NoError(t, err)
