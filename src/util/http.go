@@ -68,10 +68,18 @@ func JSONRequest(address string, body interface{}) (*HTTPRequest, error) {
 
 // XMLRequest returns a HTTPRequest using method POST with an XML marshalled body
 func XMLRequest(address string, body interface{}) (*HTTPRequest, error) {
-	post, err := xml.Marshal(body)
+	// Strip the trailing newline, since we add our own later.
+	doctype := xml.Header[:len(xml.Header)-1]
+	return XMLRequestWithDoctype(address, doctype, body)
+}
+
+// XMLRequest returns a HTTPRequest using method POST with an XML marshalled body with the specified doctype
+func XMLRequestWithDoctype(address, doctype string, body interface{}) (*HTTPRequest, error) {
+	postBody, err := xml.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
+	post := bytes.Join([][]byte{[]byte(doctype), postBody}, []byte("\n"))
 
 	request, err := NewRequest(http.MethodPost, address, bytes.NewReader(post))
 	if err != nil {
