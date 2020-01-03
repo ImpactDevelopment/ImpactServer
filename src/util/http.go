@@ -77,7 +77,7 @@ func XMLRequest(address string, body interface{}) (*HTTPRequest, error) {
 	return XMLRequestWithDoctype(address, doctype, body)
 }
 
-// XMLRequest returns a HTTPRequest using method POST with an XML marshalled body with the specified doctype
+// XMLRequestWithDoctype returns a HTTPRequest using method POST with an XML marshalled body with the specified doctype
 func XMLRequestWithDoctype(address, doctype string, body interface{}) (*HTTPRequest, error) {
 	postBody, err := xml.Marshal(body)
 	if err != nil {
