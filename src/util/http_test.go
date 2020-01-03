@@ -13,9 +13,12 @@ import (
 type testRoundTripper func(req *http.Request, body string) *http.Response
 
 func (f testRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	// Read body so we can pass it on as a string
-	defer req.Body.Close()
-	body, _ := ioutil.ReadAll(req.Body)
+	// Read body if it exists so we can pass it on as a string
+	var body []byte
+	if req.Body != nil {
+		defer req.Body.Close()
+		body, _ = ioutil.ReadAll(req.Body)
+	}
 
 	return f(req, string(body)), nil
 }
