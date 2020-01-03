@@ -79,8 +79,7 @@ func TestGet(t *testing.T) {
 	assert.Equal(t, 200, response.Code())
 	assert.Equal(t, "200 OK", response.Status())
 
-	body, err := response.String()
-	assert.NoError(t, err)
+	body := response.String()
 	assert.Equal(t, "OK", body)
 
 	assert.NoError(t, err)

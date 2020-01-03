@@ -28,6 +28,7 @@ type HTTPRequest struct {
 // HTTPResponse wraps http.Response so that we can provide custom methods
 type HTTPResponse struct {
 	Resp *http.Response
+	Body []byte
 }
 
 // NewRequest wraps http.NewRequest but returns HTTPRequest instead of http.Request. The ImpactServer User Agent is automatically added
@@ -148,7 +149,24 @@ func (r *HTTPRequest) Authorization(authType string, authKey string) {
 // Do does a request and returns the response, as a HTTPResponse
 func (r *HTTPRequest) Do() (*HTTPResponse, error) {
 	resp, err := r.client.Do(r.Req)
-	return &HTTPResponse{resp}, err
+	if err != nil {
+		return nil, err
+	}
+
+	// Read body if it exists
+	var body []byte
+	if resp.Body != nil {
+		defer resp.Body.Close()
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &HTTPResponse{
+		Resp: resp,
+		Body: body,
+	}, nil
 }
 
 // Ok returns true if the status code is "200 OK"
@@ -178,25 +196,18 @@ func (r HTTPResponse) ContentType() mediatype.MediaType {
 }
 
 // String returns the body as a string
-func (r *HTTPResponse) String() (string, error) {
-	defer r.Resp.Body.Close()
-
-	str, err := ioutil.ReadAll(r.Resp.Body)
-	return string(str), err
+func (r *HTTPResponse) String() string {
+	return string(r.Body)
 }
 
 // JSON decodes the body into the provided interface{}
 func (r *HTTPResponse) JSON(v interface{}) error {
-	defer r.Resp.Body.Close()
-
-	return json.NewDecoder(r.Resp.Body).Decode(v)
+	return json.Unmarshal(r.Body, v)
 }
 
 // XML decodes the body into the provided interface{}
 func (r *HTTPResponse) XML(v interface{}) error {
-	defer r.Resp.Body.Close()
-
-	return xml.NewDecoder(r.Resp.Body).Decode(v)
+	return xml.Unmarshal(r.Body, v)
 }
 
 // urlValues converts a map of strings to url Values for use in forms or query strings

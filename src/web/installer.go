@@ -203,7 +203,7 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 	}
 	if !resp.Ok() {
 		fmt.Println("Analytics bad status code", resp.Status())
-		data, err := resp.String()
+		data := resp.String()
 		fmt.Println(err)
 		fmt.Println(data)
 	}

@@ -55,7 +55,7 @@ func purgeWithData(jsonData interface{}) {
 		return
 	}
 
-	body, err := resp.String()
+	body := resp.String()
 	if err != nil {
 		fmt.Println("Cloudflare error reading body", err)
 		return

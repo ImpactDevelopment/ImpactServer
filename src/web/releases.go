@@ -104,7 +104,7 @@ func githubReleases(rels map[string]Release) error {
 	}
 
 	// FIXME Somehow this fails when decoding the Reader via resp.JSON(), but works when unmarshalling a byte array :/
-	body, _ := resp.String()
+	body := resp.String()
 	releasesData := make([]Release, 0)
 	err = json.Unmarshal([]byte(body), &releasesData)
 	if err != nil || len(releasesData) == 0 {
