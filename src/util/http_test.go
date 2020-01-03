@@ -17,7 +17,7 @@ func (f testRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	defer req.Body.Close()
 	body, _ := ioutil.ReadAll(req.Body)
 
-	return f(req, string(body)), nil //TODO
+	return f(req, string(body)), nil
 }
 
 //testClient returns *http.Client with Transport replaced to avoid making real calls
