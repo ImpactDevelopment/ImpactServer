@@ -87,7 +87,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestJSON(t *testing.T) {
-	reqBody := &testStruct1{"Hello, world"}
+	reqBody := testStruct1{"Hello, world"}
 	request, err := JSONRequest("http://example.com/some/other/path", reqBody)
 	assert.NoError(t, err)
 
@@ -114,15 +114,15 @@ func TestJSON(t *testing.T) {
 	assert.Equal(t, 200, response.Code())
 	assert.Equal(t, "200 OK", response.Status())
 
-	body := &testStruct2{}
-	err = response.JSON(body)
+	body := testStruct2{}
+	err = response.JSON(&body)
 	assert.NoError(t, err)
-	assert.Equal(t, &testStruct2{"thing"}, body)
+	assert.Equal(t, testStruct2{"thing"}, body)
 	assert.Equal(t, "thing", body.That)
 }
 
 func TestXML(t *testing.T) {
-	reqBody := &testStruct1{"Hello, world"}
+	reqBody := testStruct1{"Hello, world"}
 	request, err := XMLRequest("http://example.com/some/other/path", reqBody)
 	assert.NoError(t, err)
 
@@ -149,9 +149,9 @@ func TestXML(t *testing.T) {
 	assert.Equal(t, 200, response.Code())
 	assert.Equal(t, "200 OK", response.Status())
 
-	body := &testStruct2{}
-	err = response.XML(body)
+	body := testStruct2{}
+	err = response.XML(&body)
 	assert.NoError(t, err)
-	assert.Equal(t, &testStruct2{"thing"}, body)
+	assert.Equal(t, testStruct2{"thing"}, body)
 	assert.Equal(t, "thing", body.That)
 }
