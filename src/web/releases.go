@@ -1,9 +1,8 @@
 package web
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"github.com/ImpactDevelopment/ImpactServer/src/util/mediatype"
 	"log"
 	"net/http"
 	"os"
@@ -86,25 +85,29 @@ func githubReleases(rels map[string]Release) error {
 	// but we have no idea who else is on this IP (shared host from heroku)
 	// so to guard against posssible "noisy neighbors" who are spamming github's api
 	// we provoide an authorization token so that we get our own rate limit regardless of IP
-	req, err := http.NewRequest("GET", "https://api.github.com/repos/ImpactDevelopment/ImpactReleases/releases?per_page=100", nil)
-	if githubToken != "" {
-		req.Header.Set("Authorization", "Basic "+githubToken)
+	req, err := util.GetRequest("https://api.github.com/repos/ImpactDevelopment/ImpactReleases/releases")
+	if err != nil {
+		fmt.Println("Github error building request", err)
+		return err
 	}
-	req.Header.Set("Accept", "application/json")
-	resp, err := (&http.Client{}).Do(req)
+	req.SetQuery("per_page", "100")
+	req.Accept(mediatype.JSON)
+	if githubToken != "" {
+		req.Authorization("Basic", githubToken)
+	}
+
+	resp, err := req.Do()
 	if err != nil {
 		fmt.Println("Github error", err)
 		return err
 	}
-	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
 
-	releasesData := make([]Release, 0)
-	err = json.Unmarshal(body, &releasesData)
+	var releasesData []Release
+	err = resp.JSON(&releasesData)
 	if err != nil || len(releasesData) == 0 {
 		fmt.Println("Github returned invalid json reply!!")
 		fmt.Println(err)
-		fmt.Println(string(body))
+		fmt.Println(resp.String())
 		return err
 	}
 

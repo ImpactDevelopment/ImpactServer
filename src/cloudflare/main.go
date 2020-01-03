@@ -1,11 +1,8 @@
 package cloudflare
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"os"
 )
 
@@ -43,23 +40,20 @@ func purgeWithData(jsonData interface{}) {
 		fmt.Println("WARNING: Not purging cloudflare cache since a key is not specified!")
 		return
 	}
+
 	url := "https://api.cloudflare.com/client/v4/zones/" + zone + "/purge_cache"
-	data, err := json.Marshal(jsonData)
+	req, err := util.JSONRequest(url, jsonData)
 	if err != nil {
-		fmt.Println("Cloudflare marshal error", err)
+		fmt.Println("Cloudflare error building request", err)
 		return
 	}
-	fmt.Println("Cloudflare purging data:", string(data))
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
-	req.Header.Set("Authorization", "Bearer "+key)
-	req.Header.Set("Content-Type", "application/json")
+	req.Authorization("Bearer", key)
 
-	resp, err := (&http.Client{}).Do(req)
+	resp, err := req.Do()
 	if err != nil {
 		fmt.Println("Cloudflare purge error", err)
 		return
 	}
-	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("Cloudflare response body:", string(body))
+
+	fmt.Println("Cloudflare: code: "+resp.Status()+", body: ", resp.String())
 }

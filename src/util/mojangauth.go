@@ -1,9 +1,7 @@
 package util
 
 import (
-	"encoding/json"
 	"errors"
-	"net/http"
 	"strings"
 )
 
@@ -15,24 +13,21 @@ type ResponseHasJoined struct {
 }
 
 func HasJoinedServer(username, hash string) (string, error) {
-	req, err := http.NewRequest("GET", urlHasJoined, nil)
+	req, err := GetRequest(urlHasJoined)
 	if err != nil {
 		return "", err
 	}
 
-	query := req.URL.Query()
-	query.Add("username", username)
-	query.Add("serverId", "0"+hash)
-	req.URL.RawQuery = query.Encode()
+	req.SetQuery("username", username)
+	req.SetQuery("serverId", "0"+hash)
 
-	client := http.Client{}
-	response, err := client.Do(req)
+	response, err := req.Do()
 	if err != nil {
 		return "", err
 	}
 
 	data := ResponseHasJoined{}
-	err = json.NewDecoder(response.Body).Decode(&data)
+	err = response.JSON(&data)
 	if err != nil {
 		return "", err
 	}
