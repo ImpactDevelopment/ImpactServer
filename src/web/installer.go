@@ -177,8 +177,7 @@ func installerForExe(c echo.Context) error {
 }
 
 func analytics(cid string, version InstallerVersion, c echo.Context) {
-	forward := strings.Split(c.Request().Header.Get("X-FORWARDED-FOR"), ",")[0]
-	req, err := util.FormRequest("https://www.google-analytics.com/collect", map[string]string{
+	form := map[string]string{
 		"v":   "1",
 		"t":   "event",
 		"tid": "UA-143397381-1",
@@ -188,8 +187,12 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 		"ea":  "download",
 		"el":  version.getEXT(),
 		"ua":  c.Request().UserAgent(),
-		"uip": forward,
-	})
+	}
+	forward := strings.Split(c.Request().Header.Get("X-FORWARDED-FOR"), ",")[0]
+	if forward != "" {
+		form["uip"] = forward
+	}
+	req, err := util.FormRequest("https://www.google-analytics.com/collect", form)
 	if err != nil {
 		fmt.Println("Analytics failed to build request", err)
 		return

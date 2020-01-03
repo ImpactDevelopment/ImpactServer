@@ -27,7 +27,7 @@ func HasJoinedServer(username, hash string) (string, error) {
 	}
 
 	data := ResponseHasJoined{}
-	err = response.JSON(data)
+	err = response.JSON(&data)
 	if err != nil {
 		return "", err
 	}

@@ -1,7 +1,6 @@
 package web
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/ImpactDevelopment/ImpactServer/src/util/mediatype"
 	"log"
@@ -103,14 +102,12 @@ func githubReleases(rels map[string]Release) error {
 		return err
 	}
 
-	// FIXME Somehow this fails when decoding the Reader via resp.JSON(), but works when unmarshalling a byte array :/
-	body := resp.String()
-	releasesData := make([]Release, 0)
-	err = json.Unmarshal([]byte(body), &releasesData)
+	var releasesData []Release
+	err = resp.JSON(&releasesData)
 	if err != nil || len(releasesData) == 0 {
 		fmt.Println("Github returned invalid json reply!!")
 		fmt.Println(err)
-		fmt.Println(body)
+		fmt.Println(resp.String())
 		return err
 	}
 
