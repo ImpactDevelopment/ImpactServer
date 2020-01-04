@@ -30,7 +30,8 @@ func validateAndAuthorizeOrder(id string, order *paypal.Order) (err error) {
 				}
 			case "APPROVED":
 				{
-					authorization, err := client.AuthorizeOrder(order.ID, paypal.AuthorizeOrderRequest{
+					var authorization *paypal.Authorization
+					authorization, err = client.AuthorizeOrder(order.ID, paypal.AuthorizeOrderRequest{
 						PaymentSource:      nil,
 						ApplicationContext: paypal.ApplicationContext{},
 					})
