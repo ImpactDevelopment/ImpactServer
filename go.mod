@@ -12,6 +12,8 @@ require (
 	github.com/mailgun/mailgun-go/v3 v3.6.0
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.10 // indirect
+	github.com/pkg/errors v0.8.1
+	github.com/plutov/paypal/v3 v3.0.11
 	github.com/stretchr/testify v1.4.0
 	github.com/valyala/fasttemplate v1.1.0 // indirect
 	golang.org/x/crypto v0.0.0-20191002192127-34f69633bfdc // indirect

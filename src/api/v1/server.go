@@ -16,5 +16,6 @@ func API(api *echo.Group) {
 	api.GET("/dbtest", dbTest, middleware.NoCache())
 	api.GET("/minecraft/login", mojangLoginLegacy, middleware.NoCache())
 	api.GET("/login/minecraft", mojangLoginJWT, middleware.NoCache())
+	api.POST("/register/donate", donate, middleware.NoCache())
 	api.GET("/emailtest", emailTest, middleware.NoCache())
 }
