@@ -1,10 +1,11 @@
 package newWeb
 
 import (
-	"github.com/ImpactDevelopment/ImpactServer/src/util"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"net/url"
+
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
+	"github.com/labstack/echo/v4"
 
 	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
 )

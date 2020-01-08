@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/ImpactDevelopment/ImpactServer/src/api/v1"
+	v1 "github.com/ImpactDevelopment/ImpactServer/src/api/v1"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )

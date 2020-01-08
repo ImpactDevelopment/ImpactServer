@@ -6,6 +6,8 @@ require (
 	github.com/aws/aws-sdk-go v1.25.9
 	github.com/gbrlsnchs/jwt/v3 v3.0.0-rc.0
 	github.com/google/uuid v1.1.1
+	github.com/heroku/heroku-go v5.1.0+incompatible // indirect
+	github.com/heroku/heroku-go/v5 v5.1.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/labstack/echo/v4 v4.1.11
 	github.com/lib/pq v1.2.0

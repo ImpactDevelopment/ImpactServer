@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 
 	"github.com/google/uuid"
 

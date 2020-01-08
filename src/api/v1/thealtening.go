@@ -1,8 +1,9 @@
 package v1
 
 import (
-	"github.com/labstack/echo/v4"
 	"time"
+
+	"github.com/labstack/echo/v4"
 )
 
 var alteningInfoStruct = TheAlteningInfo{

@@ -2,8 +2,10 @@ package cloudflare
 
 import (
 	"fmt"
-	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"os"
+
+	"github.com/ImpactDevelopment/ImpactServer/src/heroku"
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 )
 
 var zone string
@@ -17,7 +19,11 @@ func init() {
 	}
 }
 
-func Purge() {
+func PurgeIfNeeded() {
+	if heroku.NoRecentReleases() {
+		fmt.Println("Heroku API says NO RECENT RELEASES, therefore this is simply the daily scheduled restart. NOT purging cloudflare!")
+		return
+	}
 	fmt.Println("Purging cloudflare cache of everything")
 	purgeWithData(struct {
 		PurgeEverything bool `json:"purge_everything"`

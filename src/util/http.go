@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
-	"github.com/ImpactDevelopment/ImpactServer/src/util/mediatype"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/ImpactDevelopment/ImpactServer/src/util/mediatype"
 )
 
 const userAgent = "ImpactServer"

@@ -65,7 +65,7 @@ func main() {
 	}
 	e.Use(middleware.Recover())
 
-	go cloudflare.Purge()
+	go cloudflare.PurgeIfNeeded() // "go" as a vague halfhearted attempt to make this occur only after we start listening and serving, to prevent long blocking requests
 	// Start the server
 	e.Logger.Fatal(StartServer(e, port))
 }

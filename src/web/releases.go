@@ -2,13 +2,14 @@ package web
 
 import (
 	"fmt"
-	"github.com/ImpactDevelopment/ImpactServer/src/util/mediatype"
 	"log"
 	"net/http"
 	"os"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/ImpactDevelopment/ImpactServer/src/util/mediatype"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/cloudflare"
 	"github.com/ImpactDevelopment/ImpactServer/src/s3proxy"
