@@ -23,6 +23,33 @@ func getUserInfo(c echo.Context) error {
 	return c.JSON(http.StatusOK, userData)
 }
 
+// /minecraft/user/:role/list
+func getRoleMembers(c echo.Context) error {
+	role := c.Param("role")
+	ret := ""
+	for _, user := range users.GetAllUsers() {
+		if !userHasRole(user, role) {
+			continue
+		}
+		for _, uuid := range user.MinecraftIDs() {
+			ret += uuid.String() + "\n"
+		}
+	}
+	if ret == "" {
+		return c.NoContent(http.StatusNotFound)
+	}
+	return c.String(http.StatusOK, ret)
+}
+
+func userHasRole(user users.User, roleName string) bool {
+	for _, role := range user.Roles() {
+		if role.ID == roleName {
+			return true
+		}
+	}
+	return false
+}
+
 func init() {
 	_, err := updateData()
 	if err != nil {
@@ -36,7 +63,13 @@ func init() {
 		}
 		if updated {
 			log.Println("MC UPDATE: Updated user info")
-			cloudflare.PurgeURLs([]string{"https://api.impactclient.net/v1/minecraft/user/info"})
+			cloudflare.PurgeURLs([]string{
+				"https://api.impactclient.net/v1/minecraft/user/info",
+				"https://api.impactclient.net/v1/minecraft/user/staff/list",
+				"https://api.impactclient.net/v1/minecraft/user/developer/list",
+				"https://api.impactclient.net/v1/minecraft/user/pepsi/list",
+				"https://api.impactclient.net/v1/minecraft/user/premium/list",
+			})
 		}
 	})
 }
