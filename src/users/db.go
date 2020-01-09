@@ -11,6 +11,7 @@ import (
 type databaseUser struct {
 	uuid          uuid.UUID
 	legacyPremium bool
+	capeEnabled   bool
 	pepsi         bool
 	staff         bool
 	developer     bool
@@ -72,6 +73,10 @@ func (user databaseUser) UserInfo() UserInfo {
 		role.applyDefaults(&info)
 	}
 
+	if !user.capeEnabled {
+		info.Cape = ""
+	}
+
 	return info
 }
 
@@ -84,7 +89,7 @@ func GetAllUsers() []User {
 		fmt.Println("Database not connected!")
 		return nil
 	}
-	rows, err := database.DB.Query("SELECT mc_uuid, legacy_premium, pepsi, staff, developer FROM users WHERE mc_uuid IS NOT NULL")
+	rows, err := database.DB.Query("SELECT mc_uuid, legacy_premium, cape_enabled, pepsi, staff, developer FROM users WHERE mc_uuid IS NOT NULL")
 	if err != nil {
 		panic(err)
 	}
@@ -92,7 +97,7 @@ func GetAllUsers() []User {
 	ret := make([]User, 0)
 	for rows.Next() {
 		var user databaseUser
-		err = rows.Scan(&user.uuid, &user.legacyPremium, &user.pepsi, &user.staff, &user.developer)
+		err = rows.Scan(&user.uuid, &user.legacyPremium, &user.capeEnabled, &user.pepsi, &user.staff, &user.developer)
 		if err != nil {
 			panic(err)
 		}
@@ -111,7 +116,7 @@ func LookupUserByUUID(uuid uuid.UUID) User {
 		return nil
 	}
 	var user databaseUser
-	err := database.DB.QueryRow("SELECT mc_uuid, legacy_premium, pepsi, staff, developer FROM users WHERE mc_uuid = $1", uuid).Scan(&user.uuid, &user.legacyPremium, &user.pepsi, &user.staff, &user.developer)
+	err := database.DB.QueryRow("SELECT mc_uuid, legacy_premium, cape_enabled, pepsi, staff, developer FROM users WHERE mc_uuid = $1", uuid).Scan(&user.uuid, &user.legacyPremium, &user.capeEnabled, &user.pepsi, &user.staff, &user.developer)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil // no match

@@ -110,8 +110,14 @@ func generateLegacy(usersList []users.User) map[string]string {
 func generateMap(usersList []users.User) map[string]users.UserInfo {
 	data := make(map[string]users.UserInfo)
 	for _, user := range usersList {
+		userInfo := user.UserInfo()
+		var empty users.UserInfo
+		if userInfo == empty {
+			// if a user has cape disabled, they are trying to be incognito. we should send no entry at all. not good enough to send "HASH123":{}.
+			continue
+		}
 		for _, uuid := range user.MinecraftIDs() {
-			data[hashUUID(uuid)] = user.UserInfo()
+			data[hashUUID(uuid)] = userInfo
 		}
 	}
 	return data

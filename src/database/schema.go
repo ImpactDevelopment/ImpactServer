@@ -28,7 +28,8 @@ func createTables() error {
 			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT, /* unix seconds */
 
 			mc_uuid UUID UNIQUE,
-			legacy_premium BOOL NOT NULL DEFAULT TRUE, /* list this mc uuid in the premium list for 4.7 and below */
+			legacy_premium BOOL NOT NULL DEFAULT TRUE, /* list this mc uuid in the premium list for 4.7 and below. this determines if you get a cape shown to other users who are using 4.7- */
+			cape_enabled BOOL NOT NULL DEFAULT TRUE, /* show a cape to others on 4.8+ */
 
 			discord_id TEXT UNIQUE,
 
