@@ -13,7 +13,7 @@ func API(api *echo.Group) {
 	api.GET("/motd", getMotd, middleware.CacheUntilPurge())
 	api.GET("/themes", getThemes, middleware.CacheUntilPurge())
 	api.GET("/minecraft/user/info", getUserInfo, middleware.CacheUntilPurge())
-	api.GET("/minecraft/user/:role/list", getRoleMembers, middleware.CacheUntilPurge())
+	api.GET("/minecraft/user/:role/list", getRoleMembers, middleware.NoCache())
 	api.GET("/dbtest", dbTest, middleware.NoCache())
 	api.GET("/minecraft/login", mojangLoginLegacy, middleware.NoCache())
 	api.GET("/login/minecraft", mojangLoginJWT, middleware.NoCache())
