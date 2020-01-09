@@ -28,4 +28,5 @@ func init() {
 		// apparently this DOUBLE CHECKS that it's up?
 		panic(err)
 	}
+	initialSetup()
 }

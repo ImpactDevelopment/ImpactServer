@@ -18,6 +18,8 @@ import (
 
 var userData map[string]users.UserInfo
 
+var legacyRoles map[string]string
+
 // API Handler
 func getUserInfo(c echo.Context) error {
 	return c.JSON(http.StatusOK, userData)
@@ -25,16 +27,7 @@ func getUserInfo(c echo.Context) error {
 
 // /minecraft/user/:role/list
 func getRoleMembers(c echo.Context) error {
-	role := c.Param("role")
-	ret := ""
-	for _, user := range users.GetAllUsers() {
-		if !userHasRole(user, role) {
-			continue
-		}
-		for _, uuid := range user.MinecraftIDs() {
-			ret += uuid.String() + "\n"
-		}
-	}
+	ret := legacyRoles[c.Param("role")]
 	if ret == "" {
 		return c.NoContent(http.StatusNotFound)
 	}
@@ -51,20 +44,20 @@ func userHasRole(user users.User, roleName string) bool {
 }
 
 func init() {
-	_, err := updateData()
-	if err != nil {
-		panic(err)
-	}
+	usersList := users.GetAllUsers()
+	updatedData(usersList)
+	updatedLegacyRoles(usersList)
 	util.DoRepeatedly(5*time.Minute, func() {
-		updated, err := updateData()
-		if err != nil {
-			log.Println("MC ERROR", err)
-			return
-		}
-		if updated {
+		usersList := users.GetAllUsers()
+		if updatedData(usersList) {
 			log.Println("MC UPDATE: Updated user info")
 			cloudflare.PurgeURLs([]string{
 				"https://api.impactclient.net/v1/minecraft/user/info",
+			})
+		}
+		if updatedLegacyRoles(usersList) {
+			log.Println("MC UPDATE: Updated user legacy data")
+			cloudflare.PurgeURLs([]string{
 				"https://api.impactclient.net/v1/minecraft/user/staff/list",
 				"https://api.impactclient.net/v1/minecraft/user/developer/list",
 				"https://api.impactclient.net/v1/minecraft/user/pepsi/list",
@@ -74,16 +67,8 @@ func init() {
 	})
 }
 
-func updateData() (bool, error) {
-	err := users.UpdateLegacyData()
-	if err != nil {
-		return false, err
-	}
-	return updatedData(), nil
-}
-
-func updatedData() bool {
-	newUserData := generateMap()
+func updatedData(usersList []users.User) bool {
+	newUserData := generateMap(usersList)
 	// reflect.DeepEqual is slow, especially since this map is big
 	if userData == nil || !reflect.DeepEqual(newUserData, userData) {
 		userData = newUserData
@@ -92,9 +77,39 @@ func updatedData() bool {
 	return false
 }
 
-func generateMap() map[string]users.UserInfo {
+func updatedLegacyRoles(usersList []users.User) bool {
+	newLegacyRoles := generateLegacy(usersList)
+	// reflect.DeepEqual is slow, especially since this map is big
+	if legacyRoles == nil || !reflect.DeepEqual(newLegacyRoles, legacyRoles) {
+		legacyRoles = newLegacyRoles
+		return true
+	}
+	return false
+}
+
+func generateLegacy(usersList []users.User) map[string]string {
+	m := make(map[string]string)
+	for role, _ := range users.RolesData {
+		ret := ""
+		for _, user := range usersList {
+			if !userHasRole(user, role) {
+				continue
+			}
+			if !user.IsLegacy() {
+				continue
+			}
+			for _, uuid := range user.MinecraftIDs() {
+				ret += uuid.String() + "\n"
+			}
+		}
+		m[role] = ret
+	}
+	return m
+}
+
+func generateMap(usersList []users.User) map[string]users.UserInfo {
 	data := make(map[string]users.UserInfo)
-	for _, user := range users.GetAllUsers() {
+	for _, user := range usersList {
 		for _, uuid := range user.MinecraftIDs() {
 			data[hashUUID(uuid)] = user.UserInfo()
 		}
