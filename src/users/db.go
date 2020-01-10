@@ -9,7 +9,10 @@ import (
 )
 
 type databaseUser struct {
-	uuid          uuid.UUID
+	email         sql.NullString
+	mcUUID        database.NullUUID
+	dcID          sql.NullString
+	passwdHash    sql.NullString
 	legacyPremium bool
 	capeEnabled   bool
 	pepsi         bool
@@ -36,12 +39,32 @@ var RolesData = map[string]Role{
 	"premium":   Role{ID: "premium", rank: 3},
 }
 
-func (user databaseUser) MinecraftIDs() []uuid.UUID {
-	return []uuid.UUID{user.uuid}
+func (user databaseUser) Email() *string {
+	if user.email.Valid {
+		return &user.email.String
+	} else {
+		return nil
+	}
+}
+
+func (user databaseUser) MinecraftID() *uuid.UUID {
+	if user.mcUUID.Valid {
+		return &user.mcUUID.UUID
+	} else {
+		return nil
+	}
+}
+
+func (user databaseUser) DiscordID() *string {
+	if user.dcID.Valid {
+		return &user.dcID.String
+	} else {
+		return nil
+	}
 }
 
 func (user databaseUser) Roles() []Role {
-	if user.uuid.String() == "2c3174fc-0c6b-4cfb-bb2b-0069bf7294d1" {
+	if user.mcUUID.UUID.String() == "2c3174fc-0c6b-4cfb-bb2b-0069bf7294d1" {
 		// stupid edge case: catgorl has a custom name, but no premium cape
 		// this breaks the assumption of "everyone in the database has premium"
 
@@ -65,7 +88,7 @@ func (user databaseUser) Roles() []Role {
 func (user databaseUser) UserInfo() UserInfo {
 	info := UserInfo{}
 
-	if special, ok := specialCases[user.uuid]; ok {
+	if special, ok := specialCases[user.mcUUID.UUID]; ok {
 		info = special
 	}
 
@@ -84,12 +107,24 @@ func (user databaseUser) IsLegacy() bool {
 	return user.legacyPremium
 }
 
+func (user databaseUser) CheckPassword(password string) bool {
+	if !user.HasPassword() {
+		return false
+	}
+	hash := password // TODO actually hash passwords
+	return user.passwdHash.String == hash
+}
+
+func (user databaseUser) HasPassword() bool {
+	return user.passwdHash.Valid
+}
+
 func GetAllUsers() []User {
 	if database.DB == nil {
 		fmt.Println("Database not connected!")
 		return nil
 	}
-	rows, err := database.DB.Query("SELECT mc_uuid, legacy_premium, cape_enabled, pepsi, staff, developer FROM users WHERE mc_uuid IS NOT NULL")
+	rows, err := database.DB.Query(selectString())
 	if err != nil {
 		panic(err)
 	}
@@ -97,7 +132,7 @@ func GetAllUsers() []User {
 	ret := make([]User, 0)
 	for rows.Next() {
 		var user databaseUser
-		err = rows.Scan(&user.uuid, &user.legacyPremium, &user.capeEnabled, &user.pepsi, &user.staff, &user.developer)
+		err = rows.Scan(scanDest(user)...)
 		if err != nil {
 			panic(err)
 		}
@@ -110,13 +145,13 @@ func GetAllUsers() []User {
 	return ret
 }
 
-func LookupUserByUUID(uuid uuid.UUID) User {
+func LookupUserByMinecraftID(uuid uuid.UUID) User {
 	if database.DB == nil {
 		fmt.Println("Database not connected!")
 		return nil
 	}
 	var user databaseUser
-	err := database.DB.QueryRow("SELECT mc_uuid, legacy_premium, cape_enabled, pepsi, staff, developer FROM users WHERE mc_uuid = $1", uuid).Scan(&user.uuid, &user.legacyPremium, &user.capeEnabled, &user.pepsi, &user.staff, &user.developer)
+	err := database.DB.QueryRow(selectWhereString(`mc_uuid = $1`), uuid).Scan(scanDest(user)...)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil // no match
@@ -124,4 +159,14 @@ func LookupUserByUUID(uuid uuid.UUID) User {
 		panic(err) // any other error
 	}
 	return &user
+}
+
+func selectString() string {
+	return `SELECT email, mc_uuid, discord_id, password_hash, legacy_premium, cape_enabled, pepsi, staff, developer FROM users`
+}
+func selectWhereString(where string) string {
+	return selectString() + ` WHERE ` + where
+}
+func scanDest(user databaseUser) []interface{} {
+	return []interface{}{&user.email, &user.mcUUID, &user.dcID, &user.passwdHash, &user.legacyPremium, &user.capeEnabled, &user.pepsi, &user.staff, &user.developer}
 }

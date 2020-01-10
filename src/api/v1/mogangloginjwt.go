@@ -19,7 +19,7 @@ func mojangLoginJWT(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	user := users.LookupUserByUUID(uuidVal)
+	user := users.LookupUserByMinecraftID(uuidVal)
 	if user != nil && len(user.Roles()) > 0 {
 		return c.JSONBlob(http.StatusOK, jwt.CreateJWTMcUUID(user, "", &uuidVal))
 	}

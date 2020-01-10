@@ -3,8 +3,12 @@ package users
 import "github.com/google/uuid"
 
 type User interface {
-	MinecraftIDs() []uuid.UUID
+	Email() *string
+	MinecraftID() *uuid.UUID
+	DiscordID() *string
 	Roles() []Role
 	UserInfo() UserInfo
 	IsLegacy() bool
+	CheckPassword(password string) bool
+	HasPassword() bool
 }
