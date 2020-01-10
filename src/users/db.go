@@ -132,7 +132,7 @@ func GetAllUsers() []User {
 	ret := make([]User, 0)
 	for rows.Next() {
 		var user databaseUser
-		err = rows.Scan(scanDest(user)...)
+		err = rows.Scan(scanDest(&user)...)
 		if err != nil {
 			panic(err)
 		}
@@ -151,7 +151,7 @@ func LookupUserByMinecraftID(uuid uuid.UUID) User {
 		return nil
 	}
 	var user databaseUser
-	err := database.DB.QueryRow(selectWhereString(`mc_uuid = $1`), uuid).Scan(scanDest(user)...)
+	err := database.DB.QueryRow(selectWhereString(`mc_uuid = $1`), uuid).Scan(scanDest(&user)...)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil // no match
@@ -167,6 +167,6 @@ func selectString() string {
 func selectWhereString(where string) string {
 	return selectString() + ` WHERE ` + where
 }
-func scanDest(user databaseUser) []interface{} {
+func scanDest(user *databaseUser) []interface{} {
 	return []interface{}{&user.email, &user.mcUUID, &user.dcID, &user.passwdHash, &user.legacyPremium, &user.capeEnabled, &user.pepsi, &user.staff, &user.developer}
 }
