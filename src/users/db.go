@@ -15,6 +15,7 @@ type databaseUser struct {
 	passwdHash    sql.NullString
 	legacyPremium bool
 	capeEnabled   bool
+	premium       bool
 	pepsi         bool
 	staff         bool
 	developer     bool
@@ -64,15 +65,10 @@ func (user databaseUser) DiscordID() *string {
 }
 
 func (user databaseUser) Roles() []Role {
-	if user.mcUUID.UUID.String() == "2c3174fc-0c6b-4cfb-bb2b-0069bf7294d1" {
-		// stupid edge case: catgorl has a custom name, but no premium cape
-		// this breaks the assumption of "everyone in the database has premium"
-
-		// i'm only adding this check so that the new database-backed api is ExAcTlY iDeNtIcAl to the old github-backed one
-
-		return nil
+	roles := []Role{}
+	if user.premium {
+		roles = append(roles, RolesData["premium"])
 	}
-	roles := []Role{RolesData["premium"]}
 	if user.staff {
 		roles = append(roles, RolesData["staff"])
 	}
@@ -162,11 +158,11 @@ func LookupUserByMinecraftID(uuid uuid.UUID) User {
 }
 
 func selectString() string {
-	return `SELECT email, mc_uuid, discord_id, password_hash, legacy_premium, cape_enabled, pepsi, staff, developer FROM users`
+	return `SELECT email, mc_uuid, discord_id, password_hash, legacy_premium, cape_enabled, premium, pepsi, staff, developer FROM users`
 }
 func selectWhereString(where string) string {
 	return selectString() + ` WHERE ` + where
 }
 func scanDest(user *databaseUser) []interface{} {
-	return []interface{}{&user.email, &user.mcUUID, &user.dcID, &user.passwdHash, &user.legacyPremium, &user.capeEnabled, &user.pepsi, &user.staff, &user.developer}
+	return []interface{}{&user.email, &user.mcUUID, &user.dcID, &user.passwdHash, &user.legacyPremium, &user.capeEnabled, &user.premium, &user.pepsi, &user.staff, &user.developer}
 }

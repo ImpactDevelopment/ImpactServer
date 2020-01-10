@@ -44,9 +44,10 @@ func ImportFromBlameAge() {
 }
 
 func ImportFromRoles() {
-	importFromRole("pepsi")
-	importFromRole("developer")
-	importFromRole("staff")
+	//importFromRole("pepsi")
+	//importFromRole("developer")
+	//importFromRole("staff")
+	importFromRole("premium")
 }
 
 func importFromRole(role string) {
