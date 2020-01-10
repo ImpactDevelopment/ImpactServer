@@ -33,6 +33,7 @@ func createTables() error {
 
 			discord_id TEXT UNIQUE,
 
+			premium BOOL NOT NULL DEFAULT TRUE,
 			pepsi BOOL NOT NULL DEFAULT FALSE,
 			staff BOOL NOT NULL DEFAULT FALSE,
 			developer BOOL NOT NULL DEFAULT FALSE
