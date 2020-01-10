@@ -56,14 +56,6 @@ func init() {
 	rs512 = jwt.NewRS512(jwt.RSAPrivateKey(key), jwt.RSAPublicKey(&key.PublicKey))
 }
 
-func CreateJWTMcUUID(user users.User, subject string, mcUuid *uuid.UUID) []byte {
-	return createJWT(user, subject, mcUuid, "")
-}
-
-func CreateJWTHWID(user users.User, subject string, hwid string) []byte {
-	return createJWT(user, subject, nil, hwid)
-}
-
 // roles is the list of roles that we should sign them as having
 // mcUuid or hwid is something to verify that this token is intended for them specifically
 // i.e. to prevent duplication attacks
@@ -76,7 +68,7 @@ func CreateJWTHWID(user users.User, subject string, hwid string) []byte {
 //  the client would verify that that is their hwid
 // auth cannot be the same as their impact account identifier since they won't already know it
 // (like they can't check its value against something they already know)
-func createJWT(user users.User, subject string, mcUuid *uuid.UUID, hwid string) []byte {
+func CreateJWT(user *users.User, subject string, mcUuid *uuid.UUID) []byte {
 	now := time.Now()
 	roles := user.Roles()
 	rolesArr := make([]string, len(roles))
@@ -98,7 +90,6 @@ func createJWT(user users.User, subject string, mcUuid *uuid.UUID, hwid string) 
 		},
 		Roles:  rolesArr,
 		MCUUID: mcUuidStr,
-		HWID:   hwid,
 		Legacy: user.IsLegacy(),
 	}
 

@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type databaseUser struct {
+type User struct {
 	email         sql.NullString
 	mcUUID        database.NullUUID
 	dcID          sql.NullString
@@ -34,13 +34,13 @@ var specialCases = map[uuid.UUID]UserInfo{ // TODO this should basically just be
 }
 
 var RolesData = map[string]Role{
-	"developer": Role{ID: "developer", rank: 0},
-	"pepsi":     Role{ID: "pepsi", rank: 1},
-	"staff":     Role{ID: "staff", rank: 2},
-	"premium":   Role{ID: "premium", rank: 3},
+	"developer": {ID: "developer", rank: 0},
+	"pepsi":     {ID: "pepsi", rank: 1},
+	"staff":     {ID: "staff", rank: 2},
+	"premium":   {ID: "premium", rank: 3},
 }
 
-func (user databaseUser) Email() *string {
+func (user User) Email() *string {
 	if user.email.Valid {
 		return &user.email.String
 	} else {
@@ -48,7 +48,7 @@ func (user databaseUser) Email() *string {
 	}
 }
 
-func (user databaseUser) MinecraftID() *uuid.UUID {
+func (user User) MinecraftID() *uuid.UUID {
 	if user.mcUUID.Valid {
 		return &user.mcUUID.UUID
 	} else {
@@ -56,7 +56,7 @@ func (user databaseUser) MinecraftID() *uuid.UUID {
 	}
 }
 
-func (user databaseUser) DiscordID() *string {
+func (user User) DiscordID() *string {
 	if user.dcID.Valid {
 		return &user.dcID.String
 	} else {
@@ -64,7 +64,7 @@ func (user databaseUser) DiscordID() *string {
 	}
 }
 
-func (user databaseUser) Roles() []Role {
+func (user User) Roles() []Role {
 	roles := []Role{}
 	if user.premium {
 		roles = append(roles, RolesData["premium"])
@@ -81,7 +81,7 @@ func (user databaseUser) Roles() []Role {
 	return roles
 }
 
-func (user databaseUser) UserInfo() UserInfo {
+func (user User) UserInfo() UserInfo {
 	info := UserInfo{}
 
 	if special, ok := specialCases[user.mcUUID.UUID]; ok {
@@ -99,11 +99,11 @@ func (user databaseUser) UserInfo() UserInfo {
 	return info
 }
 
-func (user databaseUser) IsLegacy() bool {
+func (user User) IsLegacy() bool {
 	return user.legacyPremium
 }
 
-func (user databaseUser) CheckPassword(password string) bool {
+func (user User) CheckPassword(password string) bool {
 	if !user.HasPassword() {
 		return false
 	}
@@ -111,7 +111,7 @@ func (user databaseUser) CheckPassword(password string) bool {
 	return user.passwdHash.String == hash
 }
 
-func (user databaseUser) HasPassword() bool {
+func (user User) HasPassword() bool {
 	return user.passwdHash.Valid
 }
 
@@ -127,12 +127,12 @@ func GetAllUsers() []User {
 	defer rows.Close()
 	ret := make([]User, 0)
 	for rows.Next() {
-		var user databaseUser
+		var user User
 		err = rows.Scan(scanDest(&user)...)
 		if err != nil {
 			panic(err)
 		}
-		ret = append(ret, &user)
+		ret = append(ret, user)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -141,12 +141,12 @@ func GetAllUsers() []User {
 	return ret
 }
 
-func LookupUserByMinecraftID(uuid uuid.UUID) User {
+func LookupUserByMinecraftID(uuid uuid.UUID) *User {
 	if database.DB == nil {
 		fmt.Println("Database not connected!")
 		return nil
 	}
-	var user databaseUser
+	var user User
 	err := database.DB.QueryRow(selectWhereString(`mc_uuid = $1`), uuid).Scan(scanDest(&user)...)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -163,6 +163,6 @@ func selectString() string {
 func selectWhereString(where string) string {
 	return selectString() + ` WHERE ` + where
 }
-func scanDest(user *databaseUser) []interface{} {
+func scanDest(user *User) []interface{} {
 	return []interface{}{&user.email, &user.mcUUID, &user.dcID, &user.passwdHash, &user.legacyPremium, &user.capeEnabled, &user.premium, &user.pepsi, &user.staff, &user.developer}
 }
