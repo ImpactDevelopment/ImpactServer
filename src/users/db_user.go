@@ -9,6 +9,7 @@ import (
 )
 
 type User struct {
+	id            uuid.UUID
 	email         sql.NullString
 	mcUUID        database.NullUUID
 	dcID          sql.NullString
@@ -142,7 +143,7 @@ func GetAllUsers() []User {
 		fmt.Println("Database not connected!")
 		return nil
 	}
-	rows, err := database.DB.Query(selectString())
+	rows, err := database.DB.Query(`SELECT * FROM users_view`)
 	if err != nil {
 		panic(err)
 	}
@@ -169,7 +170,7 @@ func LookupUserByMinecraftID(uuid uuid.UUID) *User {
 		return nil
 	}
 	var user User
-	err := database.DB.QueryRow(selectWhereString(`mc_uuid = $1`), uuid).Scan(scanDest(&user)...)
+	err := database.DB.QueryRow(`SELECT * FROM users_view WHERE mc_uuid = $1`, uuid).Scan(scanDest(&user)...)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil // no match
@@ -179,12 +180,6 @@ func LookupUserByMinecraftID(uuid uuid.UUID) *User {
 	return &user
 }
 
-func selectString() string {
-	return `SELECT email, mc_uuid, discord_id, password_hash, cape_enabled, legacy_enabled, legacy, premium, pepsi, staff, developer FROM users`
-}
-func selectWhereString(where string) string {
-	return selectString() + ` WHERE ` + where
-}
 func scanDest(user *User) []interface{} {
-	return []interface{}{&user.email, &user.mcUUID, &user.dcID, &user.passwdHash, &user.capeEnabled, &user.legacyEnabled, &user.legacy, &user.premium, &user.pepsi, &user.staff, &user.developer}
+	return []interface{}{&user.id, &user.email, &user.mcUUID, &user.dcID, &user.passwdHash, &user.capeEnabled, &user.legacyEnabled, &user.legacy, &user.premium, &user.pepsi, &user.staff, &user.developer}
 }

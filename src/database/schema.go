@@ -25,11 +25,11 @@ func createTables() error {
 			user_id  UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
 			email TEXT UNIQUE,
 			password_hash TEXT,
-			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT, /* unix seconds */
+			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT, -- unix seconds
 
 			mc_uuid UUID UNIQUE,
-			legacy_enabled BOOL NOT NULL DEFAULT TRUE, /* list this mc uuid in the premium list for 4.7 and below. this determines if you get a cape shown to other users who are using 4.7- */
-			cape_enabled BOOL NOT NULL DEFAULT TRUE, /* show a cape to others on 4.8+ */
+			legacy_enabled BOOL NOT NULL DEFAULT TRUE, -- list this mc uuid in the premium list for 4.7 and below. this determines if you get a cape shown to other users who are using 4.7-
+			cape_enabled BOOL NOT NULL DEFAULT TRUE, -- show a cape to others on 4.8+
 
 			discord_id TEXT UNIQUE,
 
@@ -42,6 +42,28 @@ func createTables() error {
 	`)
 	if err != nil {
 		log.Println("Unable to create users table")
+		return err
+	}
+
+	// A view allows us to control logical column order
+	_, err = DB.Exec(`
+			CREATE OR REPLACE VIEW users_view AS SELECT
+				user_id,
+				email,
+				mc_uuid,
+				discord_id,
+				password_hash,
+				cape_enabled,
+				legacy_enabled,
+				legacy,
+				premium,
+				pepsi,
+				staff,
+				developer
+			FROM users
+	`)
+	if err != nil {
+		log.Println("Unable to create users_view view")
 		return err
 	}
 
