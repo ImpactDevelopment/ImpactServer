@@ -35,15 +35,6 @@ func getRoleMembers(c echo.Context) error {
 	return c.String(http.StatusOK, ret)
 }
 
-func userHasRole(user users.User, roleName string) bool {
-	for _, role := range user.Roles() {
-		if role.ID == roleName {
-			return true
-		}
-	}
-	return false
-}
-
 func init() {
 	usersList := users.GetAllUsers()
 	updatedData(usersList)
@@ -93,7 +84,7 @@ func generateLegacy(usersList []users.User) map[string]string {
 	for role, _ := range users.RolesData {
 		var list strings.Builder
 		for _, user := range usersList {
-			if !userHasRole(user, role) {
+			if !user.HasRoleWithID(role) {
 				continue
 			}
 			if user.HiddenFromLegacy() {

@@ -82,6 +82,15 @@ func (user User) Roles() []Role {
 	return roles
 }
 
+func (user User) HasRoleWithID(roleID string) bool {
+	for _, role := range user.Roles() {
+		if role.ID == roleID {
+			return true
+		}
+	}
+	return false
+}
+
 func (user User) UserInfo() UserInfo {
 	info := UserInfo{}
 
