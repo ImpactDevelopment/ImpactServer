@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/cloudflare"
@@ -90,7 +91,7 @@ func updatedLegacyRoles(usersList []users.User) bool {
 func generateLegacy(usersList []users.User) map[string]string {
 	m := make(map[string]string)
 	for role, _ := range users.RolesData {
-		ret := ""
+		var list strings.Builder
 		for _, user := range usersList {
 			if !userHasRole(user, role) {
 				continue
@@ -99,10 +100,10 @@ func generateLegacy(usersList []users.User) map[string]string {
 				continue
 			}
 			if uuid := user.MinecraftID(); uuid != nil {
-				ret += uuid.String() + "\n"
+				list.WriteString(uuid.String() + "\n")
 			}
 		}
-		m[role] = ret
+		m[role] = list.String()
 	}
 	return m
 }
