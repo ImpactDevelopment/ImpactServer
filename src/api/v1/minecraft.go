@@ -95,7 +95,7 @@ func generateLegacy(usersList []users.User) map[string]string {
 			if !userHasRole(user, role) {
 				continue
 			}
-			if !user.IsLegacy() {
+			if user.HiddenFromLegacy() {
 				continue
 			}
 			if uuid := user.MinecraftID(); uuid != nil {

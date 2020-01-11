@@ -13,12 +13,13 @@ type User struct {
 	mcUUID        database.NullUUID
 	dcID          sql.NullString
 	passwdHash    sql.NullString
-	legacyPremium bool
+	legacyEnabled bool
 	capeEnabled   bool
 	premium       bool
 	pepsi         bool
 	staff         bool
 	developer     bool
+	legacy        bool
 }
 
 var specialCases = map[uuid.UUID]UserInfo{ // TODO this should basically just be a SELECT * FROM customizations;
@@ -99,8 +100,20 @@ func (user User) UserInfo() UserInfo {
 	return info
 }
 
+// IsLegacy returns true if the user was created before Impact Accounts
 func (user User) IsLegacy() bool {
-	return user.legacyPremium
+	return user.legacy
+}
+
+// IsFullAccount returns true if the user is a full Impact Account
+func (user User) IsFullAccount() bool {
+	return user.Email() != nil
+}
+
+// HiddenFromLegacy returns true if the user should not appear
+// in legacy APIs that return the UUID in plain text
+func (user User) HiddenFromLegacy() bool {
+	return !user.legacyEnabled
 }
 
 func (user User) CheckPassword(password string) bool {
@@ -158,11 +171,11 @@ func LookupUserByMinecraftID(uuid uuid.UUID) *User {
 }
 
 func selectString() string {
-	return `SELECT email, mc_uuid, discord_id, password_hash, legacy_premium, cape_enabled, premium, pepsi, staff, developer FROM users`
+	return `SELECT email, mc_uuid, discord_id, password_hash, cape_enabled, legacy_enabled, legacy, premium, pepsi, staff, developer FROM users`
 }
 func selectWhereString(where string) string {
 	return selectString() + ` WHERE ` + where
 }
 func scanDest(user *User) []interface{} {
-	return []interface{}{&user.email, &user.mcUUID, &user.dcID, &user.passwdHash, &user.legacyPremium, &user.capeEnabled, &user.premium, &user.pepsi, &user.staff, &user.developer}
+	return []interface{}{&user.email, &user.mcUUID, &user.dcID, &user.passwdHash, &user.capeEnabled, &user.legacyEnabled, &user.legacy, &user.premium, &user.pepsi, &user.staff, &user.developer}
 }
