@@ -46,8 +46,13 @@ func createTables() error {
 	}
 
 	// A view allows us to control logical column order
+	_, err = DB.Exec(`DROP VIEW IF EXISTS users_view`)
+	if err != nil {
+		log.Println("Unable to replace users_view view")
+		return err
+	}
 	_, err = DB.Exec(`
-			CREATE OR REPLACE VIEW users_view AS SELECT
+			CREATE VIEW users_view AS SELECT
 				user_id,
 				email,
 				mc_uuid,
