@@ -21,12 +21,12 @@ var userData map[string]users.UserInfo
 
 var legacyRoles map[string]string
 
-// API Handler
+// API Handler /minecraft/user/info
 func getUserInfo(c echo.Context) error {
 	return c.JSON(http.StatusOK, userData)
 }
 
-// /minecraft/user/:role/list
+// Legacy API handler /minecraft/user/:role/list
 func getRoleMembers(c echo.Context) error {
 	ret := legacyRoles[c.Param("role")]
 	if ret == "" {
