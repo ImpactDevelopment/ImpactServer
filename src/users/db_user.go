@@ -151,7 +151,7 @@ func GetAllUsers() []User {
 	ret := make([]User, 0)
 	for rows.Next() {
 		var user User
-		err = rows.Scan(scanDest(&user)...)
+		err = user.scanUsersView(rows)
 		if err != nil {
 			panic(err)
 		}
@@ -164,13 +164,17 @@ func GetAllUsers() []User {
 	return ret
 }
 
-func LookupUserByMinecraftID(uuid uuid.UUID) *User {
+func LookupUserByMinecraftID(minecraftID uuid.UUID) *User {
+	return lookupUserByField("mc_uuid", minecraftID)
+}
+
+func lookupUserByField(field string, value interface{}) *User {
 	if database.DB == nil {
 		fmt.Println("Database not connected!")
 		return nil
 	}
 	var user User
-	err := database.DB.QueryRow(`SELECT * FROM users_view WHERE mc_uuid = $1`, uuid).Scan(scanDest(&user)...)
+	err := user.scanUsersView(database.DB.QueryRow(`SELECT * FROM users_view WHERE $1 = $2`, field, value))
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil // no match
@@ -180,6 +184,13 @@ func LookupUserByMinecraftID(uuid uuid.UUID) *User {
 	return &user
 }
 
-func scanDest(user *User) []interface{} {
-	return []interface{}{&user.id, &user.email, &user.mcUUID, &user.dcID, &user.passwdHash, &user.capeEnabled, &user.legacyEnabled, &user.legacy, &user.premium, &user.pepsi, &user.staff, &user.developer}
+// scanUsersView takes a sql.Row or sql.Rows and scans it into the user.
+// It is assumed the row is has the same column order as `users_view`
+func (user *User) scanUsersView(row rowScanner) error {
+	return row.Scan(&user.id, &user.email, &user.mcUUID, &user.dcID, &user.passwdHash, &user.capeEnabled, &user.legacyEnabled, &user.legacy, &user.premium, &user.pepsi, &user.staff, &user.developer)
+}
+
+// rowScanner is implemented by sql.Row and sql.Rows
+type rowScanner interface {
+	Scan(dest ...interface{}) error
 }
