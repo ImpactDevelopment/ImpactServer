@@ -3,4 +3,6 @@ language: go
 go:
   - 1.12.x
 
-script: go test -v ./...
+script:
+  - diff -u <(echo -n) <(gofmt -d ./)
+  - go test -v ./...
