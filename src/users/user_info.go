@@ -17,6 +17,10 @@ type UserInfo struct {
 
 // NewUserInfo creates a UserInfo based on a User's roles and any special cases that apply to them
 func NewUserInfo(user User) *UserInfo {
+	if user.Incognito {
+		return nil
+	}
+
 	var info UserInfo
 
 	if special, ok := specialCases[*user.MinecraftID]; ok {
@@ -25,10 +29,6 @@ func NewUserInfo(user User) *UserInfo {
 
 	for _, role := range getRolesSorted(user.Roles) { // go in order from highest priority to least (aka numerically lowest to highest)
 		role.applyDefaults(&info)
-	}
-
-	if !user.Incognito {
-		info.Cape = ""
 	}
 
 	return &info
