@@ -19,9 +19,8 @@ func GetServerURL() *url.URL {
 		err  error
 	)
 
-	// TODO surely there is a better way than choosing between two hardcoded constants
-	if os.Getenv("APP_ENV") == "heroku" {
-		addr, err = url.Parse("https://impactclient.net")
+	if env := os.Getenv("SERVER_URL"); env != "" {
+		addr, err = url.Parse(env)
 	} else {
 		port := strings.TrimSpace(os.Getenv("PORT"))
 		switch port {
