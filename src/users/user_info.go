@@ -39,6 +39,11 @@ var specialCases = map[uuid.UUID]UserInfo{ // TODO this should basically just be
 	uuid.MustParse("2c3174fc-0c6b-4cfb-bb2b-0069bf7294d1"): {
 		TextColor: "LIGHT_PURPLE",
 	},
+	// peanut
+	uuid.MustParse(" 9d913c0a-3d57-4ce9-8b7d-689973312856"): {
+		TextColor: "BLUE",
+		BorderColor: "#FF3BB9EB,
+	},
 	// leijurv
 	uuid.MustParse("51dcd870-d33b-40e9-9fc1-aecdcff96081"): {
 		TextColor: "RED",
