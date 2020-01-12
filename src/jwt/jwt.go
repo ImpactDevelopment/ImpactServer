@@ -66,8 +66,8 @@ func CreateJWT(user *users.User, subject string) []byte {
 			IssuedAt:       jwt.NumericDate(now),
 		},
 		Roles:       user.RoleIDs(),
-		MinecraftID: user.MinecraftID().String(),
-		Legacy:      user.IsLegacy(),
+		MinecraftID: user.MinecraftID.String(),
+		Legacy:      user.Legacy,
 	}
 
 	token, err := jwt.Sign(payload, rs512)

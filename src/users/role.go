@@ -12,6 +12,13 @@ type Role struct {
 	rank int
 }
 
+var Roles = map[string]Role{
+	"developer": {ID: "developer", rank: 0},
+	"pepsi":     {ID: "pepsi", rank: 1},
+	"staff":     {ID: "staff", rank: 2},
+	"premium":   {ID: "premium", rank: 3},
+}
+
 var defaultRoleTemplates = map[string]UserInfo{
 	"developer": {
 		Cape: "http://i.imgur.com/X9NYKct.png",

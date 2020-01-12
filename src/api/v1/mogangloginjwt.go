@@ -1,10 +1,10 @@
 package v1
 
 import (
+	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"net/http"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
-	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -31,8 +31,8 @@ func mojangLoginJWT(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	user := users.LookupUserByMinecraftID(minecraftID)
-	if user == nil || len(user.Roles()) <= 0 {
+	user := database.LookupUserByMinecraftID(minecraftID)
+	if user == nil || len(user.Roles) <= 0 {
 		return echo.NewHTTPError(http.StatusForbidden, "no premium user found")
 	}
 	return c.JSONBlob(http.StatusOK, jwt.CreateJWT(user, ""))

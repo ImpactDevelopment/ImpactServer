@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"net/http"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
@@ -18,11 +19,11 @@ func mojangLoginLegacy(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	user := users.LookupUserByMinecraftID(uuidVal)
-	if user != nil && len(user.Roles()) > 0 {
+	user := database.LookupUserByMinecraftID(uuidVal)
+	if user != nil && len(user.Roles) > 0 {
 		return c.JSON(http.StatusOK, struct {
 			Roles []users.Role `json:"roles"`
-		}{Roles: user.Roles()})
+		}{Roles: user.Roles})
 	}
 	return c.JSON(http.StatusForbidden, []struct{}{})
 }

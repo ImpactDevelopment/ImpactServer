@@ -3,6 +3,7 @@ package v1
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"log"
 	"net/http"
 	"reflect"
@@ -36,11 +37,11 @@ func getRoleMembers(c echo.Context) error {
 }
 
 func init() {
-	usersList := users.GetAllUsers()
+	usersList := database.GetAllUsers()
 	updatedData(usersList)
 	updatedLegacyRoles(usersList)
 	util.DoRepeatedly(5*time.Minute, func() {
-		usersList := users.GetAllUsers()
+		usersList := database.GetAllUsers()
 		if updatedData(usersList) {
 			log.Println("MC UPDATE: Updated user info")
 			cloudflare.PurgeURLs([]string{
@@ -81,17 +82,17 @@ func updatedLegacyRoles(usersList []users.User) bool {
 
 func generateLegacy(usersList []users.User) map[string]string {
 	m := make(map[string]string)
-	for role, _ := range users.RolesData {
+	for role := range users.Roles {
 		var list strings.Builder
 		for _, user := range usersList {
 			if !user.HasRoleWithID(role) {
 				continue
 			}
-			if user.HiddenFromLegacy() {
+			if !user.LegacyEnabled {
 				continue
 			}
-			if uuid := user.MinecraftID(); uuid != nil {
-				list.WriteString(uuid.String() + "\n")
+			if minecraftID := user.MinecraftID; minecraftID != nil {
+				list.WriteString(minecraftID.String() + "\n")
 			}
 		}
 		m[role] = list.String()
@@ -102,14 +103,12 @@ func generateLegacy(usersList []users.User) map[string]string {
 func generateMap(usersList []users.User) map[string]users.UserInfo {
 	data := make(map[string]users.UserInfo)
 	for _, user := range usersList {
-		if uuid := user.MinecraftID(); uuid != nil {
-			userInfo := user.UserInfo()
-			var empty users.UserInfo
-			if userInfo == empty {
-				// if a user has cape disabled, they are trying to be incognito. we should send no entry at all. not good enough to send "HASH123":{}.
-				continue
-			}
-			data[hashUUID(*uuid)] = userInfo
+		if !user.Incognito {
+			// if a user has cape disabled, they are trying to be incognito. we should send no entry at all. not good enough to send "HASH123":{}.
+			continue
+		}
+		if minecraftID := user.MinecraftID; minecraftID != nil {
+			data[hashUUID(*minecraftID)] = *user.UserInfo
 		}
 	}
 	return data
