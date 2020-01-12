@@ -36,8 +36,10 @@ func (user *userRow) scanUsersView(row rowScanner) error {
 // makeUser converts a userRow into a users.User
 func (user *userRow) makeUser() users.User {
 	ret := users.User{
-		Legacy: user.legacy,
-		Roles:  user.roles(),
+		LegacyEnabled: user.legacyEnabled,
+		Incognito:     !user.capeEnabled,
+		Legacy:        user.legacy,
+		Roles:         user.roles(),
 	}
 	if user.email.Valid {
 		ret.Email = user.email.String
