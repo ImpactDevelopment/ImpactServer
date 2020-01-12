@@ -10,18 +10,30 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type mojangLoginRequest struct {
+	Username string `json:"username" form:"username" query:"username"`
+	Hash     string `json:"hash" form:"hash" query:"hash"`
+}
+
 func mojangLoginJWT(c echo.Context) error {
-	uuidStr, err := util.HasJoinedServer(c.QueryParam("username"), c.QueryParam("hash"))
+	var body mojangLoginRequest
+	if err := c.Bind(&body); err != nil {
+		return err
+	}
+	if body.Username == "" || body.Hash == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "both username and hash must be provided")
+	}
+	uuidStr, err := util.HasJoinedServer(body.Username, body.Hash)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusForbidden, "failed authentication with mojang").SetInternal(err)
+	}
+	minecraftID, err := uuid.Parse(uuidStr)
 	if err != nil {
 		return err
 	}
-	uuidVal, err := uuid.Parse(uuidStr) // we do this to add the dashes btw
-	if err != nil {
-		return err
+	user := users.LookupUserByMinecraftID(minecraftID)
+	if user == nil || len(user.Roles()) <= 0 {
+		return echo.NewHTTPError(http.StatusForbidden, "no premium user found")
 	}
-	user := users.LookupUserByMinecraftID(uuidVal)
-	if user != nil && len(user.Roles()) > 0 {
-		return c.JSONBlob(http.StatusOK, jwt.CreateJWT(user, "", &uuidVal))
-	}
-	return c.JSON(http.StatusForbidden, []struct{}{})
+	return c.JSONBlob(http.StatusOK, jwt.CreateJWT(user, ""))
 }

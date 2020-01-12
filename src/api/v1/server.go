@@ -3,6 +3,7 @@ package v1
 import (
 	"github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/labstack/echo/v4"
+	"net/http"
 )
 
 // API configures the Group to implement v1 of the API
@@ -16,6 +17,6 @@ func API(api *echo.Group) {
 	api.GET("/minecraft/user/:role/list", getRoleMembers, middleware.CacheUntilPurge())
 	api.GET("/dbtest", dbTest, middleware.NoCache())
 	api.GET("/minecraft/login", mojangLoginLegacy, middleware.NoCache())
-	api.GET("/login/minecraft", mojangLoginJWT, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/minecraft", mojangLoginJWT, middleware.NoCache())
 	api.GET("/emailtest", emailTest, middleware.NoCache())
 }
