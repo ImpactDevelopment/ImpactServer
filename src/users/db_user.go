@@ -174,7 +174,7 @@ func lookupUserByField(field string, value interface{}) *User {
 		return nil
 	}
 	var user User
-	err := user.scanUsersView(database.DB.QueryRow(`SELECT * FROM users_view WHERE $1 = $2`, field, value))
+	err := user.scanUsersView(database.DB.QueryRow(`SELECT * FROM users_view WHERE `+field+` = $1`, value))
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil // no match
