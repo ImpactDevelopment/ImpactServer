@@ -13,8 +13,8 @@ type Role struct {
 }
 
 var Roles = map[string]Role{
-	"developer": {ID: "developer", rank: 0},
-	"pepsi":     {ID: "pepsi", rank: 1},
+	"pepsi":     {ID: "pepsi", rank: 0},
+	"developer": {ID: "developer", rank: 1},
 	"staff":     {ID: "staff", rank: 2},
 	"premium":   {ID: "premium", rank: 3},
 }
