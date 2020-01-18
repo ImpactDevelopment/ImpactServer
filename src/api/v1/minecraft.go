@@ -3,12 +3,13 @@ package v1
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"log"
 	"net/http"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/ImpactDevelopment/ImpactServer/src/database"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/cloudflare"
 	"github.com/ImpactDevelopment/ImpactServer/src/users"

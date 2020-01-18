@@ -1,8 +1,9 @@
 package v1
 
 import (
-	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"net/http"
+
+	"github.com/ImpactDevelopment/ImpactServer/src/database"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"

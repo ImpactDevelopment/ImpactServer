@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"github.com/google/uuid"
 )
