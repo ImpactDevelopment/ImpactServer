@@ -104,6 +104,7 @@ func generateMap(usersList []users.User) map[string]users.UserInfo {
 	data := make(map[string]users.UserInfo)
 	for _, user := range usersList {
 		if user.MinecraftID != nil && user.UserInfo != nil {
+			// if a user has cape disabled, they are trying to be incognito. we should send no entry at all. not good enough to send "HASH123":{}.
 			data[hashUUID(*user.MinecraftID)] = *user.UserInfo
 		}
 	}
