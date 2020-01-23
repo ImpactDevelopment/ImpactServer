@@ -132,6 +132,9 @@ func s3Releases(resp map[string]Release) error {
 	keys := make(map[string]bool)
 
 	for _, item := range objs.Contents {
+		if *item.StorageClass != "STANDARD" {
+			continue
+		}
 		keys[*item.Key] = true
 	}
 
