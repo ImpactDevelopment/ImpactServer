@@ -25,6 +25,9 @@ var defaultRoleTemplates = map[string]UserInfo{
 	},
 	"staff": {
 		Cape: "http://i.imgur.com/uh6QcuF.png",
+		Editions: []Edition{{
+			Text: "Staff",
+		}},
 	},
 	"pepsi": {
 		Icon:            "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/textures/Pepsi_32.png",
@@ -32,9 +35,17 @@ var defaultRoleTemplates = map[string]UserInfo{
 		TextColor:       "BLUE", // #FF004B93 is the official pepsi blue
 		BackgroundColor: "#50FFFFFF",
 		BorderColor:     "#FFC9002B",
+		Editions: []Edition{{
+			Text:      "Pepsi",
+			TextColor: "#FFC9002B",
+		}},
 	},
 	"premium": {
 		Cape: "http://i.imgur.com/fc8gsyN.png",
+		Editions: []Edition{{
+			Text:      "Premium",
+			TextColor: "GOLD",
+		}},
 	},
 }
 
@@ -59,6 +70,9 @@ func (role Role) applyDefaults(info *UserInfo) {
 	}
 	if template.BorderColor != "" && info.BorderColor == "" {
 		info.BorderColor = template.BorderColor
+	}
+	if len(template.Editions) > 0 {
+		info.Editions = append(info.Editions, template.Editions...)
 	}
 }
 
