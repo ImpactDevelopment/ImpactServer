@@ -44,7 +44,7 @@ var defaultRoleTemplates = map[string]UserInfo{
 		}},
 	},
 	"spawnmason": {
-		Icon:            "https://files.impactclient.net/img/texture/spawnmason32.png",
+		Icon:            "https://files.impactclient.net/img/texture/speckles32.png",
 		TextColor:       "GOLD",
 		BackgroundColor: "#50FFFFFF",
 		BorderColor:     "RED",
