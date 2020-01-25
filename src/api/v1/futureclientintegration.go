@@ -28,7 +28,7 @@ func futureIntegration(c echo.Context) error {
 	}
 	err = rows.Err()
 	if err != nil {
-		panic(err)
+		return err
 	}
 	return c.String(http.StatusOK, ret)
 }
