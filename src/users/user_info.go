@@ -44,6 +44,6 @@ var specialCases = map[uuid.UUID]UserInfo{ // TODO this should basically just be
 	// leijurv
 	/*uuid.MustParse("51dcd870-d33b-40e9-9fc1-aecdcff96081"): {
 		TextColor: "RED",
-		Icon:      "https://files.impactclient.net/img/texture/speckles32.png",
+		Icon:      "https://files.impactclient.net/img/texture/speckles128.png",
 	},*/
 }
