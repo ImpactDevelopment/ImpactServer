@@ -21,4 +21,5 @@ func API(api *echo.Group) {
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/minecraft", mojangLoginJWT, middleware.NoCache())
 	api.GET("/emailtest", emailTest, middleware.NoCache())
 	api.GET("/premiumcheck", premiumCheck, middleware.NoCache())
+	api.GET("/futureclientintegration/masonlist", futureIntegration, middleware.NoCache())
 }
