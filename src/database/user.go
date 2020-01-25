@@ -18,6 +18,7 @@ type userRow struct {
 	capeEnabled   bool
 	premium       bool
 	pepsi         bool
+	spawnmason    bool
 	staff         bool
 	developer     bool
 	legacy        bool
@@ -31,7 +32,7 @@ type rowScanner interface {
 // scanUsersView takes a sql.Row or sql.Rows and scans it into the user.
 // It is assumed the row is has the same column order as `users_view`
 func (user *userRow) scanUsersView(row rowScanner) error {
-	return row.Scan(&user.id, &user.email, &user.minecraft, &user.discord, &user.passwdHash, &user.capeEnabled, &user.legacyEnabled, &user.legacy, &user.premium, &user.pepsi, &user.staff, &user.developer)
+	return row.Scan(&user.id, &user.email, &user.minecraft, &user.discord, &user.passwdHash, &user.capeEnabled, &user.legacyEnabled, &user.legacy, &user.premium, &user.pepsi, &user.spawnmason, &user.staff, &user.developer)
 }
 
 // makeUser converts a userRow into a users.User
@@ -68,6 +69,9 @@ func (user userRow) roles() []users.Role {
 	}
 	if user.pepsi {
 		roles = append(roles, users.Roles["pepsi"])
+	}
+	if user.spawnmason {
+		roles = append(roles, users.Roles["spawnmason"])
 	}
 	if user.developer {
 		roles = append(roles, users.Roles["developer"])

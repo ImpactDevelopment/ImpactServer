@@ -83,7 +83,10 @@ func updatedLegacyRoles(usersList []users.User) bool {
 
 func generateLegacy(usersList []users.User) map[string]string {
 	m := make(map[string]string)
-	for role := range users.Roles {
+	for role, roleVal := range users.Roles {
+		if !roleVal.LegacyList {
+			continue
+		}
 		var list strings.Builder
 		for _, user := range usersList {
 			if !user.HasRoleWithID(role) {

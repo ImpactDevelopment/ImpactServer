@@ -10,13 +10,16 @@ type Role struct {
 	ID string `json:"id"`
 	// Role rank, lower is better
 	rank int
+	// Is there a legacy list of pure UUIDs that old clients rely on?
+	LegacyList bool
 }
 
 var Roles = map[string]Role{
-	"pepsi":     {ID: "pepsi", rank: 0},
-	"developer": {ID: "developer", rank: 1},
-	"staff":     {ID: "staff", rank: 2},
-	"premium":   {ID: "premium", rank: 3},
+	"pepsi":      {ID: "pepsi", rank: 0, LegacyList: true},
+	"developer":  {ID: "developer", rank: 1, LegacyList: true},
+	"spawnmason": {ID: "spawnmason", rank: 2, LegacyList: false},
+	"staff":      {ID: "staff", rank: 3, LegacyList: true},
+	"premium":    {ID: "premium", rank: 4, LegacyList: true},
 }
 
 var defaultRoleTemplates = map[string]UserInfo{
@@ -39,6 +42,12 @@ var defaultRoleTemplates = map[string]UserInfo{
 			Text:      "Pepsi",
 			TextColor: "#FFC9002B",
 		}},
+	},
+	"spawnmason": {
+		Icon:            "https://files.impactclient.net/img/texture/spawnmason32.png",
+		TextColor:       "GOLD",
+		BackgroundColor: "#50FFFFFF",
+		BorderColor:     "RED",
 	},
 	"premium": {
 		Cape: "http://i.imgur.com/fc8gsyN.png",

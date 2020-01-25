@@ -36,6 +36,7 @@ func createTables() error {
 			legacy BOOL NOT NULL DEFAULT TRUE,
 			premium BOOL NOT NULL DEFAULT TRUE,
 			pepsi BOOL NOT NULL DEFAULT FALSE,
+			spawnmason BOOL NOT NULL DEFAULT FALSE,
 			staff BOOL NOT NULL DEFAULT FALSE,
 			developer BOOL NOT NULL DEFAULT FALSE
 		);
@@ -63,6 +64,7 @@ func createTables() error {
 				legacy,
 				premium,
 				pepsi,
+				spawnmason,
 				staff,
 				developer
 			FROM users
