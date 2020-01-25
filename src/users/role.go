@@ -15,9 +15,9 @@ type Role struct {
 }
 
 var Roles = map[string]Role{
-	"pepsi":      {ID: "pepsi", rank: 0, LegacyList: true},
-	"developer":  {ID: "developer", rank: 1, LegacyList: true},
-	"spawnmason": {ID: "spawnmason", rank: 2, LegacyList: false},
+	"spawnmason": {ID: "spawnmason", rank: 0, LegacyList: false},
+	"pepsi":      {ID: "pepsi", rank: 1, LegacyList: true},
+	"developer":  {ID: "developer", rank: 2, LegacyList: true},
 	"staff":      {ID: "staff", rank: 3, LegacyList: true},
 	"premium":    {ID: "premium", rank: 4, LegacyList: true},
 }

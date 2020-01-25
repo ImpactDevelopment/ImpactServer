@@ -47,7 +47,8 @@ func ImportFromRoles() {
 	//importFromRole("pepsi")
 	//importFromRole("developer")
 	//importFromRole("staff")
-	importFromRole("premium")
+	//importFromRole("premium")
+	importFromRole("spawnmason")
 }
 
 func importFromRole(role string) {
@@ -60,7 +61,9 @@ func importFromRole(role string) {
 			continue // oh you silly last line
 		}
 		fmt.Println(line)
-		_, err := database.DB.Exec("UPDATE users SET "+role+" = TRUE WHERE mc_uuid = $1", line)
+		// delibrately ignore duplicate errors lol
+		database.DB.Exec("INSERT INTO users(mc_uuid) VALUES ($1)", line)
+		_, err = database.DB.Exec("UPDATE users SET "+role+" = TRUE WHERE mc_uuid = $1", line)
 		if err != nil {
 			panic(err)
 		}
