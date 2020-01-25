@@ -18,9 +18,11 @@ type User struct {
 
 func (user User) RoleIDs() []string {
 	roles := user.Roles
-	arr := make([]string, len(roles))
-	for i, role := range roles {
-		arr[i] = role.ID
+	arr := make([]string, 0)
+	for _, role := range roles {
+		if role.LegacyList {
+			arr = append(arr, role.ID)
+		}
 	}
 	return arr
 }
