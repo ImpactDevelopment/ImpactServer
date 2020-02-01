@@ -115,6 +115,11 @@ func LookupUserByMinecraftID(minecraftID uuid.UUID) *users.User {
 	return lookupUserByField("mc_uuid", minecraftID)
 }
 
+// LookupUserByDiscordID returns the matching user, or nil if not found
+func LookupUserByDiscordID(discordID string) *users.User {
+	return lookupUserByField("discord_id", discordID)
+}
+
 func lookupUserByField(field string, value interface{}) *users.User {
 	if DB == nil {
 		fmt.Println("Database not connected!")
