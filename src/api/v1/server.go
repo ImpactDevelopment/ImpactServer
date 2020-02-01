@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
 	"net/http"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/middleware"
@@ -17,9 +18,9 @@ func API(api *echo.Group) {
 	api.GET("/minecraft/user/info", getUserInfo, middleware.CacheUntilPurge())
 	api.GET("/minecraft/user/:role/list", getRoleMembers, middleware.CacheUntilPurge())
 	api.GET("/dbtest", dbTest, middleware.NoCache())
-	api.GET("/minecraft/login", mojangLoginLegacy, middleware.NoCache())
-	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/minecraft", mojangLoginJWT, middleware.NoCache())
-	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/discord", discordLoginJWT, middleware.NoCache())
+	api.GET("/minecraft/login", mojangLoginLegacy, middleware.NoCache()) // TODO remove; this is only used by 4.8.1's deprecated premium login
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/minecraft", jwt.MinecraftLoginHandler, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/discord", jwt.DiscordLoginHandler, middleware.NoCache())
 	api.GET("/emailtest", emailTest, middleware.NoCache())
 	api.GET("/premiumcheck", premiumCheck, middleware.NoCache())
 	api.GET("/integration/futureclient/masonlist", futureIntegration, middleware.NoCache())

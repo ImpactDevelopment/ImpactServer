@@ -3,6 +3,8 @@ package jwt
 import (
 	"crypto/rsa"
 	"fmt"
+	"github.com/labstack/echo/v4"
+	"net/http"
 	"os"
 	"time"
 
@@ -55,13 +57,13 @@ func init() {
 // with a valid Impact server by checking the signature and issuer.
 // If the client chooses, it could cache the token and reuse it until its
 // expiration time.
-func CreateJWT(user *users.User, subject string) []byte {
+func CreateJWT(user *users.User) string {
 	now := time.Now()
 
 	payload := impactUserJWT{
 		Payload: jwt.Payload{
 			Issuer:         jwtIssuerURL,
-			Subject:        subject,
+			Subject:        "", // TODO maybe user email? or id?
 			ExpirationTime: jwt.NumericDate(now.Add(24 * time.Hour)),
 			IssuedAt:       jwt.NumericDate(now),
 		},
@@ -74,5 +76,16 @@ func CreateJWT(user *users.User, subject string) []byte {
 	if err != nil {
 		panic(err)
 	}
-	return token
+	return string(token)
+}
+
+// respondWithToken responds to a http request with the token or returns a HTTPError
+func respondWithToken(user *users.User, c echo.Context) error {
+	token := CreateJWT(user)
+	if token == "" {
+		return echo.NewHTTPError(http.StatusInternalServerError, "error creating jwt token")
+	}
+
+	// TODO respect Accept header
+	return c.String(http.StatusOK, token)
 }
