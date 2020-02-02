@@ -24,17 +24,17 @@ var Roles = map[string]Role{
 
 var defaultRoleTemplates = map[string]UserInfo{
 	"developer": {
-		Cape: "http://i.imgur.com/X9NYKct.png",
+		Cape: "https://files.impactclient.net/img/texture/developer_cape.png",
 	},
 	"staff": {
-		Cape: "http://i.imgur.com/uh6QcuF.png",
+		Cape: "https://files.impactclient.net/img/texture/staff_cape.png",
 		Editions: []Edition{{
 			Text: "Staff",
 		}},
 	},
 	"pepsi": {
-		Icon:            "https://raw.githubusercontent.com/ImpactDevelopment/Resources/master/textures/Pepsi_32.png",
-		Cape:            "http://i.imgur.com/SKjRGbH.png",
+		Icon:            "https://files.impactclient.net/img/texture/pepsi32.png",
+		Cape:            "https://files.impactclient.net/img/texture/pepsi_cape.png",
 		TextColor:       "BLUE", // #FF004B93 is the official pepsi blue
 		BackgroundColor: "#50FFFFFF",
 		BorderColor:     "#FFC9002B",
@@ -45,12 +45,13 @@ var defaultRoleTemplates = map[string]UserInfo{
 	},
 	"spawnmason": {
 		Icon:            "https://files.impactclient.net/img/texture/spawnmason128.png",
+		Cape:            "https://files.impactclient.net/img/texture/spawnmason_cape.png",
 		TextColor:       "GOLD",
 		BackgroundColor: "#90404040",
 		BorderColor:     "RED",
 	},
 	"premium": {
-		Cape: "http://i.imgur.com/fc8gsyN.png",
+		Cape: "https://files.impactclient.net/img/texture/premium_cape.png",
 		Editions: []Edition{{
 			Text:      "Premium",
 			TextColor: "GOLD",
