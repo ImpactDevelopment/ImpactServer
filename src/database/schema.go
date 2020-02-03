@@ -79,7 +79,8 @@ func createTables() error {
 		  PERFORM pg_notify('users_updated', '');
 		  RETURN NEW;
 		END;
-		$$ LANGUAGE plpgsql;`)
+		$$ LANGUAGE plpgsql;
+	`)
 	if err != nil {
 		log.Println("Unable to create notify_users_updated trigger function")
 	}
