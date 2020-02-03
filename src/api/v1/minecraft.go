@@ -7,13 +7,11 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
-	"time"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/cloudflare"
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
-	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/google/uuid"
 
 	"github.com/labstack/echo/v4"
@@ -41,7 +39,6 @@ func init() {
 	usersList := database.GetAllUsers()
 	updatedData(usersList)
 	updatedLegacyRoles(usersList)
-	util.DoRepeatedly(5*time.Minute, checkDatabaseForUpdatedUsers)
 	database.CallbackOnUsersTableUpdate(checkDatabaseForUpdatedUsers)
 }
 

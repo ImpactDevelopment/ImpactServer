@@ -22,7 +22,6 @@ func CallbackOnUsersTableUpdate(callback func()) {
 func fireCallbacks() {
 	callbacksLock.Lock()
 	defer callbacksLock.Unlock()
-	log.Println("Postgres trigger 'users_updated' got pinged!")
 	for _, callback := range callbacks {
 		callback()
 	}
@@ -34,7 +33,7 @@ func setupListener(url string) {
 	listener := pq.NewListener(url, minReconn, maxReconn, func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			log.Println("WARNING: Postgres listener hit some kind of error!")
-			log.Println(err)
+			panic(err)
 		}
 	})
 	err := listener.Listen("users_updated")
@@ -43,8 +42,19 @@ func setupListener(url string) {
 	}
 	log.Println("Postgres listener created")
 	go func() {
-		for range listener.Notify {
-			fireCallbacks()
+		for {
+			select {
+			case <-listener.Notify:
+				log.Println("Postgres trigger 'users_updated' got pinged!")
+				fireCallbacks()
+
+			// ping the listener every 30 mins even if no notify
+			// this is the suggested pattern, given that sometimes connections can drop
+			// source: https://github.com/lib/pq/blob/master/example/listen/doc.go
+			case <-time.After(30 * time.Minute):
+				go listener.Ping()
+				fireCallbacks() // failsafe
+			}
 		}
 	}()
 }
