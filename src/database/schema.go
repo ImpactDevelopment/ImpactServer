@@ -47,31 +47,53 @@ func createTables() error {
 	}
 
 	// A view allows us to control logical column order
-	_, err = DB.Exec(`DROP VIEW IF EXISTS users_view`)
-	if err != nil {
-		log.Println("Unable to replace users_view view")
-		return err
-	}
 	_, err = DB.Exec(`
-			CREATE VIEW users_view AS SELECT
-				user_id,
-				email,
-				mc_uuid,
-				discord_id,
-				password_hash,
-				cape_enabled,
-				legacy_enabled,
-				legacy,
-				premium,
-				pepsi,
-				spawnmason,
-				staff,
-				developer
-			FROM users
+		DROP VIEW IF EXISTS users_view;
+
+		CREATE VIEW users_view AS SELECT
+			user_id,
+			email,
+			mc_uuid,
+			discord_id,
+			password_hash,
+			cape_enabled,
+			legacy_enabled,
+			legacy,
+			premium,
+			pepsi,
+			spawnmason,
+			staff,
+			developer
+		FROM users;
 	`)
 	if err != nil {
 		log.Println("Unable to create users_view view")
 		return err
+	}
+
+	_, err = DB.Exec(`
+		CREATE OR REPLACE FUNCTION notify_users_updated()
+		  RETURNS trigger AS $$
+		DECLARE
+		BEGIN
+		  PERFORM pg_notify('users_updated', '');
+		  RETURN NEW;
+		END;
+		$$ LANGUAGE plpgsql;`)
+	if err != nil {
+		log.Println("Unable to create notify_users_updated trigger function")
+	}
+
+	_, err = DB.Exec(`
+		DROP TRIGGER IF EXISTS users_update_trigger ON users;
+
+		CREATE TRIGGER users_update_trigger
+		AFTER INSERT OR UPDATE OR DELETE ON users
+		FOR EACH STATEMENT
+		EXECUTE PROCEDURE notify_users_updated();
+	`)
+	if err != nil {
+		log.Println("Unable to create users_update_trigger trigger")
 	}
 
 	return nil

@@ -10,7 +10,7 @@ import (
 )
 
 func futureIntegration(c echo.Context) error {
-	auth := c.QueryParam("auth")+"0"
+	auth := c.QueryParam("auth") + "0"
 	if auth != os.Getenv("API_AUTH_SECRET") && auth != os.Getenv("FUTURE_AUTH_SECRET") {
 		return c.JSON(http.StatusForbidden, "auth wrong im sowwy")
 	}

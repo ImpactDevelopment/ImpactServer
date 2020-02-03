@@ -41,24 +41,27 @@ func init() {
 	usersList := database.GetAllUsers()
 	updatedData(usersList)
 	updatedLegacyRoles(usersList)
-	util.DoRepeatedly(5*time.Minute, func() {
-		usersList := database.GetAllUsers()
-		if updatedData(usersList) {
-			log.Println("MC UPDATE: Updated user info")
-			cloudflare.PurgeURLs([]string{
-				"https://api.impactclient.net/v1/minecraft/user/info",
-			})
-		}
-		if updatedLegacyRoles(usersList) {
-			log.Println("MC UPDATE: Updated user legacy data")
-			cloudflare.PurgeURLs([]string{
-				"https://api.impactclient.net/v1/minecraft/user/staff/list",
-				"https://api.impactclient.net/v1/minecraft/user/developer/list",
-				"https://api.impactclient.net/v1/minecraft/user/pepsi/list",
-				"https://api.impactclient.net/v1/minecraft/user/premium/list",
-			})
-		}
-	})
+	util.DoRepeatedly(5*time.Minute, checkDatabaseForUpdatedUsers)
+	database.CallbackOnUsersTableUpdate(checkDatabaseForUpdatedUsers)
+}
+
+func checkDatabaseForUpdatedUsers() {
+	usersList := database.GetAllUsers()
+	if updatedData(usersList) {
+		log.Println("MC UPDATE: Updated user info")
+		cloudflare.PurgeURLs([]string{
+			"https://api.impactclient.net/v1/minecraft/user/info",
+		})
+	}
+	if updatedLegacyRoles(usersList) {
+		log.Println("MC UPDATE: Updated user legacy data")
+		cloudflare.PurgeURLs([]string{
+			"https://api.impactclient.net/v1/minecraft/user/staff/list",
+			"https://api.impactclient.net/v1/minecraft/user/developer/list",
+			"https://api.impactclient.net/v1/minecraft/user/pepsi/list",
+			"https://api.impactclient.net/v1/minecraft/user/premium/list",
+		})
+	}
 }
 
 func updatedData(usersList []users.User) bool {

@@ -3,10 +3,10 @@ package v1
 import (
 	"errors"
 	"fmt"
-	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"net/http"
 	"regexp"
 
+	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/labstack/echo/v4"
