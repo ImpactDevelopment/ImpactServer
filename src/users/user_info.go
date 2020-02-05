@@ -48,6 +48,6 @@ var specialCases = map[uuid.UUID]UserInfo{ // TODO this should basically just be
 	},
 	// triibu popstonia
 	uuid.MustParse("8e563236-c7f5-4c82-aa27-c95bf3f4c322"): {
-		Icon: "https://cdn.discordapp.com/emojis/662370777038848050.png",
+		Icon: "https://files.impactclient.net/img/texture/popstonia.png",
 	},
 }
