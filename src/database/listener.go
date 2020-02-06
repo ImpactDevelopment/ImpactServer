@@ -33,7 +33,7 @@ func setupListener(url string) {
 	listener := pq.NewListener(url, minReconn, maxReconn, func(ev pq.ListenerEventType, err error) {
 		if err != nil {
 			log.Println("WARNING: Postgres listener hit some kind of error!")
-			panic(err)
+			log.Println(err)
 		}
 	})
 	err := listener.Listen("users_updated")
