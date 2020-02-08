@@ -21,6 +21,7 @@ func API(api *echo.Group) {
 	api.GET("/minecraft/login", mojangLoginLegacy, middleware.NoCache()) // TODO remove; this is only used by 4.8.1's deprecated premium login
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/minecraft", jwt.MinecraftLoginHandler, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/discord", jwt.DiscordLoginHandler, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/paypal/afterpayment", afterDonation, middleware.NoCache())
 	api.GET("/emailtest", emailTest, middleware.NoCache())
 	api.GET("/premiumcheck", premiumCheck, middleware.NoCache())
 	api.GET("/integration/futureclient/masonlist", futureIntegration, middleware.NoCache())

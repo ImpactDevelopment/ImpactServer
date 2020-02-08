@@ -3,6 +3,7 @@ package jwt
 import (
 	"crypto/rsa"
 	"fmt"
+	"github.com/ImpactDevelopment/ImpactServer/src/paypal"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"os"
@@ -18,6 +19,11 @@ type impactUserJWT struct {
 	Roles       []string `json:"roles"`
 	Legacy      bool     `json:"legacy"`
 	MinecraftID string   `json:"mcuuid,omitempty"`
+}
+type donationJWT struct {
+	jwt.Payload
+	OrderID string `json:"order"`
+	Amount  int    `json:"amount"`
 }
 
 var rs512 jwt.Algorithm
@@ -52,36 +58,58 @@ func init() {
 	rs512 = jwt.NewRS512(jwt.RSAPrivateKey(key), jwt.RSAPublicKey(&key.PublicKey))
 }
 
-// CreateJWT returns a jwt token for the user with the subject (if not empty).
+// CreateDonationJWT returns a jwt token for a paypal order which can then be used
+// to register for an Impact Account.
+func CreateDonationJWT(order *paypal.Order) string {
+	now := time.Now()
+
+	return createJWT(donationJWT{
+		Payload: jwt.Payload{
+			Issuer:         jwtIssuerURL,
+			Subject:        "",
+			Audience:       jwt.Audience{"impact_account"},
+			ExpirationTime: jwt.NumericDate(now.Add(90 * 24 * time.Hour)),
+			NotBefore:      jwt.NumericDate(now),
+			IssuedAt:       jwt.NumericDate(now),
+		},
+		OrderID: order.ID,
+		Amount:  order.Total(),
+	})
+}
+
+// CreateUserJWT returns a jwt token for the user with the subject (if not empty).
 // The client can then use this to verify that the user has authenticated
 // with a valid Impact server by checking the signature and issuer.
 // If the client chooses, it could cache the token and reuse it until its
 // expiration time.
-func CreateJWT(user *users.User) string {
+func CreateUserJWT(user *users.User) string {
 	now := time.Now()
 
-	payload := impactUserJWT{
+	return createJWT(impactUserJWT{
 		Payload: jwt.Payload{
 			Issuer:         jwtIssuerURL,
-			Subject:        "", // TODO maybe user email? or id?
+			Subject:        "",
+			Audience:       jwt.Audience{"impact_client", "impact_account"},
 			ExpirationTime: jwt.NumericDate(now.Add(24 * time.Hour)),
 			IssuedAt:       jwt.NumericDate(now),
 		},
 		Roles:       user.RoleIDs(),
 		MinecraftID: user.MinecraftID.String(),
 		Legacy:      user.Legacy,
-	}
+	})
+}
 
+func createJWT(payload interface{}) string {
 	token, err := jwt.Sign(payload, rs512)
 	if err != nil {
-		panic(err)
+		return ""
 	}
 	return string(token)
 }
 
 // respondWithToken responds to a http request with the token or returns a HTTPError
 func respondWithToken(user *users.User, c echo.Context) error {
-	token := CreateJWT(user)
+	token := CreateUserJWT(user)
 	if token == "" {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error creating jwt token")
 	}
