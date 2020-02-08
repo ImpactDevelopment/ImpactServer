@@ -10,6 +10,7 @@ import (
 
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
+	"github.com/ImpactDevelopment/ImpactServer/src/util/mediatype"
 	"github.com/gbrlsnchs/jwt/v3"
 )
 
@@ -86,6 +87,17 @@ func respondWithToken(user *users.User, c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error creating jwt token")
 	}
 
-	// TODO respect Accept header
-	return c.String(http.StatusOK, token)
+	// TODO more mediatypes
+	accepts := util.Accepts(*c.Request(), "text/plain", mediatype.JSON)
+	if accepts == nil {
+		return echo.NewHTTPError(http.StatusNotAcceptable)
+	}
+	switch *accepts {
+	case mediatype.JSON:
+		return c.JSON(http.StatusOK, map[string]string{
+			"token": token,
+		})
+	default:
+		return c.String(http.StatusOK, token)
+	}
 }
