@@ -88,7 +88,7 @@ func CreateUserJWT(user *users.User) string {
 	return createJWT(impactUserJWT{
 		Payload: jwt.Payload{
 			Issuer:         jwtIssuerURL,
-			Subject:        "",
+			Subject:        user.ID.String(),
 			Audience:       jwt.Audience{"impact_client", "impact_account"},
 			ExpirationTime: jwt.NumericDate(now.Add(24 * time.Hour)),
 			IssuedAt:       jwt.NumericDate(now),

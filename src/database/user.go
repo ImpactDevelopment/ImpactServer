@@ -56,6 +56,7 @@ func (user *userRow) makeUser() users.User {
 		ret.PasswordHash = user.passwdHash.String
 	}
 	ret.UserInfo = users.NewUserInfo(ret)
+	ret.ID = user.id
 	return ret
 }
 
