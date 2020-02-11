@@ -24,7 +24,7 @@ func createTables() error {
 		CREATE TABLE IF NOT EXISTS pending_donations (
 			token  UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
 			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT, -- unix seconds
-			paypal_order_id TEXT, -- can be null in case we want to make a "gift card" with no paypal order id attached
+			paypal_order_id TEXT UNIQUE, -- can be null in case we want to make a "gift card" with no paypal order id attached
 			amount INTEGER, -- can be null for the same reason
 
 			used BOOL NOT NULL DEFAULT FALSE
