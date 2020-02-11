@@ -38,13 +38,9 @@ func discordVerify(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	opt := recaptcha.VerifyOption{}
-	forward := strings.Split(c.Request().Header.Get("X-FORWARDED-FOR"), ",")[0]
-	if forward != "" {
-		opt.RemoteIP = forward
-	}
-	fmt.Println("Passing remote IP to recaptcha:", opt.RemoteIP)
-	err = captcha.VerifyWithOptions(body.Recaptcha, opt)
+	remoteIP := strings.Split(c.Request().Header.Get("X-FORWARDED-FOR"), ",")[0]
+	// remoteIP is empty string if not present, which is exactly what this library expects
+	err = captcha.VerifyWithOptions(body.Recaptcha, recaptcha.VerifyOption{RemoteIP: remoteIP})
 	if err != nil {
 		fmt.Println(err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Recaptcha failed").SetInternal(err)
