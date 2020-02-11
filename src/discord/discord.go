@@ -11,6 +11,7 @@ var discord *discordgo.Session
 
 var guildID string
 var donatorRole string
+var verifiedRole string
 
 func init() {
 	token := os.Getenv("DISCORD_BOT_TOKEN")
@@ -20,7 +21,8 @@ func init() {
 	}
 	guildID = os.Getenv("DISCORD_GUILD_ID")
 	donatorRole = os.Getenv("DISCORD_DONATOR_ROLE_ID")
-	if guildID == "" || donatorRole == "" {
+	verifiedRole = os.Getenv("DISCORD_VERIFIED_ROLE_ID")
+	if guildID == "" || donatorRole == "" || verifiedRole == "" {
 		fmt.Println("WARNING: Discord info is bad")
 		return
 	}
@@ -40,6 +42,10 @@ func init() {
 
 func GiveDonator(discordID string) error {
 	return discord.GuildMemberRoleAdd(guildID, discordID, donatorRole)
+}
+
+func GiveVerified(discordID string) error {
+	return discord.GuildMemberRoleAdd(guildID, discordID, verifiedRole)
 }
 
 func CheckServerMembership(discordID string) bool {

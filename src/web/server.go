@@ -17,6 +17,8 @@ func Server() (e *echo.Echo) {
 	e.GET("/ImpactInstaller.jar", installerForJar, mid.NoCache())
 	e.GET("/ImpactInstaller.exe", installerForExe, mid.NoCache())
 
+	e.POST("/discordverify", discordVerify)
+
 	staticEcho := echo.New()
 	staticEcho.Use(mid.CacheUntilRestart(604800)) // 1 week
 	staticEcho.Static("/", "static")
