@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/discord"
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/labstack/echo/v4"
 	"gopkg.in/ezzarghili/recaptcha-go.v4"
 )
@@ -40,7 +41,7 @@ func discordVerify(c echo.Context) error {
 	}
 	remoteIP := strings.Split(c.Request().Header.Get("X-FORWARDED-FOR"), ",")[0]
 	// remoteIP is empty string if not present, which is exactly what this library expects
-	err = captcha.VerifyWithOptions(body.Recaptcha, recaptcha.VerifyOption{RemoteIP: remoteIP})
+	err = captcha.VerifyWithOptions(body.Recaptcha, recaptcha.VerifyOption{RemoteIP: remoteIP, Hostname: util.GetServerURL().Hostname()})
 	if err != nil {
 		fmt.Println(err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Recaptcha failed").SetInternal(err)
