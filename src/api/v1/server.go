@@ -1,8 +1,9 @@
 package v1
 
 import (
-	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
 	"net/http"
+
+	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/labstack/echo/v4"
@@ -22,6 +23,8 @@ func API(api *echo.Group) {
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/minecraft", jwt.MinecraftLoginHandler, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/discord", jwt.DiscordLoginHandler, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/paypal/afterpayment", afterDonation, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/checktoken", checkToken, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/register/token", registerWithToken, middleware.NoCache())
 	api.GET("/emailtest", emailTest, middleware.NoCache())
 	api.GET("/premiumcheck", premiumCheck, middleware.NoCache())
 	api.GET("/integration/futureclient/masonlist", futureIntegration, middleware.NoCache())

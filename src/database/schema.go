@@ -21,6 +21,21 @@ func createTables() error {
 	}
 
 	_, err = DB.Exec(`
+		CREATE TABLE IF NOT EXISTS pending_donations (
+			token  UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
+			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT, -- unix seconds
+			paypal_order_id TEXT, -- can be null in case we want to make a "gift card" with no paypal order id attached
+			amount INTEGER, -- can be null for the same reason
+
+			used BOOL NOT NULL DEFAULT FALSE
+		);
+	`)
+	if err != nil {
+		log.Println("Unable to create pending_donations table")
+		return err
+	}
+
+	_, err = DB.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			user_id  UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
 			email TEXT UNIQUE,

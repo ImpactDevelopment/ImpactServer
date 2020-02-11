@@ -3,9 +3,10 @@ package paypal
 import (
 	"errors"
 	"fmt"
-	"github.com/plutov/paypal/v3"
 	"strconv"
 	"strings"
+
+	"github.com/plutov/paypal/v3"
 )
 
 type Order struct {

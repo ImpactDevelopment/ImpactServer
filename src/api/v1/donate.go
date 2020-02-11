@@ -1,10 +1,13 @@
 package v1
 
 import (
-	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
-	"github.com/ImpactDevelopment/ImpactServer/src/paypal"
-	"github.com/labstack/echo/v4"
+	"log"
 	"net/http"
+
+	"github.com/ImpactDevelopment/ImpactServer/src/database"
+	"github.com/ImpactDevelopment/ImpactServer/src/paypal"
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 )
 
 type (
@@ -12,8 +15,7 @@ type (
 		ID string `json:"orderID" form:"orderID" query:"orderID"`
 	}
 	donationResponse struct {
-		Amount int    `json:"amount"`
-		Token  string `json:"token,omitempty"`
+		Token string `json:"token"`
 	}
 )
 
@@ -42,18 +44,23 @@ func afterDonation(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error validating order").SetInternal(err)
 	}
 
-	// This token can be used to register for an impact account, assuming amount is high enough
-	token := jwt.CreateDonationJWT(order)
-	if token == "" {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Error creating donation token")
+	var token uuid.UUID
+	err = database.DB.QueryRow("INSERT INTO pending_donations(paypal_order_id, amount) VALUES ($1, $2) RETURNING token", order.ID, order.Total()).Scan(&token)
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error saving pending donation").SetInternal(err)
 	}
 
-	// TODO instead of returning a token, should we store it in the database and return a short token id instead?
-	// The jwt is rather long if users are planning to share it as a gift...
-	// Another option would be to compress it somehow maybe 🤔
+	if order.Total() < 500 {
+		// if the donation is too small, save it
+		// maybe they make multiple that sum up to over 500 eventually, lets make a record of it idk
+		// just dont give em a registration token lol
+		log.Println("Donation with PayPal order ID", order.ID, "and total", order.Total(), "is too small. token would have been", token)
+		return c.JSON(http.StatusOK, donationResponse{
+			Token: "thanks",
+		})
+	}
 	return c.JSON(http.StatusOK, donationResponse{
-		Amount: order.Total(),
-		Token:  token,
-		// TODO return expiry too?
+		Token: token.String(),
 	})
 }

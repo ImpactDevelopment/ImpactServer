@@ -2,8 +2,9 @@ package paypal
 
 import (
 	"fmt"
-	"github.com/plutov/paypal/v3"
 	"os"
+
+	"github.com/plutov/paypal/v3"
 )
 
 var client *paypal.Client

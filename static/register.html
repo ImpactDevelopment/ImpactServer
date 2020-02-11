@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+
+
+    <!-- CSS  -->
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <link rel="stylesheet" type="text/css" href="/min/style-min.css"/>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+
+</head>
+<body>
+    <div id="hide_this_if_the_token_is_valid">
+    Checking token...
+</div>
+    <div style="display: none" id="show_this_if_the_token_is_valid">
+        your token is valid!<br>
+        lets make you an IMPCAT ACCOUNT<br><br>
+        what is your discord id (its just the numbers, i DONT want your @blah#1234 tag, DONT put that in) <input type="text" name="discord" id="discord" /><br>
+        what is your minecraft uuid (NOT your username) (u can get it from namemc.com) paste it here thanks <input type="text" name="mcuuid" id="mcuuid" /><br>
+        what is your email paste it here thanks <input type="text" name="email" id="email" /><br>
+        password please paste it here thanks <input type="password" name="password" id="password" /><br>
+        <input type="button" onclick="submitlol()" value="submit" />
+    </div>
+    <h1><div id="response_from_server_goes_here"></div></h1>
+<script>
+    if (window.location.search.indexOf("token=") == -1) {
+        document.getElementsByTagName("body")[0].innerHTML="token missing";
+    } else {
+        var token = window.location.search.split("token=")[1];
+        console.log(token);
+        $.get("https://api.impactclient.net/v1/checktoken?token="+token, function(data){
+            if (data == "true") {
+                document.getElementById("show_this_if_the_token_is_valid").style="";
+                document.getElementById("hide_this_if_the_token_is_valid").style="display:none";
+            }
+        })  .fail(function() {
+   document.getElementsByTagName("body")[0].innerHTML="token invalid";
+  });
+    }
+    function submitlol(){
+        var discord=document.getElementById("discord").value;
+        var mcuuid=document.getElementById("mcuuid").value;
+        var email=document.getElementById("email").value;
+        var password=document.getElementById("password").value;
+        $.post("https://api.impactclient.net/v1/register/token", {token: token, discord: discord, mcuuid: mcuuid, email:email, password:password}).done(function(data){
+            document.getElementById("response_from_server_goes_here").innerHTML=data;
+        }).fail(function(data){
+            document.getElementById("response_from_server_goes_here").innerHTML=data.responseText;
+        });
+    }
+</script>
+</body>
+
+</html>

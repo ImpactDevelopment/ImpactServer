@@ -3,11 +3,11 @@ package jwt
 import (
 	"crypto/rsa"
 	"fmt"
-	"github.com/ImpactDevelopment/ImpactServer/src/paypal"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/labstack/echo/v4"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
@@ -56,25 +56,6 @@ func init() {
 
 	// rs512 can be used to sign and verify tokens, e.g. jtw.Sign(payload []byte, rs512 Algorithm)
 	rs512 = jwt.NewRS512(jwt.RSAPrivateKey(key), jwt.RSAPublicKey(&key.PublicKey))
-}
-
-// CreateDonationJWT returns a jwt token for a paypal order which can then be used
-// to register for an Impact Account.
-func CreateDonationJWT(order *paypal.Order) string {
-	now := time.Now()
-
-	return createJWT(donationJWT{
-		Payload: jwt.Payload{
-			Issuer:         jwtIssuerURL,
-			Subject:        "",
-			Audience:       jwt.Audience{"impact_account"},
-			ExpirationTime: jwt.NumericDate(now.Add(90 * 24 * time.Hour)),
-			NotBefore:      jwt.NumericDate(now),
-			IssuedAt:       jwt.NumericDate(now),
-		},
-		OrderID: order.ID,
-		Amount:  order.Total(),
-	})
 }
 
 // CreateUserJWT returns a jwt token for the user with the subject (if not empty).

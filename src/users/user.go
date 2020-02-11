@@ -5,7 +5,7 @@ import (
 )
 
 type User struct {
-	ID uuid.UUID
+	ID            uuid.UUID
 	Email         string
 	MinecraftID   *uuid.UUID
 	DiscordID     string

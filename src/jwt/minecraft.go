@@ -1,11 +1,12 @@
 package jwt
 
 import (
+	"net/http"
+
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 type minecraftRequest struct {
