@@ -27,7 +27,8 @@ func createTables() error {
 			paypal_order_id TEXT UNIQUE, -- can be null in case we want to make a "gift card" with no paypal order id attached
 			amount INTEGER, -- can be null for the same reason
 
-			used BOOL NOT NULL DEFAULT FALSE
+			used BOOL NOT NULL DEFAULT FALSE,
+			used_by UUID -- user_id, not mcuuid
 		);
 	`)
 	if err != nil {

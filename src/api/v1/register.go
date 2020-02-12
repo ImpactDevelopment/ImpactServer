@@ -8,6 +8,7 @@ import (
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"github.com/ImpactDevelopment/ImpactServer/src/discord"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -75,12 +76,13 @@ func registerWithToken(c echo.Context) error {
 	if resp.Code() != 200 {
 		return echo.NewHTTPError(http.StatusBadRequest, "bad mc uuid")
 	}
-	_, err = database.DB.Exec("UPDATE pending_donations SET used = true WHERE token = $1", body.Token)
+	var userID uuid.UUID
+	err = database.DB.QueryRow("INSERT INTO users(email, password_hash, mc_uuid, discord_id) VALUES ($1, $2, $3, $4) RETURNING user_id", body.Email, hashedPassword, body.Mcuuid, body.Discord).Scan(&userID)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	_, err = database.DB.Exec("INSERT INTO users(email, password_hash, mc_uuid, discord_id) VALUES ($1, $2, $3, $4)", body.Email, hashedPassword, body.Mcuuid, body.Discord)
+	_, err = database.DB.Exec("UPDATE pending_donations SET used = true, used_by = $1 WHERE token = $2", userID, body.Token)
 	if err != nil {
 		log.Println(err)
 		return err
