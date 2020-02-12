@@ -8,7 +8,9 @@
     <form action="/discordverify" method="POST">
     <div id="discordid">
     	Please paste your Discord User ID into this box. This is just the numbers (e.g. mine is 297773911158816769). This is <b>not</b> your @username#1234. <a href="https://support.discordapp.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-">How to get it</a><br/>
-    	<input type="text" name="discord" id="discord" /> <br/> <br/> <br/>
+    	<input type="text" name="discord" id="discord" onchange="checkStupidity()" onkeydown="checkStupidity()" onkeyup="checkStupidity()"/> 
+      <div id="stupid" style="display:none"><div style="color:red"><h1>No! Not your @username#1234! Your <a href="https://support.discordapp.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-">Discord User ID</a> is just numbers.</h1></div></div>
+      <br/> <br/> <br/>
     </div>
     <script>
     	if (window.location.search.indexOf("discord=") != -1) {
@@ -16,10 +18,21 @@
         	document.getElementById("discord").value = discord;
         	document.getElementById("discordid").style="display:none";
         }
+
+        function checkStupidity(){
+          var str = document.getElementById("discord").value;
+          if (str.indexOf("@") != -1 || str.indexOf("#") != -1) {
+            document.getElementById("submit").style="display:none";
+            document.getElementById("stupid").style="";
+          }else{
+            document.getElementById("stupid").style="display:none";
+            document.getElementById("submit").style="";
+          }
+        }
     </script>
       <div class="g-recaptcha" data-sitekey="6Lf19NcUAAAAADBY-60OxWuSMgr4XMH3aq1BZYRs"></div>
       <br/>
-      <input type="submit" value="Submit">
+      <input type="submit" value="Submit" id="submit">
     </form>
   </body>
 </html>
