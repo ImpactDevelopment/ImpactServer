@@ -58,12 +58,13 @@
         }
       }
 
+      var oauthUrl = "https://discordapp.com/oauth2/authorize?client_id=452934110755684382&redirect_uri=https%3A%2F%2Fimpactclient.net%2Fdiscord.html&response_type=code&scope=identify" + (getAlreadyMember() ? "" : "%20guilds.join") + "&response_type=token";
+
       function redirectToLogin() {
-        var url = "https://discordapp.com/oauth2/authorize?client_id=452934110755684382&redirect_uri=https%3A%2F%2Fimpactclient.net%2Fdiscord.html&response_type=code&scope=identify" + (getAlreadyMember() ? "" : "%20guilds.join") + "&response_type=token"
         try {
-          window.location.replace(url)
+          window.location.replace(oauthUrl);
         } catch (e) {
-          window.location = url
+          window.location = oauthUrl;
         }
       }
     </script>
@@ -72,19 +73,73 @@
       * Ok so let's try to redirect before even doing the <body>
       * If this fails, it's ok since we just show them a link.
       */
-      if (!getAuthToken() && !getProvidedId()) {
+      if (!getAuthToken() && !getProvidedId() && getAlreadyMember()) {
         redirectToLogin()
       }
     </script>
+    <!-- CSS  -->
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="/min/style-min.css" />
   </head>
   <body>
+    <header>
+    <div class="navbar-fixed">
+        <nav role="navigation">
+            <div class="nav-wrapper container">
+                <a href="#" class="brand-logo"><h1>Impact</h1></a>
+                <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="small fa fa-bars" aria-hidden="true"></i></a>
+
+            </div>
+        </nav>
+    </div>
+</header>
    <noscript>
      You must have javascript enabled to use this tool
    </noscript>
-    <p class="hide-if-authenticated">
-      <a href="https://discordapp.com/oauth2/authorize?client_id=452934110755684382&redirect_uri=https%3A%2F%2Fimpactclient.net%2Fdiscord.html&response_type=code&scope=identify%20guilds.join&response_type=token">
-        Log in with discord
-      </a>
+    <p class="hide-if-authenticated hidden">
+      <div class="section">
+        <div class="container">
+          <div class="row">
+            <p class="col s12 center large_text">
+              <b><a href="https://discordapp.com/oauth2/authorize?client_id=452934110755684382&redirect_uri=https%3A%2F%2Fimpactclient.net%2Fdiscord.html&response_type=code&scope=identify%20guilds.join&response_type=token" id="oauth_link" style="font-weight:400">
+        Click here</a></b> to login with Discord and be added to our Discord server!
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="container">
+          <div class="row">
+            <p class="col s12" style="font-size:11px;">
+              Alternatively, if you're ridiculously paranoid and won't trust OAuth, you can do the much more complicated procedure with zero OAuth:
+              <ol style="font-size:11px;">
+                <li>
+                  Click <a href="https://discord.gg/JA397mC">this</a> invite link
+                </li>
+                <li>
+                  Open your DM from Impact Bot
+                </li>
+                <li>
+                  Click the link at the top of that welcome DM
+                </li>
+                <li>
+                  Get sent back to this page with info prefilled
+                </li>
+                <li>
+                  Complete the recaptcha
+                </li>
+                <li>
+                  Submit the form
+                </li>
+                <li>
+                  Receive the verified rank
+                </li>
+              </ol>
+            </p>
+          </div>
+        </div>
+      </div>
     </p>
     <form class="show-if-authenticated hidden" action="/discordverify" method="post">
       <p>
@@ -102,6 +157,7 @@
       showOrHideStuff()
       document.getElementById("token").value = getAuthToken()
       document.getElementById("id").value = getProvidedId()
+      document.getElementById("oauth_link").href = oauthUrl
     </script>
   </body>
 </html>
