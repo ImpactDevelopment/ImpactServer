@@ -3,10 +3,11 @@ package discord
 import (
 	"errors"
 	"fmt"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"os"
 	"regexp"
+
+	"github.com/labstack/echo/v4"
 
 	"github.com/bwmarrin/discordgo"
 )

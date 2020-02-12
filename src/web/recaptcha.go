@@ -28,20 +28,18 @@ func init() {
 	}
 }
 
-type verification struct {
+type recaptchaBinder struct {
 	Recaptcha string `json:"g-recaptcha-response" form:"g-recaptcha-response" query:"g-recaptcha-response"`
-	Token     string `json:"token" form:"token" query:"token"`
-	Id        string `json:"discord" form:"discord" query:"discord"`
 }
 
-func discordVerify(c echo.Context) error {
-	body := &verification{}
+func verifyRecaptcha(c echo.Context) error {
+	body := &recaptchaBinder{}
 	err := c.Bind(body)
 	if err != nil {
 		return err
 	}
-	if body.Recaptcha == "" || (body.Id == "" && body.Token == "") {
-		return echo.NewHTTPError(http.StatusBadRequest, "recapture and discord id (or access token) must be provided")
+	if body.Recaptcha == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "recaptcha must be provided")
 	}
 
 	remoteIP := strings.Split(c.Request().Header.Get("X-FORWARDED-FOR"), ",")[0]
@@ -50,6 +48,36 @@ func discordVerify(c echo.Context) error {
 	if err != nil {
 		fmt.Println(err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Recaptcha failed").SetInternal(err)
+	}
+	return nil
+}
+
+func simpleRecaptchaCheck(c echo.Context) error {
+	err := verifyRecaptcha(c)
+	if err != nil {
+		return err
+	}
+	return c.String(200, "Success")
+}
+
+type verification struct {
+	Token string `json:"token" form:"token" query:"token"`
+	Id    string `json:"discord" form:"discord" query:"discord"`
+}
+
+func discordVerify(c echo.Context) error {
+	body := &verification{}
+	err := c.Bind(body)
+	if err != nil {
+		return err
+	}
+	err = verifyRecaptcha(c)
+	if err != nil {
+		return err
+	}
+
+	if body.Id == "" && body.Token == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, " discord id (or access token) must be provided")
 	}
 
 	// Get the user's identity
