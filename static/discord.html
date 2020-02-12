@@ -156,14 +156,18 @@
           </div>
         </div>
       </div>
-    <form class="show-if-authenticated hidden" action="/discordverify" method="post">
+    <form class="show-if-authenticated hidden" action="/discordverify" method="post" id="theForm">
       <p>
         Please prove you are not a robot:
       </p>
-      <div class="g-recaptcha" data-sitekey="6Lf19NcUAAAAADBY-60OxWuSMgr4XMH3aq1BZYRs"></div>
+      <script>
+        function recaptchaCallback(){
+           document.getElementById("theForm").submit(); 
+        }
+      </script>
+      <div class="g-recaptcha" data-callback="recaptchaCallback" data-sitekey="6Lf19NcUAAAAADBY-60OxWuSMgr4XMH3aq1BZYRs"></div>
       <input type="hidden" id="token" name="token">
       <input type="hidden" id="id" name="discord">
-      <input type="submit" value="Submit" id="submit">
     </form>
 
     <!-- Scripts at the end of the <body> is basically kinda like DOM ready -->
