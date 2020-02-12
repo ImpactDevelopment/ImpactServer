@@ -31,6 +31,7 @@ func init() {
 type verification struct {
 	Recaptcha string `json:"g-recaptcha-response" form:"g-recaptcha-response" query:"g-recaptcha-response"`
 	Token     string `json:"token" form:"token" query:"token"`
+	Id        string `json:"discord" form:"discord" query:"discord"`
 }
 
 func discordVerify(c echo.Context) error {
@@ -39,6 +40,10 @@ func discordVerify(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+	if body.Recaptcha == "" || (body.Id == "" && body.Token == "") {
+		return echo.NewHTTPError(http.StatusBadRequest, "recapture and discord id (or access token) must be provided")
+	}
+
 	remoteIP := strings.Split(c.Request().Header.Get("X-FORWARDED-FOR"), ",")[0]
 	// remoteIP is empty string if not present, which is exactly what this library expects
 	err = captcha.VerifyWithOptions(body.Recaptcha, recaptcha.VerifyOption{RemoteIP: remoteIP, Hostname: util.GetServerURL().Hostname()})
@@ -48,9 +53,14 @@ func discordVerify(c echo.Context) error {
 	}
 
 	// Get the user's identity
-	discordId, err := discord.GetUserId(body.Token)
-	if err != nil {
-		return err
+	var discordId string
+	if body.Id != "" {
+		discordId = body.Id
+	} else {
+		discordId, err = discord.GetUserId(body.Token)
+		if err != nil {
+			return err
+		}
 	}
 
 	if !discord.CheckServerMembership(discordId) {

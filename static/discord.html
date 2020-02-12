@@ -8,8 +8,13 @@
       }
     </style>
     <script>
-
       /* Functions */
+      function getProvidedId() {
+        // Impact bot gives us a nice, normal, query string
+        var query = new URLSearchParams(window.location.search)
+        return query.get("discord")
+      }
+
       function getAuthToken() {
         // discord's implicit grant passes params as a #hash not a ?query, let's make a query object
         // URLSearchParams works on everything except IE: https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams#Browser_compatibility
@@ -22,15 +27,15 @@
       }
 
       function showOrHideStuff() {
-        var i, elm, token, showIfAuthed, hideIfAuthed
+        var i, elm, authed, showIfAuthed, hideIfAuthed
 
-        token = getAuthToken()
+        authed = getAuthToken() || getProvidedId()
         showIfAuthed = document.getElementsByClassName("show-if-authenticated")
         hideIfAuthed = document.getElementsByClassName("hide-if-authenticated")
 
         for (i = 0; i < showIfAuthed.length; i++) {
           elm = showIfAuthed[i]
-          if (token) {
+          if (authed) {
             elm.classList.remove("hidden")
           } else {
             elm.classList.add("hidden")
@@ -39,7 +44,7 @@
 
         for (i = 0; i < hideIfAuthed.length; i++) {
           elm = hideIfAuthed[i]
-          if (token) {
+          if (authed) {
             elm.classList.add("hidden")
           } else {
             elm.classList.remove("hidden")
@@ -61,7 +66,7 @@
       * Ok so let's try to redirect before even doing the <body>
       * If this fails, it's ok since we just show them a link.
       */
-      if (!getAuthToken()) {
+      if (!getAuthToken() && !getProvidedId()) {
         redirectToLogin()
       }
     </script>
@@ -81,6 +86,7 @@
       </p>
       <div class="g-recaptcha" data-sitekey="6Lf19NcUAAAAADBY-60OxWuSMgr4XMH3aq1BZYRs"></div>
       <input type="hidden" id="token" name="token">
+      <input type="hidden" id="id" name="discord">
       <input type="submit" value="Submit" id="submit">
     </form>
 
@@ -88,7 +94,8 @@
     <script src="https://www.google.com/recaptcha/api.js" async></script>
     <script async>
       showOrHideStuff()
-      getTokenField().value = getAuthToken()
+      document.getElementById("token").value = getAuthToken()
+      document.getElementById("id").value = getProvidedId()
     </script>
   </body>
 </html>
