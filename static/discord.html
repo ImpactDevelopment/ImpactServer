@@ -15,6 +15,12 @@
         return query.get("discord")
       }
 
+      function getAlreadyMember() {
+        // The link in #verify
+        var query = new URLSearchParams(window.location.search)
+        return query.get("member") === "1"
+      }
+
       function getAuthToken() {
         // discord's implicit grant passes params as a #hash not a ?query, let's make a query object
         // URLSearchParams works on everything except IE: https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams#Browser_compatibility
@@ -53,7 +59,7 @@
       }
 
       function redirectToLogin() {
-        var url = "https://discordapp.com/oauth2/authorize?client_id=452934110755684382&redirect_uri=https%3A%2F%2Fimpactclient.net%2Fdiscord.html&response_type=code&scope=identify%20guilds.join&response_type=token"
+        var url = "https://discordapp.com/oauth2/authorize?client_id=452934110755684382&redirect_uri=https%3A%2F%2Fimpactclient.net%2Fdiscord.html&response_type=code&scope=identify" + (getAlreadyMember() ? "" : "%20guilds.join") + "&response_type=token"
         try {
           window.location.replace(url)
         } catch (e) {
