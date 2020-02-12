@@ -20,8 +20,7 @@
         }
 
         function checkStupidity(){
-          var str = document.getElementById("discord").value;
-          if (str.indexOf("@") != -1 || str.indexOf("#") != -1) {
+          if (!/^[0-9]*$/.test(document.getElementById("discord").value)) {
             document.getElementById("submit").style="display:none";
             document.getElementById("stupid").style="";
           }else{
