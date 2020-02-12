@@ -1,8 +1,12 @@
 package discord
 
 import (
+	"errors"
 	"fmt"
+	"github.com/labstack/echo/v4"
+	"net/http"
 	"os"
+	"regexp"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -12,6 +16,9 @@ var discord *discordgo.Session
 var guildID string
 var donatorRole string
 var verifiedRole string
+
+// Discord's OAuth tokens are alphanumeric
+var discordOAuthToken = regexp.MustCompile(`^[A-Za-z0-9]+$`)
 
 func init() {
 	token := os.Getenv("DISCORD_BOT_TOKEN")
@@ -38,6 +45,36 @@ func init() {
 
 	myselfID := user.ID
 	fmt.Println("I am", myselfID)
+}
+
+func GetUserId(accessToken string) (userId string, err error) {
+	// Validate the token, prevent trying to auth with discord using some completely invalid token
+	if !discordOAuthToken.MatchString(accessToken) {
+		return "", echo.NewHTTPError(http.StatusBadRequest, "invalid access_token "+accessToken)
+	}
+
+	// Create a discord session using the provided token. Does not verify the token is valid in any way.
+	// Using discordgo here is massively overkill, but who cares
+	// This won't use websockets unless we call session.Open(), so there's no need to call Close() either.
+	session, err := discordgo.New("Bearer " + accessToken)
+	if err != nil {
+		return "", echo.NewHTTPError(http.StatusInternalServerError, "error setting up discord session").SetInternal(err)
+	}
+
+	// Get the user's identity
+	discordUser, err := session.User("@me")
+	if err != nil {
+		var restErr *discordgo.RESTError
+		if errors.As(err, &restErr) {
+			return "", echo.NewHTTPError(http.StatusUnauthorized, fmt.Sprintf(`error authenticating with discord "%s"`, restErr.Message.Message))
+		}
+		return "", echo.NewHTTPError(http.StatusInternalServerError, "error authenticating with discord").SetInternal(err)
+	}
+	if discordUser.ID == "" {
+		return "", echo.NewHTTPError(http.StatusUnauthorized, "no discord user found")
+	}
+
+	return discordUser.ID, nil
 }
 
 func GiveDonator(discordID string) error {

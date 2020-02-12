@@ -30,7 +30,7 @@ func init() {
 
 type verification struct {
 	Recaptcha string `json:"g-recaptcha-response" form:"g-recaptcha-response" query:"g-recaptcha-response"`
-	Discord   string `json:"discord" form:"discord" query:"discord"`
+	Token     string `json:"token" form:"token" query:"token"`
 }
 
 func discordVerify(c echo.Context) error {
@@ -47,10 +47,16 @@ func discordVerify(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Recaptcha failed").SetInternal(err)
 	}
 
-	if !discord.CheckServerMembership(body.Discord) {
-		return echo.NewHTTPError(http.StatusBadRequest, body.Discord+" doesn't appear to be a member of our discord?")
+	// Get the user's identity
+	discordId, err := discord.GetUserId(body.Token)
+	if err != nil {
+		return err
 	}
-	err = discord.GiveVerified(body.Discord)
+
+	if !discord.CheckServerMembership(discordId) {
+		return echo.NewHTTPError(http.StatusBadRequest, discordId+" doesn't appear to be a member of our discord?")
+	}
+	err = discord.GiveVerified(discordId)
 	if err != nil {
 		return err
 	}
