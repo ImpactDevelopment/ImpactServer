@@ -78,6 +78,14 @@ func GetUserId(accessToken string) (userId string, err error) {
 	return discordUser.ID, nil
 }
 
+func JoinOurServer(accessToken string, discordID string, donator bool) error {
+	roles := []string{verifiedRole}
+	if donator {
+		roles = append(roles, donatorRole)
+	}
+	return discord.GuildMemberAdd(accessToken, guildID, discordID, "", roles, false, false)
+}
+
 func GiveDonator(discordID string) error {
 	return discord.GuildMemberRoleAdd(guildID, discordID, donatorRole)
 }

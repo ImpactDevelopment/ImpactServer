@@ -91,12 +91,22 @@ func discordVerify(c echo.Context) error {
 		}
 	}
 
-	if !discord.CheckServerMembership(discordId) {
-		return echo.NewHTTPError(http.StatusBadRequest, discordId+" doesn't appear to be a member of our discord?")
+	if discord.CheckServerMembership(discordId) {
+		err = discord.GiveVerified(discordId)
+		if err != nil {
+			return err
+		}
+	} else {
+		if body.Token == "" {
+			// they arent in, and we cant join since no token :(
+			return echo.NewHTTPError(http.StatusBadRequest, discordId+" doesn't appear to be a member of our discord?")
+		} else {
+			err = discord.JoinOurServer(body.Token, discordId, false)
+			if err != nil {
+				return err
+			}
+		}
 	}
-	err = discord.GiveVerified(discordId)
-	if err != nil {
-		return err
-	}
+
 	return c.String(200, "Success")
 }
