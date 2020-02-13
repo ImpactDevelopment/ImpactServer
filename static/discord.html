@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
     <title>Discord verification</title>
+
+    <!-- URLSearchParams is not supported on IE, but the URL polyfill should work on IE8+ -->
+    <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js?features=es5%2CURL%2Chtml5shiv"></script>
+
     <script>
         /* Functions */
         function onRecaptcha() {
@@ -22,7 +26,6 @@
 
         function getAuthToken() {
             // discord's implicit grant passes params as a #hash not a ?query, let's make a query object
-            // URLSearchParams works on everything except IE: https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams#Browser_compatibility
             var query = new URLSearchParams(window.location.hash)
             return query.get("access_token")
         }
@@ -72,6 +75,7 @@
             }
         }
     </script>
+
     <script>
         /*
         * Ok so let's try to redirect before even doing the <body>.
