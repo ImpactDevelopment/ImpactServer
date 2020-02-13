@@ -3,7 +3,13 @@
  *
  * Made By Joash Pereira
  * Thanks for MaterializeCSS.com
+ *
+ * Additional tweaks by the Impact Development team
  */
+
+.hidden {
+    display: none;
+}
 
 .default_color{
     background-color: #2196F3 !important;
@@ -15,11 +21,12 @@
 
 .large_text {
     font-size: 2.4rem;
-    font-weight: 100; .large_text i,
+    font-weight: 100;
 }
 
 .med_text {
     font-size: 1.8rem;
+    font-weight: 100;
 }
 
 h2, h3 {
@@ -46,6 +53,13 @@ strong {
     font-weight: bold;
 }
 
+code {
+    font-family: "Courier New", Courier, monospace;
+    color: #181818;
+    background-color: #f0f0f0;
+    padding: 2px;
+}
+
 h2 i, h3 i, h4 i, .large_text i,
 h2 b, h3 b, h4 b, .large_text b,
 h2 em, h3 em, h4 em .large_text em {
@@ -53,7 +67,7 @@ h2 em, h3 em, h4 em .large_text em {
 }
 
 h2 strong, h3 strong, h4 strong, .large_text strong {
-    font-weight: 200;
+    font-weight: 300;
 }
 
 nav, footer, .page-footer {

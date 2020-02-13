@@ -1,183 +1,193 @@
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
     <title>Discord verification</title>
-    <style>
-      .hidden {
-        display: none;
-      }
-    </style>
     <script>
-      /* Functions */
-      function getProvidedId() {
-        // Impact bot gives us a nice, normal, query string
-        var query = new URLSearchParams(window.location.search)
-        return query.get("discord")
-      }
-
-      function getAlreadyMember() {
-        // The link in #verify
-        var query = new URLSearchParams(window.location.search)
-        return query.get("member") === "1"
-      }
-
-      function getAuthToken() {
-        // discord's implicit grant passes params as a #hash not a ?query, let's make a query object
-        // URLSearchParams works on everything except IE: https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams#Browser_compatibility
-        var query = new URLSearchParams(window.location.hash)
-        return query.get("access_token")
-      }
-
-      function getTokenField() {
-        return document.getElementById("token")
-      }
-
-      function showOrHideStuff() {
-        var i, elm, authed, showIfAuthed, hideIfAuthed
-
-        authed = getAuthToken() || getProvidedId()
-        showIfAuthed = document.getElementsByClassName("show-if-authenticated")
-        hideIfAuthed = document.getElementsByClassName("hide-if-authenticated")
-
-        for (i = 0; i < showIfAuthed.length; i++) {
-          elm = showIfAuthed[i]
-          if (authed) {
-            elm.classList.remove("hidden")
-          } else {
-            elm.classList.add("hidden")
-          }
+        /* Functions */
+        function onRecaptcha() {
+            document.getElementById("theForm").submit();
         }
 
-        for (i = 0; i < hideIfAuthed.length; i++) {
-          elm = hideIfAuthed[i]
-          if (authed) {
-            elm.classList.add("hidden")
-          } else {
-            elm.classList.remove("hidden")
-          }
+        function getProvidedId() {
+            // Impact bot gives us a nice, normal, query string
+            var query = new URLSearchParams(window.location.search)
+            return query.get("discord")
         }
-      }
 
-      var oauthUrl = "https://discordapp.com/oauth2/authorize?client_id=452934110755684382&redirect_uri=https%3A%2F%2Fimpactclient.net%2Fdiscord.html&response_type=code&scope=identify" + (getAlreadyMember() ? "" : "%20guilds.join") + "&response_type=token";
-
-      function redirectToLogin() {
-        try {
-          window.location.replace(oauthUrl);
-        } catch (e) {
-          window.location = oauthUrl;
+        function getAlreadyMember() {
+            // The link in #verify, we don't need "guilds.join"
+            var query = new URLSearchParams(window.location.search)
+            return query.get("member") === "1"
         }
-      }
+
+        function getAuthToken() {
+            // discord's implicit grant passes params as a #hash not a ?query, let's make a query object
+            // URLSearchParams works on everything except IE: https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams#Browser_compatibility
+            var query = new URLSearchParams(window.location.hash)
+            return query.get("access_token")
+        }
+
+        function getOAuthUrl() {
+            return "https://discordapp.com/oauth2/authorize?client_id=452934110755684382&redirect_uri=https%3A%2F%2Fimpactclient.net%2Fdiscord.html&response_type=code&scope=identify" + (getAlreadyMember() ? "" : "%20guilds.join") + "&response_type=token"
+        }
+
+        function showOrHideStuff() {
+            var i, elm, authed, showIfAuthed, hideIfAuthed
+
+            authed = getAuthToken() || getProvidedId()
+            showIfAuthed = document.getElementsByClassName("show-if-authenticated")
+            hideIfAuthed = document.getElementsByClassName("hide-if-authenticated")
+
+            for (i = 0; i < showIfAuthed.length; i++) {
+                elm = showIfAuthed[i]
+                if (authed) {
+                    elm.classList.remove("hidden")
+                } else {
+                    elm.classList.add("hidden")
+                }
+            }
+
+            for (i = 0; i < hideIfAuthed.length; i++) {
+                elm = hideIfAuthed[i]
+                if (authed) {
+                    elm.classList.add("hidden")
+                } else {
+                    elm.classList.remove("hidden")
+                }
+            }
+        }
+
+        function gtag() {
+            if (!window.dataLayer) {
+                window.dataLayer = []
+            }
+            window.dataLayer.push(arguments)
+        }
+
+        function redirect(url) {
+            try {
+                window.location.replace(url);
+            } catch (e) {
+                window.location = url;
+            }
+        }
     </script>
     <script>
-      /*
-      * Ok so let's try to redirect before even doing the <body>
-      * If this fails, it's ok since we just show them a link.
-      */
-      if (!getAuthToken() && !getProvidedId() && getAlreadyMember()) {
-        redirectToLogin()
-      }
+        /*
+        * Ok so let's try to redirect before even doing the <body>.
+        *
+        * We only want to redirect if auth is not done AND we don't need guilds.join.
+        * If we need guilds.join we want the user to read the landing page because
+        * leijurv is paranoid.
+        */
+        if (!getAuthToken() && !getProvidedId() && getAlreadyMember()) {
+            redirect(getOAuthUrl())
+        }
     </script>
-    <!-- CSS  -->
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
-    <link rel="stylesheet" type="text/css" href="/min/style-min.css" />
+
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-143397381-1"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+        gtag('js', new Date())
+        gtag('config', 'UA-143397381-1')
 
-      gtag('config', 'UA-143397381-1');
-        
-      var getOutboundLink = function(label) {
-        gtag('event', 'click', {
-            'event_category': 'outbound',
-            'event_label': label,
-            'transport_type': 'beacon'
-        });
-      }
+        // magic function that we never call, I assume GA uses this for something?
+        function getOutboundLink(label) {
+            gtag('event', 'click', {
+                'event_category': 'outbound',
+                'event_label': label,
+                'transport_type': 'beacon'
+            })
+        }
     </script>
-  </head>
-  <body>
-    <header>
+
+    <!-- CSS  -->
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <link rel="stylesheet" type="text/css" href="/min/style-min.css"/>
+</head>
+<body>
+<header>
     <div class="navbar-fixed">
         <nav role="navigation">
             <div class="nav-wrapper container">
                 <a href="#" class="brand-logo"><h1>Impact</h1></a>
-                <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="small fa fa-bars" aria-hidden="true"></i></a>
-
             </div>
         </nav>
     </div>
 </header>
-   <noscript>
-     You must have javascript enabled to use this tool
-   </noscript>
-      <div class="section hide-if-authenticated hidden">
-        <div class="container">
-          <div class="row">
-            <p class="col s12 center large_text">
-              <b><a href="https://discordapp.com/oauth2/authorize?client_id=452934110755684382&redirect_uri=https%3A%2F%2Fimpactclient.net%2Fdiscord.html&response_type=code&scope=identify%20guilds.join&response_type=token" id="oauth_link" style="font-weight:400">
-        Click here</a></b> to login with Discord and be added to our Discord server!
-            </p>
-          </div>
-        </div>
-      </div>
-      <div class="section hide-if-authenticated hidden">
-        <div class="container">
-          <div class="row">
-            <p class="col s12" style="font-size:11px;">
-              Alternatively, if you're ridiculously paranoid and won't trust OAuth, you can do the much more complicated procedure with zero OAuth:
-              <ol style="font-size:11px;">
-                <li>
-                  Click <a href="https://discord.gg/JA397mC">this</a> invite link
-                </li>
-                <li>
-                  Open your DM from Impact Bot
-                </li>
-                <li>
-                  Click the link at the top of that welcome DM
-                </li>
-                <li>
-                  Get sent back to this page with info prefilled
-                </li>
-                <li>
-                  Complete the recaptcha
-                </li>
-                <li>
-                  Submit the form
-                </li>
-                <li>
-                  Receive the verified rank
-                </li>
-              </ol>
-            </p>
-          </div>
-        </div>
-      </div>
-    <form class="show-if-authenticated hidden" action="/discordverify" method="post" id="theForm">
-      <p>
-        Please prove you are not a robot:
-      </p>
-      <script>
-        function recaptchaCallback(){
-           document.getElementById("theForm").submit(); 
-        }
-      </script>
-      <div class="g-recaptcha" data-callback="recaptchaCallback" data-sitekey="6Lf19NcUAAAAADBY-60OxWuSMgr4XMH3aq1BZYRs"></div>
-      <input type="hidden" id="token" name="token">
-      <input type="hidden" id="id" name="discord">
-    </form>
 
-    <!-- Scripts at the end of the <body> is basically kinda like DOM ready -->
-    <script src="https://www.google.com/recaptcha/api.js" async></script>
-    <script async>
-      showOrHideStuff()
-      document.getElementById("token").value = getAuthToken()
-      document.getElementById("id").value = getProvidedId()
-      document.getElementById("oauth_link").href = oauthUrl
-    </script>
-  </body>
+<noscript>
+    You must have javascript enabled.
+</noscript>
+
+<div class="section hide-if-authenticated hidden">
+    <div class="container">
+        <div class="row">
+            <div class="col s12 center">
+                <p class="large_text">
+                    Simply <strong><a id="oauth_link" href="#this-is-set-later">login with Discord</a></strong>
+                    to be added to our Discord server!
+                </p>
+                <p class="med_text">
+                    Be sure to complete the verification afterwards to be able to talk in the server.
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col s12 grey-text">
+                <p>
+                    Alternatively, if you're ridiculously paranoid and don't trust us with OAuth, you can do the much more
+                    complicated procedure with zero OAuth:
+                </p>
+                <ol>
+                    <li>Click <a href="https://discord.gg/JA397mC">this invite link</a></li>
+                    <li>Open your direct message from Impact Bot</li>
+                    <li>Click the link at the top of that message <i class="text-lighten-3">(this is what bypasses OAuth)</i></li>
+                    <li>Complete the verification captcha</li>
+                </ol>
+                <p>
+                    This isn't actually required; we don't log, store or remember your session, token, credentials etc nor will we add you to
+                    any server other than the Impact Discord server. Since we don't store your token, it's impossible for
+                    us to abuse it in the future by, for example, re-adding you if you quit the discord.
+                </p>
+                <p>
+                    You can view our server-side code <a href="https://github.com/ImpactDevelopment/ImpactServer/blob/master/src/web/recaptcha.go">here</a>
+                    (specifically the <code>discordVerify</code> function).
+                    You can view the client-side code <a href="https://github.com/ImpactDevelopment/ImpactServer/blob/master/static/discord.html">here</a>
+                    or by using your browser's <a href="https://www.view-page-source.com/howto-see-html-code-different-browsers/">inspection tools</a>.
+                </p>
+                <p>
+                    TLDR: OAuth is safe, fast and convenient. Use the big "login with Discord" link above.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section show-if-authenticated hidden">
+    <div class="container">
+        <div class="row">
+            <form id="theForm" class="col s12" method="post" action="/discordverify">
+                <p class="large_text">Please prove you are not a robot:</p>
+                <div class="g-recaptcha" data-callback="onRecaptcha" data-sitekey="6Lf19NcUAAAAADBY-60OxWuSMgr4XMH3aq1BZYRs"></div>
+                <input type="hidden" id="token" name="token">
+                <input type="hidden" id="id" name="discord">
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts at the end of the <body> is basically kinda like DOM ready -->
+<script src="https://www.google.com/recaptcha/api.js" async></script>
+<script async>
+    document.getElementById("token").value = getAuthToken()
+    document.getElementById("id").value = getProvidedId()
+    document.getElementById("oauth_link").href = getOAuthUrl()
+
+    // Everything is hidden by default, show the stuff we want based on params etc
+    showOrHideStuff()
+</script>
+</body>
 </html>
 
