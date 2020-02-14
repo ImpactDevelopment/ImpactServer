@@ -108,5 +108,5 @@ func discordVerify(c echo.Context) error {
 		}
 	}
 
-	return c.String(200, "Success")
+	return c.Redirect(http.StatusFound, "https://discordapp.com/channels/208753003996512258/222120655594848256")
 }
