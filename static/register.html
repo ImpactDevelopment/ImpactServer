@@ -67,15 +67,29 @@
     <link rel="stylesheet" type="text/css" href="/min/style-min.css"/>
 </head>
 <body>
+<header>
+    <div class="navbar-fixed">
+        <nav role="navigation">
+            <div class="nav-wrapper container">
+                <a href="/" class="brand-logo"><h1>Impact</h1></a>
+            </div>
+        </nav>
+    </div>
+</header>
 <div id="hide_this_if_the_token_is_valid">
     Checking token...
 </div>
 <div class="hidden" id="show_this_if_the_token_is_valid">
     <!-- TODO make this a form -->
     <!-- TODO use materializecss -->
+    <div class="container">
+    <div class="row">
+        <div class="col s12">
+            <br>
+            <br>
     your token is valid!
     <br>
-    lets make you an IMPCAT ACCOUNT
+    lets make you an account ok
     <br><br>
     what is your discord id (its just the numbers, i DONT want your @blah#1234 tag, DONT put that in). you should go and <a href="/discord.html" target="_blank">join our Discord server</a> if you haven't already, before submitting.
     <input type="text" name="discord" id="discord"/>
@@ -90,6 +104,9 @@
     <input type="password" name="password" id="password"/>
     <br>
     <input type="button" onclick="return onSubmit()" value="submit"/>
+</div>
+</div>
+</div>
 </div>
 <h1 id="response_from_server_goes_here"></h1>
 
