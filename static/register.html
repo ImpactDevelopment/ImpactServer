@@ -102,15 +102,15 @@
                 </div>
                 <div class="input-field col s12">
                     <!-- TODO OAuth button -->
-                    <input type="text" name="discord" id="discord" class="validate" required pattern="[0-9]+"/>
+                    <input type="text" name="discord" id="discord" class="validate" required pattern="[0-9]{14}[0-9]+"/>
                     <label for="discord">
                         Discord ID
                     </label>
                     <span class="helper-text" data-error="Invalid Discord ID">
-                        Your discord ID, not your @username#1234 tag.
+                        Your discord ID. This is <u>NOT</u> the four digits after the #. This is <u>NOT</u> your @username#1234 tag.
                         <i style="color: rgba(0,0,0,0.54)">
-                            <br>If you don't know it, you can <b>DM Discord Bot to find out</b>
-                            <br>You must be <strong>a member of our Discord server</strong> before submitting this form!
+                            <br>If you don't know it, you should <b>DM Impact Bot to find out</b>
+                            <br>You must be <strong>a member of our <a href="/discord.html" target="_blank"><u>Discord server</u></a></strong> before submitting this form!
                         </i>
                     </span>
                 </div>
@@ -127,7 +127,7 @@
                     <span class="helper-text" data-error="Invalid UUID">
                         Your Minecraft UUID, not your username.
                         <i style="color: rgba(0,0,0,0.54)">
-                            <br>You can get it from <b>namemc.com</b>
+                            <br>You can get it from <b><a href="https://namemc.com" target="_blank"><u>namemc.com</u></a></b>
                         </i>
                     </span>
                 </div>
