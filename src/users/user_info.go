@@ -45,7 +45,6 @@ var specialCases = map[uuid.UUID]UserInfo{ // TODO this should basically just be
 	uuid.MustParse("51dcd870-d33b-40e9-9fc1-aecdcff96081"): {
 		TextColor: "RED",
 		Icon:      "https://files.impactclient.net/img/texture/speckles128.png",
-		Cape:      "https://files.impactclient.net/img/texture/test1.png",
 	},
 	// triibu popstonia
 	uuid.MustParse("8e563236-c7f5-4c82-aa27-c95bf3f4c322"): {
