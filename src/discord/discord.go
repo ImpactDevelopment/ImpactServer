@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 
@@ -84,13 +85,14 @@ func GetUserId(accessToken string) (userId string, err error) {
 func JoinOurServer(accessToken string, discordID string, donator bool) error {
 	roles := []string{verifiedRole}
 	if donator {
+		defer logDonation(discordID, true) // log once added
 		roles = append(roles, donatorRole)
 	}
 	return discord.GuildMemberAdd(accessToken, guildID, discordID, "", roles, false, false)
 }
 
 func GiveDonator(discordID string) error {
-	go discord.ChannelMessageSend(donationMsgChannel, "<@"+discordID+"> just donated and received Impact premium!")
+	defer logDonation(discordID, false)
 	return discord.GuildMemberRoleAdd(guildID, discordID, donatorRole)
 }
 
@@ -101,4 +103,15 @@ func GiveVerified(discordID string) error {
 func CheckServerMembership(discordID string) bool {
 	member, err := discord.GuildMember(guildID, discordID)
 	return err == nil && member != nil
+}
+
+func logDonation(discordID string, join bool) {
+	var msg strings.Builder
+	msg.WriteString("<@" + discordID + "> just")
+	if join {
+		msg.WriteString(" joined the server,")
+	}
+	msg.WriteString(" donated and received Impact Premium!")
+
+	go discord.ChannelMessageSend(donationMsgChannel, msg.String())
 }
