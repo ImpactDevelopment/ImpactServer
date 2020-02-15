@@ -87,6 +87,8 @@ func JoinOurServer(accessToken string, discordID string, donator bool) error {
 }
 
 func GiveDonator(discordID string) error {
+	go discord.ChannelMessageSend("556229210491060226", "<@"+discordID+"> just donated and received Impact premium!")
+	go discord.ChannelMessageSend("308653317834145802", "<@"+discordID+"> just donated and received Impact premium!")
 	return discord.GuildMemberRoleAdd(guildID, discordID, donatorRole)
 }
 
