@@ -21,6 +21,9 @@ var verifiedRole string
 // Discord's OAuth tokens are alphanumeric
 var discordOAuthToken = regexp.MustCompile(`^[A-Za-z0-9]+$`)
 
+// Where to notify donations
+const donationMsgChannel = "678230156091064330"
+
 func init() {
 	token := os.Getenv("DISCORD_BOT_TOKEN")
 	if token == "" {
@@ -87,8 +90,7 @@ func JoinOurServer(accessToken string, discordID string, donator bool) error {
 }
 
 func GiveDonator(discordID string) error {
-	go discord.ChannelMessageSend("556229210491060226", "<@"+discordID+"> just donated and received Impact premium!")
-	go discord.ChannelMessageSend("308653317834145802", "<@"+discordID+"> just donated and received Impact premium!")
+	go discord.ChannelMessageSend(donationMsgChannel, "<@"+discordID+"> just donated and received Impact premium!")
 	return discord.GuildMemberRoleAdd(guildID, discordID, donatorRole)
 }
 
