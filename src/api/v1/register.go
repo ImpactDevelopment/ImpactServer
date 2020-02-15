@@ -18,11 +18,11 @@ type registrationCheck struct {
 }
 
 type registration struct {
-	Token    string `json:"token" form:"token" query:"token"`
-	Discord  string `json:"discord" form:"discord" query:"discord"`
-	Mcuuid   string `json:"mcuuid" form:"mcuuid" query:"mcuuid"`
-	Email    string `json:"email" form:"email" query:"email"`
-	Password string `json:"password" form:"password" query:"password"`
+	Token        string `json:"token" form:"token" query:"token"`
+	DiscordToken string `json:"discord" form:"discord" query:"discord"`
+	Mcuuid       string `json:"mcuuid" form:"mcuuid" query:"mcuuid"`
+	Email        string `json:"email" form:"email" query:"email"`
+	Password     string `json:"password" form:"password" query:"password"`
 }
 
 func checkToken(c echo.Context) error {
@@ -48,10 +48,18 @@ func registerWithToken(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	body.Discord = strings.TrimSpace(body.Discord)
-	if body.Token == "" || body.Discord == "" || body.Mcuuid == "" || body.Email == "" || body.Password == "" {
+	// TODO allow creating account without discord or minecraft
+	if body.Token == "" || body.DiscordToken == "" || body.Mcuuid == "" || body.Email == "" || body.Password == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "empty field(s)")
 	}
+
+	// get discord user id
+	body.Token = strings.TrimSpace(body.Token)
+	discordID, err := discord.GetUserId(body.DiscordToken)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid discord token")
+	}
+
 	var createdAt int64
 	err = database.DB.QueryRow("SELECT created_at FROM pending_donations WHERE token = $1 AND NOT used", body.Token).Scan(&createdAt)
 	if err != nil {
@@ -61,10 +69,8 @@ func registerWithToken(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	if !discord.CheckServerMembership(body.Discord) {
-		return echo.NewHTTPError(http.StatusBadRequest, "join our discord first lol")
-	}
 
+	// Check mc uuid TODO: is this ratelimited?
 	req, err := util.GetRequest("https://api.mojang.com/user/profiles/" + strings.Replace(body.Mcuuid, "-", "", -1) + "/names")
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "bad mc uuid")
@@ -77,7 +83,7 @@ func registerWithToken(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "bad mc uuid")
 	}
 	var userID uuid.UUID
-	err = database.DB.QueryRow("INSERT INTO users(email, password_hash, mc_uuid, discord_id) VALUES ($1, $2, $3, $4) RETURNING user_id", body.Email, hashedPassword, body.Mcuuid, body.Discord).Scan(&userID)
+	err = database.DB.QueryRow("INSERT INTO users(email, password_hash, mc_uuid, discord_id) VALUES ($1, $2, $3, $4) RETURNING user_id", body.Email, hashedPassword, body.Mcuuid, discordID).Scan(&userID)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -87,9 +93,14 @@ func registerWithToken(c echo.Context) error {
 		log.Println(err)
 		return err
 	}
-	err = discord.GiveDonator(body.Discord)
+
+	if discord.CheckServerMembership(discordID) {
+		err = discord.GiveDonator(discordID)
+	} else {
+		err = discord.JoinOurServer(body.DiscordToken, discordID, true)
+	}
 	if err != nil {
-		log.Println(err)
+		log.Printf("Error adding donator to discord: %s\n", err.Error())
 		return err
 	}
 
