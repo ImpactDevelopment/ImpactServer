@@ -19,6 +19,9 @@ type (
 	}
 )
 
+// TODO add a refund webhook to revoke premium perks
+// https://developer.paypal.com/docs/integration/direct/webhooks/event-names/#authorized-and-captured-payments
+
 func afterDonation(c echo.Context) error {
 	body := &donationRequest{}
 	err := c.Bind(body)

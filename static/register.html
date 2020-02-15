@@ -7,38 +7,14 @@
     <!-- URLSearchParams is not supported on IE, but the URL polyfill should work on IE8+ -->
     <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js?features=es5%2CURL%2Chtml5shiv%2CElement.prototype.classList"></script>
 
-    <!-- jquery used for cross browser ajax, TODO lightweight alternative or just don't ajax -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <!-- RegExp.escape() is used by the "confirm password" field -->
+    <script crossorigin="anonymous" src="https://raw.githubusercontent.com/benjamingr/RegExp.escape/master/polyfill.js"></script>
 
     <script>
         /* Functions */
         function getToken() {
             var query = new URLSearchParams(window.location.search)
             return query.get("token")
-        }
-
-        // TODO just have a form that with action=api/v1 method=post instead of this handler
-        function onSubmit() {
-            var discord = document.getElementById("discord").value;
-            var mcuuid = document.getElementById("mcuuid").value;
-            var email = document.getElementById("email").value;
-            var password = document.getElementById("password").value;
-
-            $.post("https://api.impactclient.net/v1/register/token", {
-                token: token,
-                discord: discord,
-                mcuuid: mcuuid,
-                email: email,
-                password: password
-            }).done(function (data) {
-                document.getElementById("response_from_server_goes_here").innerHTML = data;
-                if (data == "SUCCESS"){
-                    document.location.href="https://discordapp.com/channels/208753003996512258/613478149669388298";
-                }
-            }).fail(function (data) {
-                // TODO don't block non-token requests; the user might enter a token manually
-                document.getElementById("response_from_server_goes_here").innerHTML = data.responseText;
-            });
         }
 
         function gtag() {
@@ -79,57 +55,113 @@
         </nav>
     </div>
 </header>
-<div id="hide_this_if_the_token_is_valid">
-    Checking token...
-</div>
-<div class="hidden" id="show_this_if_the_token_is_valid">
-    <!-- TODO make this a form -->
-    <!-- TODO use materializecss -->
-    <div class="container">
-    <div class="row">
-        <div class="col s12">
-            <br>
-            <br>
-    your token is valid!
-    <br>
-    lets make you an account ok
-    <br><br>
-    what is your discord id (its just the numbers, i DONT want your @blah#1234 tag, DONT put that in). you should go and <a href="/discord.html" target="_blank">join our Discord server</a> if you haven't already, before submitting. if you don't know your Discord User ID, dm Impact Bot and it will tell you.
-    <input type="text" name="discord" id="discord"/>
-    <br>
-    what is your minecraft uuid (NOT your username) (u can get it from namemc.com) paste it here thanks
-    <input type="text" name="mcuuid" id="mcuuid"/>
-    <br>
-    email
-    <input type="text" name="email" id="email"/>
-    <br>
-    password
-    <input type="password" name="password" id="password"/>
-    <br>
-    <input type="button" onclick="return onSubmit()" value="submit"/>
-</div>
-</div>
-</div>
-</div>
-<h1 id="response_from_server_goes_here"></h1>
 
+<noscript>This page requires javascript to function</noscript>
+
+<!-- hidden to prevent FOUC, unhidden by JS -->
+<div class="container hidden unhide">
+    <div class="row">
+        <!-- TODO also validate onsubmit for browsers without html5 validation -->
+        <form class="col s12" method="post" action="https://api.impactclient.net/v1/register/token">
+            <div class="row">
+                <div class="input-field col s12" id="token_field">
+                    <input type="text" name="token" id="token" class="validate" required pattern="[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}">
+                    <label for="token" data-error="Invalid token">
+                        Impact account token
+                    </label>
+                    <span class="helper-text">
+                        Impact Accounts require a token generated when you donated
+                    </span>
+                </div>
+                <div class="input-field col s12 m4 l6">
+                    <input type="email" name="email" id="email" class="validate" required/>
+                    <label for="email">
+                        Email
+                    </label>
+                    <span class="helper-text">
+                        This will be used once Impact Account dashboards go live
+                    </span>
+                </div>
+                <div class="input-field col s6 m4 l3">
+                    <!--
+                        regex requires at least one number, lowercase, uppercase and symbol using lookaheads like /(?=.*[0-9])/
+                        It also requires a length of at least 6 using normal pattern matching /.{6,}/
+                    -->
+                    <input type="password" name="password" id="password" class="validate" required pattern="(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{6,}" onchange="form.password2.pattern = RegExp.escape(this.value);"/>
+                    <label for="password">
+                        Password
+                    </label>
+                    <span class="helper-text" data-error="Must be 6 characters or more & include lowercase, uppercase, numeric and symbolic characters"></span>
+                </div>
+                <div class="input-field col s6 m4 l3">
+                    <input type="password" name="password2" id="password2" class="validate" required pattern="\w"/>
+                    <label for="password2">
+                        Confirm
+                    </label>
+                    <span class="helper-text" data-error="Password does not match"></span>
+                </div>
+                <div class="input-field col s12">
+                    <!-- TODO OAuth button -->
+                    <input type="text" name="discord" id="discord" class="validate" required pattern="[0-9]+"/>
+                    <label for="discord">
+                        Discord ID
+                    </label>
+                    <span class="helper-text" data-error="Invalid Discord ID">
+                        Your discord ID, not your @username#1234 tag.
+                        <i style="color: rgba(0,0,0,0.54)">
+                            <br>If you don't know it, you can <b>DM Discord Bot to find out</b>
+                            <br>You must be <strong>a member of our Discord server</strong> before submitting this form!
+                        </i>
+                    </span>
+                </div>
+                <div class="input-field col s12">
+                    <!--
+                        TODO use MineTools API to get UUID
+                        Mojang's API can't be used client-side because of their CORS policy
+                        https://api.minetools.eu/uuid
+                    -->
+                    <input type="text" name="mcuuid" id="minecraft" class="validate" required pattern="[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"/>
+                    <label for="minecraft">
+                        Minecraft UUID
+                    </label>
+                    <span class="helper-text" data-error="Invalid UUID">
+                        Your Minecraft UUID, not your username.
+                        <i style="color: rgba(0,0,0,0.54)">
+                            <br>You can get it from <b>namemc.com</b>
+                        </i>
+                    </span>
+                </div>
+                <div class="input-field col s12">
+                    <button class="btn waves-effect waves-light" type="submit" name="action">
+                        Submit
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/js/materialize.min.js"></script>
 <script>
-    var token = getToken()
-    if (token) {
-        console.log(token);
-        $.get("https://api.impactclient.net/v1/checktoken?token=" + token, function (data) {
-            if (data === "true") {
-                document.getElementById("show_this_if_the_token_is_valid").classList.remove("hidden")
-                document.getElementById("hide_this_if_the_token_is_valid").classList.add("hidden")
-            }
-        }).fail(function () {
-            // TODO don't overwrite the body
-            document.getElementsByTagName("body")[0].innerHTML = "token invalid"
-        });
-    } else {
-        // TODO don't overwrite the body
-        document.getElementsByTagName("body")[0].innerHTML = "token missing"
-    }
+    (function () {
+        var token = getToken()
+        if (token) {
+            // Hide the label and set the input value if a token was passed in
+            // We don't care if it is valid at this point
+            document.getElementById("token_field").classList.add("hidden")
+            var tokenField = document.getElementById("token")
+            tokenField.value = token
+            tokenField.type = "hidden"
+        }
+
+        // un-hide stuff tagged with `unhide` to prevent FOUC
+        var unhide = document.getElementsByClassName("unhide")
+        for (var i = 0; i < unhide.length; i++) {
+            var elm = unhide[i]
+            elm.classList.remove("unhide")
+            elm.classList.remove("hidden")
+        }
+    })()
 </script>
 </body>
 </html>
