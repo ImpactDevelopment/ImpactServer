@@ -48,6 +48,7 @@ func registerWithToken(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+	body.Discord = strings.TrimSpace(body.Discord)
 	if body.Token == "" || body.Discord == "" || body.Mcuuid == "" || body.Email == "" || body.Password == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "empty field(s)")
 	}
