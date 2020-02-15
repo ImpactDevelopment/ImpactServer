@@ -25,8 +25,10 @@ func NewUserInfo(user User) *UserInfo {
 
 	var info UserInfo
 
-	if special, ok := specialCases[*user.MinecraftID]; ok {
-		info = special
+	if user.MinecraftID != nil {
+		if special, ok := specialCases[*user.MinecraftID]; ok {
+			info = special
+		}
 	}
 
 	for _, role := range getRolesSorted(user.Roles) { // go in order from highest priority to least (aka numerically lowest to highest)
