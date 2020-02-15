@@ -32,6 +32,9 @@
                 password: password
             }).done(function (data) {
                 document.getElementById("response_from_server_goes_here").innerHTML = data;
+                if (data == "SUCCESS"){
+                    document.location.href="https://discordapp.com/channels/208753003996512258/613478149669388298";
+                }
             }).fail(function (data) {
                 // TODO don't block non-token requests; the user might enter a token manually
                 document.getElementById("response_from_server_goes_here").innerHTML = data.responseText;

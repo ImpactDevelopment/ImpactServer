@@ -92,5 +92,5 @@ func registerWithToken(c echo.Context) error {
 		log.Println(err)
 		return err
 	}
-	return c.Redirect(http.StatusFound, "https://discordapp.com/channels/208753003996512258/613478149669388298")
+	return c.String(200, "SUCCESS")
 }
