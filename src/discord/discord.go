@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 
@@ -87,6 +88,7 @@ func JoinOurServer(accessToken string, discordID string, donator bool) error {
 }
 
 func GiveDonator(discordID string) error {
+	discordID = strings.TrimSpace(discordID)
 	go discord.ChannelMessageSend("556229210491060226", "<@"+discordID+"> just donated and received Impact premium!")
 	go discord.ChannelMessageSend("308653317834145802", "<@"+discordID+"> just donated and received Impact premium!")
 	return discord.GuildMemberRoleAdd(guildID, discordID, donatorRole)
