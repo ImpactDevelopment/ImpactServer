@@ -55,10 +55,25 @@ func afterDonation(c echo.Context) error {
 	}
 
 	if order.Total() < 500 {
-		// if the donation is too small, save it
-		// maybe they make multiple that sum up to over 500 eventually, lets make a record of it idk
-		// just dont give em a registration token lol
+		// keep a record of orders that are too smol
 		log.Println("Donation with PayPal order ID", order.ID, "and total", order.Total(), "is too small. token would have been", token)
+		// also check if the total of all donations with the same token is more than $5.00
+		res, err := database.DB.Query("SELECT SUM(amount) AS total FROM pending_donations WHERE token=$1", token)
+		if err != nil {
+			log.Println(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Error checking for previous donations").SetInternal(err)
+		}
+		var totalPaid int
+		err = res.Scan(&totalPaid)
+		if err != nil {
+			log.Println(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Error checking for previous donations").SetInternal(err)
+		}
+		if totalPaid >= 500 {
+			return c.JSON(http.StatusOK, donationResponse{
+				Token: token.String(),
+			})
+		}
 		return c.JSON(http.StatusOK, donationResponse{
 			Token: "thanks",
 		})
