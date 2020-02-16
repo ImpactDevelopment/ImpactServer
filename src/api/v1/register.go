@@ -65,13 +65,20 @@ func registerWithToken(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid token")
 	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 
-	// Check mc uuid TODO: is this ratelimited?
-	req, err := util.GetRequest("https://api.mojang.com/user/profiles/" + strings.Replace(body.Mcuuid, "-", "", -1) + "/names")
+	// Sanitise minecraft ID
+	minecraftID, err := uuid.Parse(strings.TrimSpace(body.Mcuuid))
+	if err != nil || minecraftID.String() == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "bad mc uuid")
+	}
+
+	// Verify minecraft id
+	req, err := util.GetRequest("https://api.mojang.com/user/profiles/" + strings.Replace(minecraftID.String(), "-", "", -1) + "/names")
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "bad mc uuid")
 	}
@@ -82,8 +89,9 @@ func registerWithToken(c echo.Context) error {
 	if resp.Code() != 200 {
 		return echo.NewHTTPError(http.StatusBadRequest, "bad mc uuid")
 	}
+
 	var userID uuid.UUID
-	err = database.DB.QueryRow("INSERT INTO users(email, password_hash, mc_uuid, discord_id) VALUES ($1, $2, $3, $4) RETURNING user_id", body.Email, hashedPassword, body.Mcuuid, discordID).Scan(&userID)
+	err = database.DB.QueryRow("INSERT INTO users(email, password_hash, mc_uuid, discord_id) VALUES ($1, $2, $3, $4) RETURNING user_id", body.Email, hashedPassword, minecraftID, discordID).Scan(&userID)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -104,6 +112,7 @@ func registerWithToken(c echo.Context) error {
 		return err
 	}
 
+	// TODO redirect to dashboard
 	const donatorInfo = "https://discordapp.com/channels/208753003996512258/613478149669388298"
 	return c.Redirect(http.StatusFound, donatorInfo)
 }

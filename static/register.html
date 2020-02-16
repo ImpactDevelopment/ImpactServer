@@ -21,6 +21,70 @@
             return query.get("token")
         }
 
+        function updateMinecraftInfo() {
+            var uuidField = document.getElementById("minecraft_id")
+            var nameField = document.getElementById("minecraft_name")
+            var helper = document.getElementById("minecraft_helper_text")
+
+            if (!nameField.value) {
+                return
+            }
+
+            nameField.classList.add("loading")
+            getMinecraftUser(nameField.value, function (user, error) {
+                if (error || !user.uuid) {
+                    nameField.classList.add("invalid")
+                    uuidField.value = ""
+                } else {
+                    uuidField.value = user.uuid
+                    helper.setAttribute("data-success", user.name)
+                    nameField.classList.remove("invalid")
+                    // TODO also update some kinda user avatar?
+                }
+                nameField.classList.remove("loading")
+
+            }, true)
+        }
+
+        function getMinecraftUser(name, callback, useFallback) {
+            // Get the user profile from mcheads or minetools
+            // luckily both APIs have name and id json properties and accept either name or uuid input
+            var main = "https://api.minetools.eu/uuid/"
+            var fallback = "https://mc-heads.net/minecraft/profile/"
+
+            // Generate a function here to aid recursion when fallback is enabled
+            // base is either main or fallback
+            function req(base) {
+                $.get({
+                    url: base + encodeURIComponent(("" + name).trim()),
+                    dataType: "json",
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        // If fallback is enabled, recurse one level
+                        if (useFallback && base !== fallback) {
+                            console.warn("MineTools API failed, falling back to MC Heads for UUID lookup")
+                            req(fallback)
+                        } else {
+                            callback(null, errorThrown)
+                        }
+                    },
+                    success: function (data, status) {
+                        if (!data ||
+                                !data.id || data.id === "null" ||
+                                (data.status && (""+data.status).toLowerCase() !== "ok")) {
+                            callback(null, "No user found")
+                        } else {
+                            callback({
+                                name: data.name || "",
+                                uuid: data.id || ""
+                            })
+                        }
+                    }
+                })
+            }
+
+            req(main)
+        }
+
         // Passes a user object to callback TODO consider using Promises (what's the oldest browser that can support them?)
         /*
             {
@@ -304,8 +368,8 @@
                     <label for="email">
                         Email
                     </label>
-                    <span class="helper-text">
-                        This will be used once Impact Account dashboards go live
+                    <span class="helper-text" style="overflow: visible;">
+                        To login with
                     </span>
                 </div>
                 <div class="input-field col s6 m4 l3">
@@ -313,20 +377,31 @@
                         regex requires at least one number, lowercase, uppercase and symbol using lookaheads like /(?=.*[0-9])/
                         It also requires a length of at least 6 using normal pattern matching /.{6,}/
                     -->
-                    <input type="password" name="password" id="password" class="validate" required pattern="(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{6,}" onchange="form.password2.pattern = RegExp.escape(this.value);"/>
+                    <input type="password" name="password" id="password" class="validate" autocomplete required pattern="(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{6,}" onchange="form.password2.pattern = RegExp.escape(this.value);"/>
                     <label for="password">
                         Password
                     </label>
                     <span class="helper-text" data-error="Must be 6 characters or more & include lowercase, uppercase, numeric and symbolic characters"></span>
                 </div>
                 <div class="input-field col s6 m4 l3">
-                    <input type="password" name="password2" id="password2" class="validate" required pattern="\w"/>
+                    <input type="password" name="password2" id="password2" class="validate" autocomplete="off" required pattern="\w"/>
                     <label for="password2">
                         Confirm
                     </label>
                     <span class="helper-text" data-error="Password does not match"></span>
                 </div>
-                <div class="col s12">
+                <div class="input-field col s12 m4 l6">
+                    <!-- TODO show a render from mcheads? -->
+                    <input type="hidden" name="mcuuid" id="minecraft_id" required>
+                    <input type="text" id="minecraft_name" class="validate" autocomplete="off" required onkeyup="updateMinecraftInfo()">
+                    <label for="minecraft_name">
+                        Minecraft username
+                    </label>
+                    <span id="minecraft_helper_text" class="helper-text" data-error="Invalid minecraft name">
+                        Your Minecraft UUID or your username. Not your email.
+                    </span>
+                </div>
+                <div class="input-field col s12 m8 l6">
                     <input type="hidden" name="discord" id="discord" required>
                     <a id="discord_login_btn" class="btn waves-effect waves-light" onclick="openDiscordOAuth()" href="">Login with discord</a>
                     <div id="discord_info_box" class="hidden row left-align">
@@ -342,25 +417,11 @@
                             <span id="discord_msg"></span>
                         </div>
                     </div>
+                    <p class="helper-text">
+                        Please login to Discord to link your account and join our server.
+                    </p>
                 </div>
                 <div class="input-field col s12">
-                    <!--
-                        TODO use MineTools API to get UUID
-                        Mojang's API can't be used client-side because of their CORS policy
-                        https://api.minetools.eu/uuid
-                    -->
-                    <input type="text" name="mcuuid" id="minecraft" class="validate" required pattern="[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"/>
-                    <label for="minecraft">
-                        Minecraft UUID
-                    </label>
-                    <span class="helper-text" data-error="Invalid UUID">
-                        Your Minecraft UUID, not your username.
-                        <i style="color: rgba(0,0,0,0.54)">
-                            <br>You can get it from <b><a href="https://namemc.com" target="_blank"><u>namemc.com</u></a></b>
-                        </i>
-                    </span>
-                </div>
-                <div class="col s12">
                     <button class="btn waves-effect waves-light" type="submit" name="action">
                         Submit
                     </button>
