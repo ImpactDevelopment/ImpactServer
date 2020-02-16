@@ -135,6 +135,46 @@
             return newWindow
         }
 
+        // validateForm is used where html5 validation can't be
+        // e.g. old browsers and hidden inputs like discord oauth
+        function validateForm() {
+            // we could pass in `this` from the onsubmit but idk how well that is supported, so just use getElementById
+            var form = document.getElementById("form")
+            var msg = document.getElementById("form_msg")
+            if (!form || !msg) {
+                console.error("validateForm broke somehow", form, msg)
+                return false
+            }
+
+            // Lets compile a list of errors so we can tell the user about all of them
+            // TODO use the same regexs as html5 validation, right now we only check stuff is present
+            var errors = []
+            if (!form.email.value) {
+                errors.push("No email")
+            }
+            if (!form.discord.value) {
+                errors.push("No discord ID")
+            }
+            if (!form.password.value) {
+                errors.push("No password")
+            }
+            if (form.password.value !== form.password2.value) {
+                errors.push("Passwords don't match")
+            }
+            if (!form.mcuuid.value) {
+                errors.push("No Minecraft UUID")
+            }
+
+            // Return false if
+            if (errors.length > 0) {
+                msg.innerHTML = errors.join("<br>")
+            } else {
+                msg.innerHTML = ""
+            }
+
+            return errors.length <= 0
+        }
+
         function gtag() {
             if (!window.dataLayer) {
                 window.dataLayer = []
@@ -213,6 +253,9 @@
         #discord_unlink_btn:hover {
             border-color: hsla(0,0%,100%,.6);
         }
+        #form_msg {
+            color: #F44336;
+        }
         .invisible {
             opacity: 0!important;
         }
@@ -234,8 +277,8 @@
 <!-- hidden to prevent FOUC, unhidden by JS -->
 <div class="section container hidden unhide">
     <div class="row">
-        <!-- TODO also validate onsubmit for browsers without html5 validation -->
-        <form class="col s12" method="post" action="https://api.impactclient.net/v1/register/token">
+        <!-- novalidate doesn't block materialize's error messages but does allow validateForm to take chage of the final validation -->
+        <form novalidate id="form" class="col s12" onsubmit="return validateForm()" method="post" action="https://api.impactclient.net/v1/register/token">
             <div class="row">
                 <div class="input-field col s12" id="token_field">
                     <input type="text" name="token" id="token" class="validate" required pattern="[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}">
@@ -311,6 +354,7 @@
                         Submit
                     </button>
                 </div>
+                <p id="form_msg" class="col s12 helper-text error"></p>
             </div>
         </form>
     </div>
