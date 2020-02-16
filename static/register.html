@@ -27,7 +27,7 @@
                 id: the user's id
                 email: the user's account email
                 username: the user's username (not nickname)
-                tag: the user's username#discriminator tag
+                tag: the user's #1234 tag
                 avatar: the user's avatar url (PNG or GIF)
                 nitro: whether or not the user has nitro
             }
@@ -82,11 +82,23 @@
                 document.getElementById("discord_avatar").src = user.avatar
                 document.getElementById("discord_username").innerText = user.username
                 document.getElementById("discord_tag").innerText = user.tag
+                var nitroImg = document.getElementById("discord_nitro")
+                if (user.nitro) {
+                    nitroImg.classList.remove("hidden")
+                } else {
+                    nitroImg.classList.add("hidden")
+                }
+
+                // Fade in now the info is loaded
+                document.getElementById("discord_info").classList.remove("invisible")
 
                 // Overwrite empty or invalid email with discord email
                 var email = document.getElementById("email")
                 if (!email.value || (email.validity && !email.validity.valid)) {
                     email.value = user.email
+                    if (window.Materialize) {
+                        window.Materialize.updateTextFields()
+                    }
                 }
             })
         }
@@ -102,9 +114,11 @@
 
         function deleteDiscordOAuth() {
             document.getElementById("discord_info_box").classList.add("hidden")
+            document.getElementById("discord_info").classList.add("invisible")
             document.getElementById("discord_login_btn").classList.remove("hidden")
             document.getElementById("discord").value = ""
             document.getElementById("discord_avatar").src = ""
+            document.getElementById("discord_nitro").src = ""
             document.getElementById("discord_username").innerText = ""
             document.getElementById("discord_tag").innerText = ""
         }
@@ -158,11 +172,15 @@
             -webkit-box-sizing: border-box;
             box-sizing: border-box;
         }
-        #discord_name {
+        #discord_info {
             font-size: 32px;
             color: #fff;
             font-weight: 700;
             min-height: 74px;
+
+            opacity: 1;
+            -webkit-transition: opacity .33s ease;
+            transition: opacity .33s ease;
         }
         #discord_avatar {
             width: 64px;
@@ -172,6 +190,10 @@
             background-size: 74px;
             vertical-align: middle;
         }
+        #discord_nitro {
+            height: 24px;
+            vertical-align: baseline;
+        }
         #discord_tag {
             opacity: .6;
         }
@@ -180,8 +202,8 @@
             color: #fff;
         }
         #discord_unlink_btn {
-            -webkit-transition: color .17s ease,background-color .17s ease,border-color .17s ease;
-            transition: color .17s ease,background-color .17s ease,border-color .17s ease;
+            -webkit-transition: border-color .17s ease;
+            transition: border-color .17s ease;
             color: #fff;
             border-width: 1px;
             border-style: solid;
@@ -190,6 +212,9 @@
         }
         #discord_unlink_btn:hover {
             border-color: hsla(0,0%,100%,.6);
+        }
+        .invisible {
+            opacity: 0!important;
         }
     </style>
 </head>
@@ -252,10 +277,12 @@
                     <input type="hidden" name="discord" id="discord" required>
                     <button id="discord_login_btn" class="btn waves-effect waves-light" onclick="openDiscordOAuth()">Login with discord</button>
                     <div id="discord_info_box" class="hidden row left-align">
-                        <div id="discord_name" class="col s12 truncate">
+                        <!-- .invisible allows fade-in to avoid FOUC -->
+                        <div id="discord_info" class="col s12 truncate invisible">
                             <img id="discord_avatar" src="" alt="avatar">
                             <span id="discord_username"></span>
                             <span id="discord_tag"></span>
+                            <img id="discord_nitro" class="hidden" src="https://discordapp.com/assets/386884eecd36164487505ddfbac35a9d.svg" alt="nitro">
                         </div>
                         <div class="col s12">
                             <button id="discord_unlink_btn" class="btn waves-effect waves-light" onclick="deleteDiscordOAuth()">Unlink</button>
