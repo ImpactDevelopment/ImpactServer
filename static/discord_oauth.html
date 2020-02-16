@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Discord authentication</title>
+    <script>
+        function getAccessToken() {
+            // discord's implicit grant passes params as a #hash not a ?query, let's make a query object
+            var hash = "" + window.location.hash
+            var query = new URLSearchParams(hash.replace(/^#/, "?"))
+            return query.get("access_token")
+        }
+
+        function getOAuthUrl() {
+            // Redirect back here on completion, encodeURIComponent is supported in IE5.5+
+            // This is mainly to make localhost testing easier
+            var redirect = encodeURIComponent(location.protocol + '//' + location.host + location.pathname)
+
+            // Add any additional scopes
+            var query = new URLSearchParams(window.location.search)
+            var scopes = query.get("scopes") || ""
+            if (scopes.length > 0) {
+                scopes = "%20" + scopes
+            }
+
+            // Compile the url
+            return "https://discordapp.com/api/oauth2/authorize?client_id=452934110755684382&redirect_uri=" + redirect + "&response_type=token&scope=identify" + scopes
+        }
+
+        function redirect(url) {
+            try {
+                window.location.replace(url);
+            } catch (e) {
+                window.location = url;
+            }
+        }
+
+        function isFunction(x) {
+            return Object.prototype.toString.call(x) === '[object Function]'
+        }
+
+        function init() {
+            if (!getAccessToken()) {
+                redirect(getOAuthUrl())
+            }
+        }
+
+        function main() {
+            var token = getAccessToken()
+            if (!token) {
+                redirect(getOAuthUrl())
+                return
+            }
+
+            var opener = window.opener
+            if (!opener) {
+                document.getElementById("message").innerText = "Error: is this definitely a popup window?"
+                return
+            }
+
+            if (!isFunction(opener.discordCallback)) {
+                document.getElementById("message").innerText = "Error: the parent window doesn't implement discordCallback"
+                return
+            }
+
+            try {
+                opener.discordCallback(token)
+            } catch (e) {
+                document.getElementById("message").innerText = "Error: the parent window threw an exception: " + e.toString()
+                return
+            }
+
+            window.close()
+        }
+
+        init()
+    </script>
+    <style>
+        body {
+            text-align: center;
+            font-family: sans-serif;
+            padding: 50px;
+        }
+    </style>
+</head>
+<body>
+    <noscript>This page requires javascript to be enabled.</noscript>
+    <p id="message">You can now close this window.</p>
+    <script>
+        main()
+    </script>
+</body>
+</html>

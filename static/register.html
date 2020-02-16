@@ -8,13 +8,117 @@
     <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js?features=es5%2CURL%2Chtml5shiv%2CElement.prototype.classList"></script>
 
     <!-- RegExp.escape() is used by the "confirm password" field -->
-    <script crossorigin="anonymous" src="https://raw.githubusercontent.com/benjamingr/RegExp.escape/master/polyfill.js"></script>
+    <script crossorigin="anonymous" src="https://benjamingr.github.io/RegExp.escape/polyfill.js"></script>
+
+    <!-- Dependencies -->
+    <script type="text/javascript" src="/min/modernizr-min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
     <script>
         /* Functions */
         function getToken() {
             var query = new URLSearchParams(window.location.search)
             return query.get("token")
+        }
+
+        // Passes a user object to callback TODO consider using Promises (what's the oldest browser that can support them?)
+        /*
+            {
+                id: the user's id
+                email: the user's account email
+                username: the user's username (not nickname)
+                tag: the user's username#discriminator tag
+                avatar: the user's avatar url (PNG or GIF)
+                nitro: whether or not the user has nitro
+            }
+         */
+        function getDiscordUser(access_token, callback) {
+            // Materializecss needs jQuery so we may as well use it too
+            $.get({
+                url: "https://discordapp.com/api/v6/users/@me",
+                dataType: "json",
+                headers: {
+                    // https://discordapp.com/developers/docs/reference#http-api
+                    "User-Agent": "ImpactBot (https://impactclient.net, 1.0)",
+                    "Authorization": "Bearer " + access_token
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    callback(null, errorThrown)
+                },
+                success: function (data, status) {
+                    // get avatar url https://discordapp.com/developers/docs/reference#image-formatting
+                    var avatar = ""
+                    if (data && data.avatar && data.id) {
+                        var ext = "a_" === data.avatar.substring(0, 2) ? ".gif" : ".png"
+                        var base = "https://cdn.discordapp.com/avatars/"
+                        avatar = base + data.id + "/" + data.avatar + ext
+                    }
+
+                    // Pass a serialized user object to callback
+                    callback({
+                        id: data.id || "",
+                        email: data.email || "",
+                        username: data.username || "",
+                        tag: data.discriminator ? "#" + data.discriminator : "",
+                        avatar: avatar,
+                        nitro: data.premium_type && data.premium_type > 0
+                    })
+                }
+            })
+        }
+
+        // Called by the oauth popup window
+        function discordCallback(discordToken) {
+            document.getElementById("discord").value = discordToken
+            document.getElementById("discord_login_btn").classList.add("hidden")
+            document.getElementById("discord_info_box").classList.remove("hidden")
+            getDiscordUser(discordToken, function (user, error) {
+                if (error) {
+                    // fuck
+                    return
+                }
+
+                // Update user info
+                document.getElementById("discord_avatar").src = user.avatar
+                document.getElementById("discord_username").innerText = user.username
+                document.getElementById("discord_tag").innerText = user.tag
+
+                // Overwrite empty or invalid email with discord email
+                var email = document.getElementById("email")
+                if (!email.value || (email.validity && !email.validity.valid)) {
+                    email.value = user.email
+                }
+            })
+        }
+
+        // Open the discord oauth popup window
+        function openDiscordOAuth() {
+            return popupOverWindow(
+                // TODO pass additional scopes as ?scopes= %20 separated list
+                "/discord_oauth.html?scopes=guilds.join%20email",
+                "oauth", 600, 800
+            )
+        }
+
+        function deleteDiscordOAuth() {
+            document.getElementById("discord_info_box").classList.add("hidden")
+            document.getElementById("discord_login_btn").classList.remove("hidden")
+            document.getElementById("discord").value = ""
+            document.getElementById("discord_avatar").src = ""
+            document.getElementById("discord_username").innerText = ""
+            document.getElementById("discord_tag").innerText = ""
+        }
+
+        // popup centered on window
+        // https://stackoverflow.com/a/32261263
+        function popupOverWindow(url, title, w, h) {
+            var y = window.top.outerHeight / 2 + window.top.screenY - ( h / 2)
+            var x = window.top.outerWidth / 2 + window.top.screenX - ( w / 2)
+            var newWindow = window.open(url, title, 'toolbar=no,location=no,directories=no,status=no,menubar=no,copyhistory=no,width='+w+',height='+h+',top='+y+',left='+x)
+            if (window.focus) {
+                newWindow.focus()
+            }
+            return newWindow
         }
 
         function gtag() {
@@ -44,6 +148,50 @@
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
     <link rel="stylesheet" type="text/css" href="/min/style-min.css"/>
+    <style>
+        #discord_info_box {
+            background: #7289da;
+            border-radius: 5px;
+            -webkit-box-shadow: 0 2px 8px 0 rgba(0,0,0,.06);
+            box-shadow: 0 2px 8px 0 rgba(0,0,0,.06);
+            padding: 16px;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+        #discord_name {
+            font-size: 32px;
+            color: #fff;
+            font-weight: 700;
+            min-height: 74px;
+        }
+        #discord_avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 32px;
+            background-color: hsla(0,0%,100%,.2);
+            background-size: 74px;
+            vertical-align: middle;
+        }
+        #discord_tag {
+            opacity: .6;
+        }
+        #discord_login_btn {
+            background-color: #7289da;
+            color: #fff;
+        }
+        #discord_unlink_btn {
+            -webkit-transition: color .17s ease,background-color .17s ease,border-color .17s ease;
+            transition: color .17s ease,background-color .17s ease,border-color .17s ease;
+            color: #fff;
+            border-width: 1px;
+            border-style: solid;
+            border-color: hsla(0,0%,100%,.3);
+            background: none;
+        }
+        #discord_unlink_btn:hover {
+            border-color: hsla(0,0%,100%,.6);
+        }
+    </style>
 </head>
 <body>
 <header>
@@ -100,19 +248,19 @@
                     </label>
                     <span class="helper-text" data-error="Password does not match"></span>
                 </div>
-                <div class="input-field col s12">
-                    <!-- TODO OAuth button -->
-                    <input type="text" name="discord" id="discord" class="validate" required pattern="[0-9]{14}[0-9]+"/>
-                    <label for="discord">
-                        Discord ID
-                    </label>
-                    <span class="helper-text" data-error="Invalid Discord ID">
-                        Your discord ID. This is <u>NOT</u> the four digits after the #. This is <u>NOT</u> your @username#1234 tag.
-                        <i style="color: rgba(0,0,0,0.54)">
-                            <br>If you don't know it, you should <b>DM Impact Bot to find out</b>
-                            <br>You must be <strong>a member of our <a href="/discord.html" target="_blank"><u>Discord server</u></a></strong> before submitting this form!
-                        </i>
-                    </span>
+                <div class="col s12">
+                    <input type="hidden" name="discord" id="discord" required>
+                    <button id="discord_login_btn" class="btn waves-effect waves-light" onclick="openDiscordOAuth()">Login with discord</button>
+                    <div id="discord_info_box" class="hidden row left-align">
+                        <div id="discord_name" class="col s12 truncate">
+                            <img id="discord_avatar" src="" alt="avatar">
+                            <span id="discord_username"></span>
+                            <span id="discord_tag"></span>
+                        </div>
+                        <div class="col s12">
+                            <button id="discord_unlink_btn" class="btn waves-effect waves-light" onclick="deleteDiscordOAuth()">Unlink</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="input-field col s12">
                     <!--
@@ -131,7 +279,7 @@
                         </i>
                     </span>
                 </div>
-                <div class="input-field col s12">
+                <div class="col s12">
                     <button class="btn waves-effect waves-light" type="submit" name="action">
                         Submit
                     </button>
@@ -141,8 +289,6 @@
     </div>
 </div>
 
-<script type="text/javascript" src="/min/modernizr-min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/js/materialize.min.js"></script>
 <script>
     (function () {
