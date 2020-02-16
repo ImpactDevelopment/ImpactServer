@@ -70,18 +70,26 @@
         // Called by the oauth popup window
         function discordCallback(discordToken) {
             document.getElementById("discord").value = discordToken
+            document.getElementById("discord_msg").innerText = ""
+            document.getElementById("discord_info").classList.add("invisible")
             document.getElementById("discord_login_btn").classList.add("hidden")
             document.getElementById("discord_info_box").classList.remove("hidden")
             getDiscordUser(discordToken, function (user, error) {
                 if (error) {
-                    // fuck
+                    document.getElementById("discord_msg").innerText = "Error fetching discord info: " + error
                     return
                 }
 
                 // Update user info
-                document.getElementById("discord_avatar").src = user.avatar
                 document.getElementById("discord_username").innerText = user.username
                 document.getElementById("discord_tag").innerText = user.tag
+                var avatarImg = document.getElementById("discord_avatar")
+                if (user.avatar) {
+                    avatarImg.src = user.avatar
+                    avatarImg.classList.remove("hidden")
+                } else {
+                    avatarImg.classList.add("hidden")
+                }
                 var nitroImg = document.getElementById("discord_nitro")
                 if (user.nitro) {
                     nitroImg.classList.remove("hidden")
@@ -114,7 +122,6 @@
 
         function deleteDiscordOAuth() {
             document.getElementById("discord_info_box").classList.add("hidden")
-            document.getElementById("discord_info").classList.add("invisible")
             document.getElementById("discord_login_btn").classList.remove("hidden")
             document.getElementById("discord").value = ""
             document.getElementById("discord_avatar").src = ""
@@ -149,6 +156,9 @@
             // Lets compile a list of errors so we can tell the user about all of them
             // TODO use the same regexs as html5 validation, right now we only check stuff is present
             var errors = []
+            if (!form.token.value) {
+                errors.push("No registration token")
+            }
             if (!form.email.value) {
                 errors.push("No email")
             }
@@ -165,14 +175,13 @@
                 errors.push("No Minecraft UUID")
             }
 
-            // Return false if
             if (errors.length > 0) {
                 msg.innerHTML = errors.join("<br>")
             } else {
                 msg.innerHTML = ""
             }
 
-            return errors.length <= 0
+            return errors.length < 1
         }
 
         function gtag() {
@@ -253,8 +262,9 @@
         #discord_unlink_btn:hover {
             border-color: hsla(0,0%,100%,.6);
         }
-        #form_msg {
+        #form_msg, #discord_msg {
             color: #F44336;
+            padding-left: 8px;
         }
         .invisible {
             opacity: 0!important;
@@ -283,7 +293,7 @@
                 <div class="input-field col s12" id="token_field">
                     <input type="text" name="token" id="token" class="validate" required pattern="[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}">
                     <label for="token" data-error="Invalid token">
-                        Impact account token
+                        Registration token
                     </label>
                     <span class="helper-text">
                         Impact Accounts require a token generated when you donated
@@ -318,7 +328,7 @@
                 </div>
                 <div class="col s12">
                     <input type="hidden" name="discord" id="discord" required>
-                    <button id="discord_login_btn" class="btn waves-effect waves-light" onclick="openDiscordOAuth()">Login with discord</button>
+                    <a id="discord_login_btn" class="btn waves-effect waves-light" onclick="openDiscordOAuth()" href="">Login with discord</a>
                     <div id="discord_info_box" class="hidden row left-align">
                         <!-- .invisible allows fade-in to avoid FOUC -->
                         <div id="discord_info" class="col s12 truncate invisible">
@@ -328,7 +338,8 @@
                             <img id="discord_nitro" class="hidden" src="https://discordapp.com/assets/386884eecd36164487505ddfbac35a9d.svg" alt="nitro">
                         </div>
                         <div class="col s12">
-                            <button id="discord_unlink_btn" class="btn waves-effect waves-light" onclick="deleteDiscordOAuth()">Unlink</button>
+                            <a id="discord_unlink_btn" class="btn waves-effect waves-light" onclick="deleteDiscordOAuth()" href="">Unlink</a>
+                            <span id="discord_msg"></span>
                         </div>
                     </div>
                 </div>
