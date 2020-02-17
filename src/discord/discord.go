@@ -93,6 +93,8 @@ func JoinOurServer(accessToken string, discordID string, donator bool) error {
 
 func GiveDonator(discordID string) error {
 	defer logDonation(discordID, false)
+	GiveVerified(discordID)
+	// dont return early & fail to give donator role if we cant give verified
 	return discord.GuildMemberRoleAdd(guildID, discordID, donatorRole)
 }
 
