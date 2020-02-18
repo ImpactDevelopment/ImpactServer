@@ -44,12 +44,12 @@ func createTables() error {
 			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT, -- unix seconds
 
 			mc_uuid UUID UNIQUE,
-			legacy_enabled BOOL NOT NULL DEFAULT TRUE, -- list this mc uuid in the premium list for 4.7 and below. this determines if you get a cape shown to other users who are using 4.7-
+			legacy_enabled BOOL NOT NULL DEFAULT FALSE, -- list this mc uuid in the premium list for 4.7 and below. this determines if you get a cape shown to other users who are using 4.7-
 			cape_enabled BOOL NOT NULL DEFAULT TRUE, -- show a cape to others on 4.8+
 
 			discord_id TEXT UNIQUE,
 
-			legacy BOOL NOT NULL DEFAULT TRUE,
+			legacy BOOL NOT NULL DEFAULT TRUE, -- this defaults to true e.g. for manual inserts. register.go overrides this to false however!
 			premium BOOL NOT NULL DEFAULT TRUE,
 			pepsi BOOL NOT NULL DEFAULT FALSE,
 			spawnmason BOOL NOT NULL DEFAULT FALSE,
