@@ -80,7 +80,20 @@ func registerWithToken(c echo.Context) error {
 
 	// Try parsing minecraft as a UUID, if that fails use it as a name to lookup the UUID
 	minecraftID, err := uuid.Parse(strings.TrimSpace(body.Minecraft))
-	if err != nil || minecraftID.String() == "" {
+	if err == nil && minecraftID.String() != "" {
+		// Verify provided minecraft id
+		req, err := util.GetRequest("https://api.mojang.com/user/profiles/" + url.PathEscape(strings.Replace(minecraftID.String(), "-", "", -1)) + "/names")
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "bad mc uuid")
+		}
+		resp, err := req.Do()
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "bad mc uuid")
+		}
+		if !resp.Ok() {
+			return echo.NewHTTPError(http.StatusBadRequest, "bad mc uuid")
+		}
+	} else {
 		// minecraft isn't an ID, it must be a name
 		req, err := util.GetRequest("https://api.mojang.com/users/profiles/minecraft/" + url.PathEscape(strings.TrimSpace(body.Minecraft)))
 		if err != nil {
@@ -100,19 +113,6 @@ func registerWithToken(c echo.Context) error {
 		}
 
 		minecraftID = respBody.Id
-	} else {
-		// Verify provided minecraft id
-		req, err := util.GetRequest("https://api.mojang.com/user/profiles/" + url.PathEscape(strings.Replace(minecraftID.String(), "-", "", -1)) + "/names")
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "bad mc uuid")
-		}
-		resp, err := req.Do()
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "bad mc uuid")
-		}
-		if !resp.Ok() {
-			return echo.NewHTTPError(http.StatusBadRequest, "bad mc uuid")
-		}
 	}
 
 	var userID uuid.UUID
