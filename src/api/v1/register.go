@@ -91,7 +91,7 @@ func registerWithToken(c echo.Context) error {
 	}
 
 	var userID uuid.UUID
-	err = database.DB.QueryRow("INSERT INTO users(email, password_hash, mc_uuid, discord_id) VALUES ($1, $2, $3, $4) RETURNING user_id", body.Email, hashedPassword, minecraftID, discordID).Scan(&userID)
+	err = database.DB.QueryRow("INSERT INTO users(legacy, email, password_hash, mc_uuid, discord_id) VALUES (false, $1, $2, $3, $4) RETURNING user_id", body.Email, hashedPassword, minecraftID, discordID).Scan(&userID)
 	if err != nil {
 		log.Println(err)
 		return err
