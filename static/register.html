@@ -22,26 +22,23 @@
         }
 
         function updateMinecraftInfo() {
-            var uuidField = document.getElementById("minecraft_id")
-            var nameField = document.getElementById("minecraft_name")
+            var field = document.getElementById("minecraft_name")
             var helper = document.getElementById("minecraft_helper_text")
 
-            if (!nameField.value) {
+            if (!field.value) {
                 return
             }
 
-            nameField.classList.add("loading")
-            getMinecraftUser(nameField.value, function (user, error) {
+            field.classList.add("loading")
+            getMinecraftUser(field.value, function (user, error) {
                 if (error || !user.uuid) {
-                    nameField.classList.add("invalid")
-                    uuidField.value = ""
+                    field.classList.add("invalid")
                 } else {
-                    uuidField.value = user.uuid
                     helper.setAttribute("data-success", user.name)
-                    nameField.classList.remove("invalid")
+                    field.classList.remove("invalid")
                     // TODO also update some kinda user avatar?
                 }
-                nameField.classList.remove("loading")
+                field.classList.remove("loading")
 
             }, true)
         }
@@ -226,7 +223,7 @@
                 errors.push("No email")
             }
             if (!form.discord.value) {
-                errors.push("No discord ID")
+                errors.push("No discord account")
             }
             if (!form.password.value) {
                 errors.push("No password")
@@ -234,8 +231,8 @@
             if (form.password.value !== form.password2.value) {
                 errors.push("Passwords don't match")
             }
-            if (!form.mcuuid.value) {
-                errors.push("No Minecraft UUID")
+            if (!form.minecraft.value) {
+                errors.push("No Minecraft account")
             }
 
             if (errors.length > 0) {
@@ -391,8 +388,7 @@
                 </div>
                 <div class="input-field col s12 m4 l6">
                     <!-- TODO show a render from mcheads? -->
-                    <input type="hidden" name="mcuuid" id="minecraft_id" required>
-                    <input type="text" id="minecraft_name" class="validate" autocomplete="off" required onkeyup="updateMinecraftInfo()">
+                    <input type="text" id="minecraft_name" name="minecraft" class="validate" autocomplete="off" required onkeyup="updateMinecraftInfo()">
                     <label for="minecraft_name">
                         Minecraft username
                     </label>
