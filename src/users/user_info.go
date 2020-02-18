@@ -53,7 +53,7 @@ var specialCases = map[uuid.UUID]UserInfo{ // TODO this should basically just be
 		Icon: "https://files.impactclient.net/img/texture/popstonia.png",
 	},
 	// popstonia (rebane) 
-	uuid.MustParse("342fc44b-1fd1-4272-a4c3-a98a2df98abc"):
+	uuid.MustParse("342fc44b-1fd1-4272-a4c3-a98a2df98abc"): {
 	Icon: "https://files.impactclient.net/img/texture/popstonia.png",
 	},
 	
