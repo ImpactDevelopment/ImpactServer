@@ -74,7 +74,7 @@ func EnforceHTTPS(code int) echo.MiddlewareFunc {
 			}
 			// it is http
 			addr := c.Request().URL
-			if addr.Path == "/releases.json" {
+			if addr.Path == "/releases.json" || ((strings.HasPrefix(addr.Path, "/Impact-") || strings.HasPrefix(addr.Path, "/maven.refmap.json")) && (strings.HasSuffix(addr.Path, ".json") || strings.HasSuffix(addr.Path, ".json.asc"))) {
 				// don't break 4.7 and 4.8 update checker
 				return next(c)
 			}

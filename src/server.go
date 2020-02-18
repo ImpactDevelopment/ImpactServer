@@ -8,6 +8,7 @@ import (
 	"github.com/ImpactDevelopment/ImpactServer/src/api"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/cloudflare"
+	"github.com/ImpactDevelopment/ImpactServer/src/githubproxy"
 	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/ImpactDevelopment/ImpactServer/src/newWeb"
 	"github.com/ImpactDevelopment/ImpactServer/src/s3proxy"
@@ -28,10 +29,11 @@ func init() {
 
 func main() {
 	hosts := map[string]*echo.Echo{
-		"":      web.Server(),
-		"new":   newWeb.Server(),
-		"files": s3proxy.Server(),
-		"api":   api.Server(),
+		"":            web.Server(),
+		"new":         newWeb.Server(),
+		"files":       s3proxy.Server(),
+		"api":         api.Server(),
+		"githubproxy": githubproxy.Server(),
 	}
 
 	e := echo.New()
