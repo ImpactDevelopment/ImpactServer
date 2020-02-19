@@ -3,6 +3,8 @@ package jwt
 import (
 	"crypto/rsa"
 	"fmt"
+	"github.com/ImpactDevelopment/ImpactServer/src/database"
+	"github.com/google/uuid"
 	"net/http"
 	"os"
 	"time"
@@ -56,6 +58,42 @@ func init() {
 
 	// rs512 can be used to sign and verify tokens, e.g. jtw.Sign(payload []byte, rs512 Algorithm)
 	rs512 = jwt.NewRS512(jwt.RSAPrivateKey(key), jwt.RSAPublicKey(&key.PublicKey))
+}
+
+func Verify(token string) (*users.User, error) {
+	var (
+		now = time.Now()
+
+		// Validate "iss", "iat" and "exp" claims
+		issValidator = jwt.IssuerValidator(jwtIssuerURL)
+		iatValidator = jwt.IssuedAtValidator(now)
+		expValidator = jwt.ExpirationTimeValidator(now)
+
+		// Use jwt.ValidatePayload to build a jwt.VerifyOption.
+		// Validators are run in the order informed.
+		userPayload impactUserJWT
+		validator   = jwt.ValidatePayload(&userPayload.Payload, issValidator, iatValidator, expValidator)
+	)
+
+	// Verify the token is signed with our key and is valid
+	// populate userPayload with the token's fields
+	_, err := jwt.Verify([]byte(token), rs512, &userPayload, validator)
+	if err != nil {
+		return nil, err
+	}
+
+	// The subject should be the user's id
+	id, err := uuid.Parse(userPayload.Subject)
+	if err != nil {
+		return nil, err
+	}
+
+	user := database.LookupUserByID(id)
+	if user == nil {
+		return nil, fmt.Errorf("unable to find user with id %s", id.String())
+	}
+
+	return user, nil
 }
 
 // CreateUserJWT returns a jwt token for the user with the subject (if not empty).
