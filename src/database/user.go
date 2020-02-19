@@ -116,6 +116,10 @@ func LookupUserByID(id uuid.UUID) *users.User {
 	return lookupUserByField("user_id", id)
 }
 
+func LookupUserByEmail(email string) *users.User {
+	return lookupUserByField("email", email)
+}
+
 // LookupUserByMinecraftID returns the matching user, or nil if not found
 func LookupUserByMinecraftID(minecraftID uuid.UUID) *users.User {
 	return lookupUserByField("mc_uuid", minecraftID)

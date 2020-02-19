@@ -28,8 +28,8 @@ func DiscordLoginHandler(c echo.Context) error {
 	}
 
 	user := database.LookupUserByDiscordID(discordId)
-	if user == nil || len(user.Roles) <= 0 {
-		return echo.NewHTTPError(http.StatusUnauthorized, "no premium user found")
+	if user == nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "no user found")
 	}
 
 	return respondWithToken(user, c)

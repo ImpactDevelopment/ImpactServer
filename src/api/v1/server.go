@@ -19,6 +19,7 @@ func API(api *echo.Group) {
 	api.GET("/minecraft/user/info", getUserInfo, middleware.CacheUntilPurge())
 	api.GET("/minecraft/user/:role/list", getRoleMembers, middleware.CacheUntilPurge())
 	api.GET("/dbtest", dbTest, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/password", jwt.PasswordLoginHandler, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/minecraft", jwt.MinecraftLoginHandler, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/discord", jwt.DiscordLoginHandler, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/paypal/afterpayment", afterDonation, middleware.NoCache())
