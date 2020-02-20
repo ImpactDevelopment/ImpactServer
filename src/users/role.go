@@ -1,6 +1,7 @@
 package users
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 )
@@ -94,4 +95,23 @@ func getRolesSorted(roles []Role) (sorted []Role) {
 		return sorted[i].rank < sorted[j].rank
 	})
 	return
+}
+
+func (role Role) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf(`"%s"`, role.ID)), nil
+}
+
+func (role *Role) UnmarshalJSON(bytes []byte) error {
+	var id string
+	err := json.Unmarshal(bytes, &id)
+	if err != nil {
+		return err
+	}
+	if r, ok := Roles[id]; ok {
+		role.ID = r.ID
+		role.rank = r.rank
+		role.LegacyList = r.LegacyList
+		return nil
+	}
+	return fmt.Errorf("unable to find role with id %s", string(id))
 }

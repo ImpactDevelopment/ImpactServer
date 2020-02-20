@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
 	"log"
 	"net/http"
 	"net/url"
@@ -59,9 +60,9 @@ func registerWithToken(c echo.Context) error {
 	if body.Token == "" || body.DiscordToken == "" || body.Minecraft == "" || body.Email == "" || body.Password == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "empty field(s)")
 	}
+	body.Token = strings.TrimSpace(body.Token)
 
 	// get discord user id
-	body.Token = strings.TrimSpace(body.Token)
 	discordID, err := discord.GetUserId(body.DiscordToken)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid discord token")
@@ -137,7 +138,12 @@ func registerWithToken(c echo.Context) error {
 		return err
 	}
 
-	// TODO redirect to dashboard
-	const donatorInfo = "https://discordapp.com/channels/208753003996512258/613478149669388298"
-	return c.Redirect(http.StatusFound, donatorInfo)
+	// Get the user so we can log them in
+	user := database.LookupUserByID(userID)
+	if user == nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "successfully registered, but can't find user")
+	}
+	token := jwt.CreateUserJWT(user)
+
+	return c.String(http.StatusOK, token)
 }

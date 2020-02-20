@@ -5,7 +5,7 @@
     <title>Register</title>
 
     <!-- URLSearchParams is not supported on IE, but the URL polyfill should work on IE8+ -->
-    <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js?features=es5%2CURL%2Chtml5shiv%2CElement.prototype.classList"></script>
+    <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js"></script>
 
     <!-- RegExp.escape() is used by the "confirm password" field -->
     <script crossorigin="anonymous" src="https://benjamingr.github.io/RegExp.escape/polyfill.js"></script>
@@ -13,6 +13,7 @@
     <!-- Dependencies -->
     <script type="text/javascript" src="/min/modernizr-min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/api.js"></script>
 
     <script>
         /* Functions */
@@ -169,15 +170,19 @@
                     }
                 }
             })
+
+            return false
         }
 
         // Open the discord oauth popup window
         function openDiscordOAuth() {
-            return popupOverWindow(
+            popupOverWindow(
                 // TODO pass additional scopes as ?scopes= %20 separated list
                 "/discord_oauth.html?scopes=guilds.join%20email",
                 "oauth", 600, 800
             )
+
+            return false
         }
 
         function deleteDiscordOAuth() {
@@ -205,7 +210,6 @@
         // validateForm is used where html5 validation can't be
         // e.g. old browsers and hidden inputs like discord oauth
         function validateForm() {
-            // we could pass in `this` from the onsubmit but idk how well that is supported, so just use getElementById
             var form = document.getElementById("form")
             var msg = document.getElementById("form_msg")
             if (!form || !msg) {
@@ -242,6 +246,49 @@
             }
 
             return errors.length < 1
+        }
+
+        function onSubmit() {
+            // we could pass in `this` from the onsubmit but idk how well that is supported, so just use getElementById
+            var form = document.getElementById("form")
+
+            if (!validateForm()) {
+                return false
+            }
+
+            $.post({
+                url: "https://api.",
+                dataType: "json",
+                headers: {
+                    // https://discordapp.com/developers/docs/reference#http-api
+                    "Authorization": "Bearer " + access_token
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    callback(null, errorThrown)
+                },
+                success: function (data, status) {
+                    // get avatar url https://discordapp.com/developers/docs/reference#image-formatting
+                    var avatar = ""
+                    if (data && data.avatar && data.id) {
+                        var ext = "a_" === data.avatar.substring(0, 2) ? ".gif" : ".png"
+                        var base = "https://cdn.discordapp.com/avatars/"
+                        avatar = base + data.id + "/" + data.avatar + ext
+                    }
+
+                    // Pass a serialized user object to callback
+                    callback({
+                        id: data.id || "",
+                        email: data.email || "",
+                        username: data.username || "",
+                        tag: data.discriminator ? "#" + data.discriminator : "",
+                        avatar: avatar,
+                        nitro: data.premium_type && data.premium_type > 0
+                    })
+                }
+            })
+
+            // Don't submit, we've done that via ajax already
+            return false
         }
 
         function gtag() {
@@ -398,7 +445,7 @@
                 </div>
                 <div class="input-field col s12 m8 l6">
                     <input type="hidden" name="discord" id="discord" required>
-                    <a id="discord_login_btn" class="btn waves-effect waves-light" onclick="openDiscordOAuth()" href="">Login with discord</a>
+                    <a id="discord_login_btn" class="btn waves-effect waves-light" onclick="return openDiscordOAuth()" href="#">Login with discord</a>
                     <div id="discord_info_box" class="hidden row left-align">
                         <!-- .invisible allows fade-in to avoid FOUC -->
                         <div id="discord_info" class="col s12 truncate invisible">
@@ -408,7 +455,7 @@
                             <img id="discord_nitro" class="hidden" src="https://discordapp.com/assets/386884eecd36164487505ddfbac35a9d.svg" alt="nitro">
                         </div>
                         <div class="col s12">
-                            <a id="discord_unlink_btn" class="btn waves-effect waves-light" onclick="deleteDiscordOAuth()" href="">Unlink</a>
+                            <a id="discord_unlink_btn" class="btn waves-effect waves-light" onclick="return deleteDiscordOAuth()" href="#">Unlink</a>
                             <span id="discord_msg"></span>
                         </div>
                     </div>
@@ -449,6 +496,23 @@
             elm.classList.remove("unhide")
             elm.classList.remove("hidden")
         }
+
+        $("form").on("submit", function(event) {
+            event.preventDefault()
+
+            if (!validateForm()) {
+                return
+            }
+
+            api.register($(this).serialize())
+                .then(function (response) {
+                    $.withAuth.setToken(response)
+                    $("#form_msg").text("success! token is " + response)
+                })
+                .catch(function (error) {
+                    $("#form_msg").text(error)
+                })
+        })
     })()
 </script>
 </body>
