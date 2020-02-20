@@ -462,8 +462,8 @@
 
             api.register($(this).serialize())
                 .then(function (response) {
-                    $.withAuth.setToken(response)
-                    $("#form_msg").text("success! token is " + response)
+                    // api has logged them in so navigate to dashboard
+                    window.location = "/account.html"
                 })
                 .catch(function (error) {
                     $("#form_msg").text(error)
