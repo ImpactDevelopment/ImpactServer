@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Impact Account</title>
+
+<!-- Dependencies -->
+<script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js"></script>
+<script type="text/javascript" src="/min/modernizr-min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script type="text/javascript" src="/js/api.js"></script>
+</head>
+<body>
+<pre id="info"></pre>
+<script>
+    (function() {
+        api.me()
+            .then(function (user) {
+                user["user_info"] = undefined // this is irrelevant info here
+                $("#info").text(JSON.stringify(user, null, 4))
+            })
+            .catch(function (error) {
+                $("#info").text(error)
+            })
+    })()
+</script>
+</body>
+</html>
