@@ -8,19 +8,134 @@
 <script type="text/javascript" src="/min/modernizr-min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script type="text/javascript" src="/js/api.js"></script>
+<script>
+    // Called by the oauth popup window
+    function discordCallback(discordToken) {
+        api.login(discordToken)
+        .then(function(result) {
+            // TODO instead or reloading just call an init() func
+            window.location.reload(false)
+        })
+        .catch(function(error) {
+            $("#discord_login_msg").text(error)
+        })
+    }
+
+    // popup centered on window
+    // https://stackoverflow.com/a/32261263
+    function popupOverWindow(url, title, w, h) {
+        var y = window.top.outerHeight / 2 + window.top.screenY - ( h / 2)
+        var x = window.top.outerWidth / 2 + window.top.screenX - ( w / 2)
+        var newWindow = window.open(url, title, 'toolbar=no,location=no,directories=no,status=no,menubar=no,copyhistory=no,width='+w+',height='+h+',top='+y+',left='+x)
+        if (window.focus) {
+            newWindow.focus()
+        }
+        return newWindow
+    }
+</script>
+
+<!-- CSS  -->
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+<link rel="stylesheet" type="text/css" href="/min/style-min.css"/>
+<style>
+    #fouc {
+        opacity: 1;
+        -webkit-transition: opacity .33s ease;
+        transition: opacity .33s ease;
+    }
+    .invisible {
+        opacity: 0!important;
+    }
+    #discord_login_btn {
+        background-color: #7289da;
+        color: #fff;
+    }
+</style>
 </head>
 <body>
-<pre id="info"></pre>
+<header>
+    <div class="navbar-fixed">
+        <nav role="navigation">
+            <div class="nav-wrapper container">
+                <a href="/" class="brand-logo"><h1>Impact</h1></a>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<noscript>This page requires javascript to function</noscript>
+
+<div id="fouc" class="section container invisible">
+    <div id="login" class="row hidden">
+        <!-- novalidate doesn't block materialize's error messages but does allow validateForm to take chage of the final validation -->
+        <form novalidate id="form" class="col s12">
+            <div class="row">
+                <div class="input-field col s12">
+                    <a id="discord_login_btn" class="btn waves-effect waves-light">Login with discord</a>
+                    <p id="discord_login_msg"></p>
+                </div>
+                <div class="input-field col s12 center grey-text">
+                    <p>or</p>
+                </div>
+                <div class="input-field col s12 m6">
+                    <input type="email" name="email" id="email" class="validate" required/>
+                    <label for="email">Email</label>
+                </div>
+                <div class="input-field col s4 m4">
+                    <input type="password" name="password" id="password" class="validate" autocomplete required/>
+                    <label for="password">Password</label>
+                    <!--TODO: <span class="helper-text"><a>Click here</a> if you've forgotten your password</span>-->
+                </div>
+                <div class="input-field col s2">
+                    <button class="btn waves-effect waves-light" type="submit" name="action">
+                        Submit
+                    </button>
+                </div>
+                <p id="form_msg" class="col s12 helper-text error"></p>
+            </div>
+        </form>
+    </div>
+    <div id="dashboard" class="hidden">
+        <p>TODO: dashboard</p>
+        <pre id="info"></pre>
+        <a id="logout" class="btn waves-effect waves-light" href="#">Logout</a>
+    </div>
+</div>
 <script>
     (function() {
-        api.me()
-            .then(function (user) {
-                user["user_info"] = undefined // this is irrelevant info here
-                $("#info").text(JSON.stringify(user, null, 4))
-            })
-            .catch(function (error) {
-                $("#info").text(error)
-            })
+        if (api.isLoggedIn()) {
+            $("#dashboard").removeClass("hidden")
+            $("#login").addClass("hidden")
+            api.me()
+                .then(function (user) {
+                    user["user_info"] = undefined // this is irrelevant info here
+                    $("#info").text(JSON.stringify(user, null, 4))
+                })
+                .catch(function (error) {
+                    $("#info").text(error)
+                })
+        } else {
+            $("#dashboard").addClass("hidden")
+            $("#login").removeClass("hidden")
+        }
+
+        $("#discord_login_btn").click(function (event) {
+            event.preventDefault()
+            popupOverWindow(
+                "/discord_oauth.html",
+                "oauth", 600, 800
+            )
+        })
+
+        $("#logout").click(function (event) {
+            event.preventDefault()
+            api.logout()
+            window.location.reload(false)
+        })
+
+        // Fade in
+        $("#fouc").removeClass("invisible")
     })()
 </script>
 </body>

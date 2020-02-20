@@ -177,7 +177,6 @@
         // Open the discord oauth popup window
         function openDiscordOAuth() {
             popupOverWindow(
-                // TODO pass additional scopes as ?scopes= %20 separated list
                 "/discord_oauth.html?scopes=guilds.join%20email",
                 "oauth", 600, 800
             )
@@ -246,49 +245,6 @@
             }
 
             return errors.length < 1
-        }
-
-        function onSubmit() {
-            // we could pass in `this` from the onsubmit but idk how well that is supported, so just use getElementById
-            var form = document.getElementById("form")
-
-            if (!validateForm()) {
-                return false
-            }
-
-            $.post({
-                url: "https://api.",
-                dataType: "json",
-                headers: {
-                    // https://discordapp.com/developers/docs/reference#http-api
-                    "Authorization": "Bearer " + access_token
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    callback(null, errorThrown)
-                },
-                success: function (data, status) {
-                    // get avatar url https://discordapp.com/developers/docs/reference#image-formatting
-                    var avatar = ""
-                    if (data && data.avatar && data.id) {
-                        var ext = "a_" === data.avatar.substring(0, 2) ? ".gif" : ".png"
-                        var base = "https://cdn.discordapp.com/avatars/"
-                        avatar = base + data.id + "/" + data.avatar + ext
-                    }
-
-                    // Pass a serialized user object to callback
-                    callback({
-                        id: data.id || "",
-                        email: data.email || "",
-                        username: data.username || "",
-                        tag: data.discriminator ? "#" + data.discriminator : "",
-                        avatar: avatar,
-                        nitro: data.premium_type && data.premium_type > 0
-                    })
-                }
-            })
-
-            // Don't submit, we've done that via ajax already
-            return false
         }
 
         function gtag() {
@@ -395,7 +351,7 @@
 <div class="section container hidden unhide">
     <div class="row">
         <!-- novalidate doesn't block materialize's error messages but does allow validateForm to take chage of the final validation -->
-        <form novalidate id="form" class="col s12" onsubmit="return validateForm()" method="post" action="https://api.impactclient.net/v1/register/token">
+        <form novalidate id="form" class="col s12" method="post" action="https://api.impactclient.net/v1/register/token">
             <div class="row">
                 <div class="input-field col s12" id="token_field">
                     <input type="text" name="token" id="token" class="validate" required pattern="[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}">

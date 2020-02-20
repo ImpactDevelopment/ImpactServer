@@ -25,6 +25,14 @@
                 })
             })
         },
+        // Add a way check if logged in
+        isLoggedIn: function() {
+            return !!window.localStorage.getItem("access_token")
+        },
+        // Add a way check if logged in
+        logout: function() {
+            window.localStorage.removeItem("access_token")
+        },
         // login with either discord token or username + password
         login: function(username, password) {
             var url = baseUrl + "/login/" + (password ? "password" : "discord")
@@ -145,7 +153,7 @@
     }
 
     // Add a way to set token
-    $.withAuth.setToken = function setToken(token) {
+    $.withAuth.setToken = function(token) {
         window.localStorage.setItem("access_token", token)
     }
 })(jQuery);
