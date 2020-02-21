@@ -128,6 +128,29 @@
             )
         })
 
+        $("form").submit(function (event) {
+            event.preventDefault()
+
+            var email = $("#email").val()
+            var password = $("#password").val()
+
+            // validate
+            var msg = ""
+            if (!email) msg += ("<br>Email is required")
+            if (!password) msg += ("<br>Password is required")
+            $("#form_msg").html(msg)
+            if (msg) return
+
+            api.login(email, password)
+                .then(function(result) {
+                    // The api has logged us in
+                    window.location.reload(false)
+                })
+                .catch(function(error) {
+                    console.error(error)
+                })
+        })
+
         $("#logout").click(function (event) {
             event.preventDefault()
             api.logout()

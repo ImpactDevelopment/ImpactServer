@@ -34,11 +34,11 @@
             window.localStorage.removeItem("access_token")
         },
         // login with either discord token or username + password
-        login: function(username, password) {
+        login: function(email, password) {
             var url = baseUrl + "/login/" + (password ? "password" : "discord")
             var fields = {
-                "access_token": password ? undefined : username,
-                "username": password ? username : undefined,
+                "access_token": password ? undefined : email,
+                "email": password ? email : undefined,
                 "password": password
             }
             return new Promise(function (resolve, reject) {
