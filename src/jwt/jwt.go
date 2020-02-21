@@ -3,11 +3,12 @@ package jwt
 import (
 	"crypto/rsa"
 	"fmt"
-	"github.com/ImpactDevelopment/ImpactServer/src/database"
-	"github.com/google/uuid"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/ImpactDevelopment/ImpactServer/src/database"
+	"github.com/google/uuid"
 
 	"github.com/labstack/echo/v4"
 
