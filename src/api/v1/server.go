@@ -29,4 +29,5 @@ func API(api *echo.Group) {
 	api.GET("/premiumcheck", premiumCheck, middleware.NoCache())
 	api.GET("/integration/futureclient/masonlist", futureIntegration, middleware.NoCache())
 	api.GET("/integration/impactbot/checkdonator/:discordid", checkDonator, middleware.NoCache())
+	api.GET("/integration/impactbot/genkey", genkey, middleware.NoCache())
 }

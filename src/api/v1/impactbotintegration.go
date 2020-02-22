@@ -25,3 +25,11 @@ func checkDonator(c echo.Context) error {
 		return c.String(http.StatusOK, "no")
 	}
 }
+
+func genkey(c echo.Context) error {
+	auth := c.QueryParam("auth") + "0"
+	if auth != os.Getenv("IMPACTBOT_AUTH_SECRET") {
+		return c.JSON(http.StatusForbidden, "auth wrong im sowwy")
+	}
+	return c.String(http.StatusOK, "test test test")
+}
