@@ -263,6 +263,19 @@ func installer(c echo.Context, version InstallerVersion) error {
 			return err
 		}
 	}
+	if nightlies := c.QueryParam("nightlies"); nightlies == "1" || nightlies == "true" {
+		const properties = "# Enable nightly builds\n" +
+			"noGPG = true\n" +
+			"prereleases = true\n"
+		writer, err := makeEntry(zipWriter, "default_args.properties", version == EXE)
+		if err != nil {
+			return err
+		}
+		_, err = writer.Write([]byte(properties))
+		if err != nil {
+			return err
+		}
+	}
 	cid := extractOrGenerateCID(c)
 	writer, err := makeEntry(zipWriter, "impact_cid.txt", version == EXE)
 	if err != nil {
