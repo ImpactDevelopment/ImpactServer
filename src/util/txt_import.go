@@ -62,8 +62,8 @@ func importFromRole(role string) {
 		}
 		fmt.Println(line)
 		// delibrately ignore duplicate errors lol
-		database.DB.Exec("INSERT INTO users(mc_uuid) VALUES ($1)", line)
-		_, err = database.DB.Exec("UPDATE users SET "+role+" = TRUE WHERE mc_uuid = $1", line)
+		database.DB.Exec(`INSERT INTO users(mc_uuid) VALUES ($1)`, line)
+		_, err = database.DB.Exec(`UPDATE users SET roles = array_append(roles, $2) WHERE mc_uuid = $1`, line, role)
 		if err != nil {
 			panic(err)
 		}

@@ -50,11 +50,8 @@ func createTables() error {
 			discord_id TEXT UNIQUE,
 
 			legacy BOOL NOT NULL DEFAULT TRUE, -- this defaults to true e.g. for manual inserts. register.go overrides this to false however!
-			premium BOOL NOT NULL DEFAULT TRUE,
-			pepsi BOOL NOT NULL DEFAULT FALSE,
-			spawnmason BOOL NOT NULL DEFAULT FALSE,
-			staff BOOL NOT NULL DEFAULT FALSE,
-			developer BOOL NOT NULL DEFAULT FALSE
+			
+			roles TEXT[] NOT NULL DEFAULT ARRAY[]
 		);
 	`)
 	if err != nil {
@@ -75,11 +72,7 @@ func createTables() error {
 			cape_enabled,
 			legacy_enabled,
 			legacy,
-			premium,
-			pepsi,
-			spawnmason,
-			staff,
-			developer
+			roles
 		FROM users;
 	`)
 	if err != nil {

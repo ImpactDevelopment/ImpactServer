@@ -15,7 +15,7 @@ func checkDonator(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, "auth wrong im sowwy")
 	}
 	var premium bool
-	err := database.DB.QueryRow("SELECT premium FROM users WHERE discord_id = $1", c.Param("discordid")).Scan(&premium)
+	err := database.DB.QueryRow(`SELECT 'premium'=ANY(roles) FROM users WHERE discord_id = $1`, c.Param("discordid")).Scan(&premium)
 	if err != nil {
 		log.Println(err)
 	}
@@ -32,7 +32,7 @@ func genkey(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, "auth wrong im sowwy")
 	}
 	var token string
-	err := database.DB.QueryRow("INSERT INTO pending_donations(amount) VALUES(0) RETURNING token").Scan(&token)
+	err := database.DB.QueryRow(`INSERT INTO pending_donations(amount) VALUES(0) RETURNING token`).Scan(&token)
 	if err != nil {
 		return err
 	}
