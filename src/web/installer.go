@@ -3,7 +3,6 @@ package web
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -212,10 +211,10 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 	}
 }
 
-func makeEntry(zipWriter *zip.Writer, name string, version InstallerVersion) (io.Writer, error) {
+func makeEntry(zipWriter *zip.Writer, entryName string, entry []byte, version InstallerVersion) error {
 	// make an entry with a valid last modified time so as to not crash java 12 reeee
 	header := &zip.FileHeader{
-		Name:   name,
+		Name:   entryName,
 		Method: zip.Deflate,
 	}
 	switch version {
@@ -223,7 +222,17 @@ func makeEntry(zipWriter *zip.Writer, name string, version InstallerVersion) (io
 	default:
 		header.Modified = time.Now()
 	}
-	return zipWriter.CreateHeader(header)
+
+	// make the entry
+	writer, err := zipWriter.CreateHeader(header)
+	if err != nil {
+		return err
+	}
+	_, err = writer.Write([]byte(entry))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func installer(c echo.Context, version InstallerVersion) error {
@@ -255,11 +264,7 @@ func installer(c echo.Context, version InstallerVersion) error {
 	zipWriter := zip.NewWriter(res)
 	defer zipWriter.Close()
 	for _, entry := range installerEntries {
-		entryWriter, err := makeEntry(zipWriter, entry.name, version)
-		if err != nil {
-			return err
-		}
-		_, err = entryWriter.Write(entry.data)
+		err := makeEntry(zipWriter, entry.name, entry.data, version)
 		if err != nil {
 			return err
 		}
@@ -268,21 +273,13 @@ func installer(c echo.Context, version InstallerVersion) error {
 		const properties = "# Enable nightly builds\n" +
 			"noGPG = true\n" +
 			"prereleases = true\n"
-		writer, err := makeEntry(zipWriter, "default_args.properties", version)
-		if err != nil {
-			return err
-		}
-		_, err = writer.Write([]byte(properties))
+		err := makeEntry(zipWriter, "default_args.properties", []byte(properties), version)
 		if err != nil {
 			return err
 		}
 	}
 	cid := extractOrGenerateCID(c)
-	writer, err := makeEntry(zipWriter, "impact_cid.txt", version)
-	if err != nil {
-		return err
-	}
-	_, err = writer.Write([]byte(cid))
+	err := makeEntry(zipWriter, "impact_cid.txt", []byte(cid), version)
 	if err != nil {
 		return err
 	}
