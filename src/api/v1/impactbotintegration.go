@@ -31,5 +31,10 @@ func genkey(c echo.Context) error {
 	if auth != os.Getenv("IMPACTBOT_AUTH_SECRET") {
 		return c.JSON(http.StatusForbidden, "auth wrong im sowwy")
 	}
-	return c.String(http.StatusOK, "test test test")
+	var token string
+	err := database.DB.QueryRow("INSERT INTO pending_donations(amount) VALUES(0) RETURNING token").Scan(&token)
+	if err != nil {
+		return err
+	}
+	return c.String(http.StatusOK, token)
 }
