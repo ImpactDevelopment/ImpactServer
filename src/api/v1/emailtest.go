@@ -2,10 +2,8 @@ package v1
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/mailgun"
@@ -13,10 +11,6 @@ import (
 )
 
 func emailTest(c echo.Context) error {
-	if c.QueryParam("auth")+"0" != os.Getenv("API_AUTH_SECRET") {
-		return errors.New("no u")
-	}
-
 	message := mailgun.MG.NewMessage("Impcat Verification Idk Lmao <noreply@impactclient.net>", "I am, basically, emailing you", "text only version of the rich text: image of speckles (just imagine a good kitty)", c.QueryParam("dest"))
 	message.SetHtml(`<html>
     	<body>

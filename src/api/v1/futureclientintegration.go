@@ -2,7 +2,6 @@ package v1
 
 import (
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
@@ -10,11 +9,6 @@ import (
 )
 
 func futureIntegration(c echo.Context) error {
-	auth := c.QueryParam("auth") + "0"
-	if auth != os.Getenv("API_AUTH_SECRET") && auth != os.Getenv("FUTURE_AUTH_SECRET") {
-		return c.JSON(http.StatusForbidden, "auth wrong im sowwy")
-	}
-
 	rows, err := database.DB.Query("SELECT mc_uuid FROM users WHERE spawnmason")
 	if err != nil {
 		return err

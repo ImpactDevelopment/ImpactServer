@@ -20,6 +20,7 @@ var Roles = map[string]Role{
 	"developer":  {ID: "developer", rank: 2, LegacyList: true},
 	"staff":      {ID: "staff", rank: 3, LegacyList: true},
 	"premium":    {ID: "premium", rank: 4, LegacyList: true},
+	"future_dev": {ID: "future_dev", rank: 5, LegacyList: false},
 }
 
 var defaultRoleTemplates = map[string]UserInfo{
