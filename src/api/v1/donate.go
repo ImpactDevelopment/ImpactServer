@@ -37,9 +37,9 @@ func afterDonation(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnprocessableEntity, "Error getting order details for id "+body.ID).SetInternal(err)
 	}
 
-	err = order.Authorize()
+	err = order.Capture()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Error authorizing order").SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error capturing order").SetInternal(err)
 	}
 
 	err = order.Validate()
@@ -48,7 +48,8 @@ func afterDonation(c echo.Context) error {
 	}
 
 	var token uuid.UUID
-	err = database.DB.QueryRow("INSERT INTO pending_donations(paypal_order_id, amount) VALUES ($1, $2) RETURNING token", order.ID, order.Total()).Scan(&token)
+	err = database.DB.QueryRow("INSERT INTO pending_donations(paypal_order_id, paypal_payer_id, paypal_payer_email, amount) VALUES ($1, $2, $3, $4) RETURNING token",
+		order.ID, order.PayerID, order.PayerEmail, order.Total()).Scan(&token)
 	if err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error saving pending donation").SetInternal(err)

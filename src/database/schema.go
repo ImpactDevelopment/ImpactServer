@@ -25,6 +25,8 @@ func createTables() error {
 			token  UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
 			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT, -- unix seconds
 			paypal_order_id TEXT UNIQUE, -- can be null in case we want to make a "gift card" with no paypal order id attached
+			paypal_payer_id TEXT,
+			paypal_payer_email TEXT,
 			amount INTEGER, -- can be null for the same reason
 
 			used BOOL NOT NULL DEFAULT FALSE,

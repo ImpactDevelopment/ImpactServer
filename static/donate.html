@@ -177,6 +177,7 @@
 
     function createOrder(data, actions) {
         return actions.order.create({
+            intent: 'CAPTURE',
             application_context: {
                 brand_name: 'Impact',
                 shipping_preference: 'NO_SHIPPING'
