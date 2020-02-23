@@ -44,7 +44,7 @@ func resetPassword(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "user not found")
 	}
 
-	token, err := getToken(user.ID)
+	token, err := genToken(user.ID)
 	if err != nil {
 		return err
 	}
@@ -93,12 +93,24 @@ func putPassword(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid reset token").SetInternal(err)
 		}
 
-		return c.String(http.StatusOK, token)
+		// ok, matching token so we can trust them now I guess
+		err = setPassword(user.ID, body.Password)
+		if err != nil {
+			return err
+		}
+
+		// Delete the token so it can't be used more than once
+		_, err := database.DB.Exec(`DELETE FROM password_resets WHERE token = $1`, token)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "unable to delete reset token").SetInternal(err)
+		}
+
+		return c.JSONBlob(http.StatusOK, []byte(`{"message":"success"}`))
 	}
 }
 
-func getToken(userID uuid.UUID) (token uuid.UUID, err error) {
-	err = database.DB.QueryRow(`INSERT INTO password_resets (user_id) VALUES ($1) RETURNING token`).Scan(&token)
+func genToken(userID uuid.UUID) (token uuid.UUID, err error) {
+	err = database.DB.QueryRow(`INSERT INTO password_resets (user_id) VALUES ($1) RETURNING token`, userID).Scan(&token)
 	if err != nil {
 		err = echo.NewHTTPError(http.StatusInternalServerError, "failed to create reset token").SetInternal(err)
 	}
