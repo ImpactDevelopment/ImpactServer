@@ -75,13 +75,58 @@
             return new Promise(function (resolve, reject) {
                 $.post({
                     url: baseUrl + "/paypal/afterpayment",
-                    data: '{"orderID":"' + orderID + '"}',
+                    data: {
+                        orderID: orderID
+                    },
                     dataType: "json",
                     error: function (jqXHR, textStatus, errorThrown) {
                         reject(errorThrown)
                     },
                     success: function (data, status) {
                         resolve(data.token)
+                    }
+                })
+            })
+        },
+        forgotPassword: function(email, verification) {
+            return new Promise(function (resolve, reject) {
+                $.post({
+                    url: baseUrl + "/password/reset",
+                    data: {
+                        email: email,
+                        "g-recaptcha-response": verification
+                    },
+                    dataType: "json",
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        reject(errorThrown)
+                    },
+                    success: function (data, status) {
+                        resolve(data)
+                    }
+                })
+            })
+        },
+        // Change password using a reset token. If logged in then token can optionally be omitted.
+        changePassword: function(token, password) {
+            if (!password) {
+                password = token
+                token = undefined
+            }
+            var url = token ? baseUrl + "/password/" + encodeURIComponent(token) : baseUrl + "/password/me"
+            var post = token ? $.post : $.withAuth.post
+
+            return new Promise(function (resolve, reject) {
+                post({
+                    url: url,
+                    data: {
+                        password: password
+                    },
+                    dataType: "json",
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        reject(errorThrown)
+                    },
+                    success: function (data, status) {
+                        resolve(data)
                     }
                 })
             })

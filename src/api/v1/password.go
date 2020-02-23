@@ -29,17 +29,23 @@ const (
 )
 
 func resetPassword(c echo.Context) error {
-	email := strings.TrimSpace(c.Param("email"))
-	if email == "" {
+	var body struct {
+		Email string `json:"email" form:"email" query:"email"`
+	}
+	err := c.Bind(&body)
+	if err != nil {
+		return err
+	}
+	if body.Email == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "email is required")
 	}
 
-	err := recaptcha.Verify(c)
+	err = recaptcha.Verify(c)
 	if err != nil {
 		return err
 	}
 
-	user := database.LookupUserByEmail(email)
+	user := database.LookupUserByEmail(strings.TrimSpace(body.Email))
 	if user == nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "user not found")
 	}
