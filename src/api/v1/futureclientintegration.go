@@ -15,7 +15,7 @@ func futureIntegration(c echo.Context) error {
 		return c.JSON(http.StatusForbidden, "auth wrong im sowwy")
 	}
 
-	rows, err := database.DB.Query(`SELECT mc_uuid FROM users WHERE 'spawnmason'=ANY(roles)`)
+	rows, err := database.DB.Query("SELECT mc_uuid FROM users WHERE spawnmason")
 	if err != nil {
 		return err
 	}

@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"github.com/lib/pq"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"github.com/google/uuid"
@@ -17,8 +16,12 @@ type userRow struct {
 	passwdHash    sql.NullString
 	legacyEnabled bool
 	capeEnabled   bool
+	premium       bool
+	pepsi         bool
+	spawnmason    bool
+	staff         bool
+	developer     bool
 	legacy        bool
-	roleList      pq.StringArray
 }
 
 // rowScanner is implemented by sql.Row and sql.Rows
@@ -29,7 +32,7 @@ type rowScanner interface {
 // scanUsersView takes a sql.Row or sql.Rows and scans it into the user.
 // It is assumed the row is has the same column order as `users_view`
 func (user *userRow) scanUsersView(row rowScanner) error {
-	return row.Scan(&user.id, &user.email, &user.minecraft, &user.discord, &user.passwdHash, &user.capeEnabled, &user.legacyEnabled, &user.legacy, &user.roleList)
+	return row.Scan(&user.id, &user.email, &user.minecraft, &user.discord, &user.passwdHash, &user.capeEnabled, &user.legacyEnabled, &user.legacy, &user.premium, &user.pepsi, &user.spawnmason, &user.staff, &user.developer)
 }
 
 // makeUser converts a userRow into a users.User
@@ -59,12 +62,20 @@ func (user *userRow) makeUser() users.User {
 
 func (user userRow) roles() []users.Role {
 	var roles []users.Role
-	for _, roleID := range user.roleList {
-		if role, ok := users.Roles[roleID]; ok {
-			roles = append(roles, role)
-		} else {
-			fmt.Printf("User %s has unknown role %s\n", user.id, roleID)
-		}
+	if user.premium {
+		roles = append(roles, users.Roles["premium"])
+	}
+	if user.staff {
+		roles = append(roles, users.Roles["staff"])
+	}
+	if user.pepsi {
+		roles = append(roles, users.Roles["pepsi"])
+	}
+	if user.spawnmason {
+		roles = append(roles, users.Roles["spawnmason"])
+	}
+	if user.developer {
+		roles = append(roles, users.Roles["developer"])
 	}
 	return roles
 }

@@ -115,15 +115,13 @@ func registerWithToken(c echo.Context) error {
 		minecraftID = respBody.Id
 	}
 
-	// TODO check for existing rows first
-	// TODO check which roles should be assigned based on the token
 	var userID uuid.UUID
-	err = database.DB.QueryRow(`INSERT INTO users(legacy, email, password_hash, mc_uuid, discord_id, roles) VALUES (false, $1, $2, $3, $4, '{"premium"}') RETURNING user_id`, body.Email, hashedPassword, minecraftID, discordID).Scan(&userID)
+	err = database.DB.QueryRow("INSERT INTO users(legacy, email, password_hash, mc_uuid, discord_id) VALUES (false, $1, $2, $3, $4) RETURNING user_id", body.Email, hashedPassword, minecraftID, discordID).Scan(&userID)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	_, err = database.DB.Exec(`UPDATE pending_donations SET used = true, used_by = $1 WHERE token = $2`, userID, body.Token)
+	_, err = database.DB.Exec("UPDATE pending_donations SET used = true, used_by = $1 WHERE token = $2", userID, body.Token)
 	if err != nil {
 		log.Println(err)
 		return err
