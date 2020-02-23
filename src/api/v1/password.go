@@ -1,15 +1,31 @@
 package v1
 
 import (
+	"context"
 	"fmt"
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
+	"github.com/ImpactDevelopment/ImpactServer/src/mailgun"
 	"github.com/ImpactDevelopment/ImpactServer/src/recaptcha"
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
+	"net/url"
 	"strings"
+	"time"
+)
+
+const (
+	// Let's be real, I should be using text/template and html/template here instead of format strings
+	text = `Here's your password reset link: %s`
+	html = `<p>
+<a href="%s">Click here to reset your password</a> or copy the following link if that doesn't work:
+</p>
+<pre>
+%s
+</pre>`
 )
 
 func resetPassword(c echo.Context) error {
@@ -32,15 +48,21 @@ func resetPassword(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+	resetUrl := util.GetServerURL()
+	resetUrl.Path = "/forgotpassword.html"
+	resetUrl.RawQuery = url.Values{"token": {token.String()}}.Encode()
 
-	// TODO send user an email, don't just give anyone a token!!
-	//return c.JSONBlob(http.StatusOK, []byte(`{"message":"success"}`))
-	// FIXME DO NOT MERGE WITH THIS AS IS!!!!!!
-	return c.JSON(http.StatusOK, struct {
-		Token string
-	}{
-		Token: token.String(),
-	})
+	// Send user an email, don't just give anyone a token lol
+	message := mailgun.MG.NewMessage("Impact <noreply@impactclient.net>", "Password reset", fmt.Sprintf(text, resetUrl.String()), user.Email)
+	message.SetHtml(fmt.Sprintf(html, resetUrl.String(), resetUrl.String()))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	resp, id, err := mailgun.MG.Send(ctx, message)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed to send reset email")
+	}
+	fmt.Printf("Successful password reset email sent to %s, mailgun id %s, resp %s", user.Email, id, resp)
+	return c.JSONBlob(http.StatusOK, []byte(`{"message":"success"}`))
 }
 
 func putPassword(c echo.Context) error {
