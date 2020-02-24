@@ -10,12 +10,12 @@ const alteningReferral = "impact"
 
 var alteningInfoStruct = TheAlteningInfo{
 	Dashboard: &Dashboard{
-		GenerateUrl: "https://thealtening.com/?ref=impact&type=transit&destination=https://panel.thealtening.com/#generator?ref=" + alteningReferral,
-		AccountUrl:  "https://thealtening.com/?ref=impact&type=transit&destination=https://panel.thealtening.com/#account?ref=" + alteningReferral,
+		GenerateUrl: "https://panel.thealtening.com/?ref=" + alteningReferral + "#generator",
+		AccountUrl:  "https://panel.thealtening.com/?ref=" + alteningReferral + "#account",
 	},
 	Generator: &Generator{
-		FreeUrl: "https://thealtening.com/?ref=impact&type=transit&destination=https://thealtening.com/free/free-minecraft-alt?ref=" + alteningReferral,
-		PaidUrl: "https://thealtening.com/?ref=impact&type=transit&destination=https://panel.thealtening.com/#generator?ref=" + alteningReferral,
+		FreeUrl: "https://thealtening.com/?ref=" + alteningReferral + "&type=transit&destination=https://thealtening.com/free/free-minecraft-alt",
+		PaidUrl: "https://panel.thealtening.com/?ref=" + alteningReferral + "#generator",
 	},
 	// TODO load a list of `Promo`s at runtime
 	Promos: &[]Promo{

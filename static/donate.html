@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Donate to impact</title>
+
+
+    <!-- CSS  -->
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <link rel="stylesheet" type="text/css" href="/min/style-min.css"/>
+
+    <style>
+        #amount:before {
+            content: '$';
+        }
+    </style>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-143397381-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-143397381-1');
+        
+      var getOutboundLink = function(label) {
+        gtag('event', 'click', {
+            'event_category': 'outbound',
+            'event_label': label,
+            'transport_type': 'beacon'
+        });
+      }
+    </script>
+</head>
+<body>
+<header>
+    <div class="navbar-fixed">
+        <nav role="navigation">
+            <div class="nav-wrapper container">
+                <a href="/" class="brand-logo"><h1>Impact</h1></a>
+            </div>
+        </nav>
+    </div>
+</header>
+<script src="https://www.paypal.com/sdk/js?client-id=AaIwV_K_wsv1FUcoee2uHxfYptMhWXLVG6wFbdYEFBY2Ub94kM3m-8yzBOdKHMplLIES6BLGVB3yWJ7J"></script>
+ <div class="container">
+    <div class="row">
+        <form class="col s12">
+            <div class="row">
+                <br><br>
+                <div class="input-field col s9 push-l3">
+                    Donations of any size are appreciated! The minimum donation to receive premium features is $5. 
+                </div>
+                <div class="input-field col s3 pull-l9">
+                    <span class="prefix">$</span>
+                    <input id="amount" type="number" data-type="currency" min="0.5" step="0.01" value="5"
+                           pattern="^\$\d{1,3}(,\d{3})*(\.\d+)?$">
+                    <label for="amount" class="active">Amount</label>
+                </div>
+                <div class="range-field col s12">
+                    <input id="amountslider" type="range" min="1" max="100" value="5">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12">
+                    <div id="paypal-button-container"></div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // TODO accept local currency?
+    var currency = 'USD'; // https://www.currency-iso.org/dam/downloads/lists/list_one.xml
+    var currencyInput = document.querySelector('#amount');
+    var currencySlider = document.querySelector('#amountslider');
+    var mcUuid = "";
+
+
+    currencyInput.addEventListener('input', () => {
+        if (currencySlider.value !== currencyInput.value)
+            currencySlider.value = currencyInput.value;
+
+    });
+    currencySlider.addEventListener('input', () => {
+        if (currencyInput.value !== currencySlider.value)
+            currencyInput.value = currencySlider.value;
+
+    });
+
+    function localStringToNumber(s) {
+        return Number(String(s).replace(/[^0-9.-]+/g, ""));
+    }
+
+    function formatNumber(n) {
+        // format number 1000000 to 1,234,567
+        return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+    }
+
+
+    function formatCurrency(input, blur) {
+        // appends $ to value, validates decimal side
+        // and puts cursor back in right position.
+
+        // get input value
+        var input_val = input.val();
+
+        // don't validate empty input
+        if (input_val === "") {
+            return;
+        }
+
+        // original length
+        var original_len = input_val.length;
+
+        // initial caret position
+        var caret_pos = input.prop("selectionStart");
+
+        // check for decimal
+        if (input_val.indexOf(".") >= 0) {
+
+            // get position of first decimal
+            // this prevents multiple decimals from
+            // being entered
+            var decimal_pos = input_val.indexOf(".");
+
+            // split number by decimal point
+            var left_side = input_val.substring(0, decimal_pos);
+            var right_side = input_val.substring(decimal_pos);
+
+            // add commas to left side of number
+            left_side = formatNumber(left_side);
+
+            // validate right side
+            right_side = formatNumber(right_side);
+
+            // On blur make sure 2 numbers after decimal
+            if (blur === "blur") {
+                right_side += "00";
+            }
+
+            // Limit decimal to only 2 digits
+            right_side = right_side.substring(0, 2);
+
+            // join number by .
+            input_val = "$" + left_side + "." + right_side;
+
+        } else {
+            // no decimal entered
+            // add commas to number
+            // remove all non-digits
+            input_val = formatNumber(input_val);
+            input_val = "$" + input_val;
+
+            // final formatting
+            if (blur === "blur") {
+                input_val += ".00";
+            }
+        }
+
+        // send updated string to input
+        input.value = input_val;
+
+        // put caret back in the right position
+        var updated_len = input_val.length;
+        caret_pos = updated_len - original_len + caret_pos;
+        input[0].setSelectionRange(caret_pos, caret_pos);
+    }
+
+    function qualifiesForPerks() {
+        return localStringToNumber(currencyInput.value) >= 5;
+    }
+
+    function createOrder(data, actions) {
+        return actions.order.create({
+            application_context: {
+                brand_name: 'Impact',
+                shipping_preference: 'NO_SHIPPING'
+                // return_url: '',
+                // cancel_url: '',
+            },
+            purchase_units: [
+                {
+                    amount: {
+                        currency_code: currency,
+                        value: localStringToNumber(currencyInput.value)
+                    }
+                }
+            ]
+        });
+    }
+
+    paypal.Buttons({
+        createOrder: createOrder,
+        onApprove: function (data, actions) {
+            return actions.order.capture().then(function (details) {
+                console.log('Transaction completed ', details);
+                // Call your server to save the transaction
+                // Our server will verify the order id with paypal api:
+                // https://developer.paypal.com/docs/api/orders/v2/#orders_get
+                return fetch('https://api.impactclient.net/v1/paypal/afterpayment', {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'content-type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        orderID: data.orderID,
+                        // TODO other info like uuid, impact account email, etc
+                        // This is basically account registration??
+                        // or at least
+                    })
+                }).then(function(response){
+                    return response.json();
+                }).then(function(myJson) {
+                    console.log(myJson);
+                    var token = myJson.token;
+                    if (token && token != "thanks") {
+                        document.location.href='/register.html?token=' + token;
+                    } else {
+                        document.getElementsByTagName("body")[0].innerHTML="thanks for the donation. it is less than 5 dollars though.";
+                    }
+                });
+            });
+        }
+    }).render('#paypal-button-container');
+</script>
+</body>
+</html>

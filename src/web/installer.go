@@ -2,9 +2,7 @@ package web
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -213,21 +211,33 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 	}
 }
 
-func makeEntry(zipWriter *zip.Writer, name string, exe bool) (io.Writer, error) {
+func makeEntry(zipWriter *zip.Writer, entryName string, entry []byte, version InstallerVersion) error {
 	// make an entry with a valid last modified time so as to not crash java 12 reeee
 	header := &zip.FileHeader{
-		Name:   name,
+		Name:   entryName,
 		Method: zip.Deflate,
 	}
-	if !exe {
+	switch version {
+	case EXE: // Don't set modified time for EXE versions
+	default:
 		header.Modified = time.Now()
 	}
-	return zipWriter.CreateHeader(header)
+
+	// make the entry
+	writer, err := zipWriter.CreateHeader(header)
+	if err != nil {
+		return err
+	}
+	_, err = writer.Write([]byte(entry))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func installer(c echo.Context, version InstallerVersion) error {
 	if installerVersion == "" {
-		return errors.New("Installer version not specified")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Installer version not specified")
 	}
 	awaitStartup() // in case we get an early request, block until startup is done
 
@@ -254,21 +264,22 @@ func installer(c echo.Context, version InstallerVersion) error {
 	zipWriter := zip.NewWriter(res)
 	defer zipWriter.Close()
 	for _, entry := range installerEntries {
-		entryWriter, err := makeEntry(zipWriter, entry.name, version == EXE)
+		err := makeEntry(zipWriter, entry.name, entry.data, version)
 		if err != nil {
 			return err
 		}
-		_, err = entryWriter.Write(entry.data)
+	}
+	if nightlies := c.QueryParam("nightlies"); nightlies == "1" || nightlies == "true" {
+		const properties = "# Enable nightly builds\n" +
+			"noGPG = true\n" +
+			"prereleases = true\n"
+		err := makeEntry(zipWriter, "default_args.properties", []byte(properties), version)
 		if err != nil {
 			return err
 		}
 	}
 	cid := extractOrGenerateCID(c)
-	writer, err := makeEntry(zipWriter, "impact_cid.txt", version == EXE)
-	if err != nil {
-		return err
-	}
-	_, err = writer.Write([]byte(cid))
+	err := makeEntry(zipWriter, "impact_cid.txt", []byte(cid), version)
 	if err != nil {
 		return err
 	}

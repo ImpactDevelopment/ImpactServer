@@ -3,6 +3,8 @@ package v1
 import (
 	"net/http"
 
+	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
+
 	"github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/labstack/echo/v4"
 )
@@ -17,8 +19,15 @@ func API(api *echo.Group) {
 	api.GET("/minecraft/user/info", getUserInfo, middleware.CacheUntilPurge())
 	api.GET("/minecraft/user/:role/list", getRoleMembers, middleware.CacheUntilPurge())
 	api.GET("/dbtest", dbTest, middleware.NoCache())
-	api.GET("/minecraft/login", mojangLoginLegacy, middleware.NoCache())
-	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/minecraft", mojangLoginJWT, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/password", jwt.PasswordLoginHandler, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/minecraft", jwt.MinecraftLoginHandler, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/discord", jwt.DiscordLoginHandler, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/paypal/afterpayment", afterDonation, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/checktoken", checkToken, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/register/token", registerWithToken, middleware.NoCache())
 	api.GET("/emailtest", emailTest, middleware.NoCache())
 	api.GET("/premiumcheck", premiumCheck, middleware.NoCache())
+	api.GET("/integration/futureclient/masonlist", futureIntegration, middleware.NoCache())
+	api.GET("/integration/impactbot/checkdonator/:discordid", checkDonator, middleware.NoCache())
+	api.GET("/integration/impactbot/genkey", genkey, middleware.NoCache())
 }

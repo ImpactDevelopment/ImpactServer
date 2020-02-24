@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+
+    <!-- URLSearchParams is not supported on IE, but the URL polyfill should work on IE8+ -->
+    <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js?features=es5%2CURL%2Chtml5shiv%2CElement.prototype.classList"></script>
+
+    <!-- RegExp.escape() is used by the "confirm password" field -->
+    <script crossorigin="anonymous" src="https://benjamingr.github.io/RegExp.escape/polyfill.js"></script>
+
+    <!-- Dependencies -->
+    <script type="text/javascript" src="/min/modernizr-min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <script>
+        /* Functions */
+        function getToken() {
+            var query = new URLSearchParams(window.location.search)
+            return query.get("token")
+        }
+
+        function updateMinecraftInfo() {
+            var field = document.getElementById("minecraft_name")
+            var helper = document.getElementById("minecraft_helper_text")
+
+            if (!field.value) {
+                return
+            }
+
+            field.classList.add("loading")
+            getMinecraftUser(field.value, function (user, error) {
+                if (error || !user.uuid) {
+                    field.classList.add("invalid")
+                } else {
+                    helper.setAttribute("data-success", user.name)
+                    field.classList.remove("invalid")
+                    // TODO also update some kinda user avatar?
+                }
+                field.classList.remove("loading")
+
+            }, true)
+        }
+
+        function getMinecraftUser(name, callback, useFallback) {
+            // Get the user profile from mcheads or minetools
+            // luckily both APIs have name and id json properties and accept either name or uuid input
+            var main = "https://api.minetools.eu/uuid/"
+            var fallback = "https://mc-heads.net/minecraft/profile/"
+
+            // Generate a function here to aid recursion when fallback is enabled
+            // base is either main or fallback
+            function req(base) {
+                $.get({
+                    url: base + encodeURIComponent(("" + name).trim()),
+                    dataType: "json",
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        // If fallback is enabled, recurse one level
+                        if (useFallback && base !== fallback) {
+                            console.warn("MineTools API failed, falling back to MC Heads for UUID lookup")
+                            req(fallback)
+                        } else {
+                            callback(null, errorThrown)
+                        }
+                    },
+                    success: function (data, status) {
+                        if (!data ||
+                                !data.id || data.id === "null" ||
+                                (data.status && (""+data.status).toLowerCase() !== "ok")) {
+                            callback(null, "No user found")
+                        } else {
+                            callback({
+                                name: data.name || "",
+                                uuid: data.id || ""
+                            })
+                        }
+                    }
+                })
+            }
+
+            req(main)
+        }
+
+        // Passes a user object to callback TODO consider using Promises (what's the oldest browser that can support them?)
+        /*
+            {
+                id: the user's id
+                email: the user's account email
+                username: the user's username (not nickname)
+                tag: the user's #1234 tag
+                avatar: the user's avatar url (PNG or GIF)
+                nitro: whether or not the user has nitro
+            }
+         */
+        function getDiscordUser(access_token, callback) {
+            // Materializecss needs jQuery so we may as well use it too
+            $.get({
+                url: "https://discordapp.com/api/v6/users/@me",
+                dataType: "json",
+                headers: {
+                    // https://discordapp.com/developers/docs/reference#http-api
+                    "Authorization": "Bearer " + access_token
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    callback(null, errorThrown)
+                },
+                success: function (data, status) {
+                    // get avatar url https://discordapp.com/developers/docs/reference#image-formatting
+                    var avatar = ""
+                    if (data && data.avatar && data.id) {
+                        var ext = "a_" === data.avatar.substring(0, 2) ? ".gif" : ".png"
+                        var base = "https://cdn.discordapp.com/avatars/"
+                        avatar = base + data.id + "/" + data.avatar + ext
+                    }
+
+                    // Pass a serialized user object to callback
+                    callback({
+                        id: data.id || "",
+                        email: data.email || "",
+                        username: data.username || "",
+                        tag: data.discriminator ? "#" + data.discriminator : "",
+                        avatar: avatar,
+                        nitro: data.premium_type && data.premium_type > 0
+                    })
+                }
+            })
+        }
+
+        // Called by the oauth popup window
+        function discordCallback(discordToken) {
+            document.getElementById("discord").value = discordToken
+            document.getElementById("discord_msg").innerText = ""
+            document.getElementById("discord_info").classList.add("invisible")
+            document.getElementById("discord_login_btn").classList.add("hidden")
+            document.getElementById("discord_info_box").classList.remove("hidden")
+            getDiscordUser(discordToken, function (user, error) {
+                if (error) {
+                    document.getElementById("discord_msg").innerText = "Error fetching discord info: " + error
+                    return
+                }
+
+                // Update user info
+                document.getElementById("discord_username").innerText = user.username
+                document.getElementById("discord_tag").innerText = user.tag
+                var avatarImg = document.getElementById("discord_avatar")
+                if (user.avatar) {
+                    avatarImg.src = user.avatar
+                    avatarImg.classList.remove("hidden")
+                } else {
+                    avatarImg.classList.add("hidden")
+                }
+                var nitroImg = document.getElementById("discord_nitro")
+                if (user.nitro) {
+                    nitroImg.classList.remove("hidden")
+                } else {
+                    nitroImg.classList.add("hidden")
+                }
+
+                // Fade in now the info is loaded
+                document.getElementById("discord_info").classList.remove("invisible")
+
+                // Overwrite empty or invalid email with discord email
+                var email = document.getElementById("email")
+                if (!email.value || (email.validity && !email.validity.valid)) {
+                    email.value = user.email
+                    if (window.Materialize) {
+                        window.Materialize.updateTextFields()
+                    }
+                }
+            })
+        }
+
+        // Open the discord oauth popup window
+        function openDiscordOAuth() {
+            return popupOverWindow(
+                // TODO pass additional scopes as ?scopes= %20 separated list
+                "/discord_oauth.html?scopes=guilds.join%20email",
+                "oauth", 600, 800
+            )
+        }
+
+        function deleteDiscordOAuth() {
+            document.getElementById("discord_info_box").classList.add("hidden")
+            document.getElementById("discord_login_btn").classList.remove("hidden")
+            document.getElementById("discord").value = ""
+            document.getElementById("discord_avatar").src = ""
+            document.getElementById("discord_nitro").src = ""
+            document.getElementById("discord_username").innerText = ""
+            document.getElementById("discord_tag").innerText = ""
+        }
+
+        // popup centered on window
+        // https://stackoverflow.com/a/32261263
+        function popupOverWindow(url, title, w, h) {
+            var y = window.top.outerHeight / 2 + window.top.screenY - ( h / 2)
+            var x = window.top.outerWidth / 2 + window.top.screenX - ( w / 2)
+            var newWindow = window.open(url, title, 'toolbar=no,location=no,directories=no,status=no,menubar=no,copyhistory=no,width='+w+',height='+h+',top='+y+',left='+x)
+            if (window.focus) {
+                newWindow.focus()
+            }
+            return newWindow
+        }
+
+        // validateForm is used where html5 validation can't be
+        // e.g. old browsers and hidden inputs like discord oauth
+        function validateForm() {
+            // we could pass in `this` from the onsubmit but idk how well that is supported, so just use getElementById
+            var form = document.getElementById("form")
+            var msg = document.getElementById("form_msg")
+            if (!form || !msg) {
+                console.error("validateForm broke somehow", form, msg)
+                return false
+            }
+
+            // Lets compile a list of errors so we can tell the user about all of them
+            // TODO use the same regexs as html5 validation, right now we only check stuff is present
+            var errors = []
+            if (!form.token.value) {
+                errors.push("No registration token")
+            }
+            if (!form.email.value) {
+                errors.push("No email")
+            }
+            if (!form.discord.value) {
+                errors.push("No discord account")
+            }
+            if (!form.password.value) {
+                errors.push("No password")
+            }
+            if (form.password.value !== form.password2.value) {
+                errors.push("Passwords don't match")
+            }
+            if (!form.minecraft.value) {
+                errors.push("No Minecraft account")
+            }
+
+            if (errors.length > 0) {
+                msg.innerHTML = errors.join("<br>")
+            } else {
+                msg.innerHTML = ""
+            }
+
+            return errors.length < 1
+        }
+
+        function gtag() {
+            if (!window.dataLayer) {
+                window.dataLayer = []
+            }
+            window.dataLayer.push(arguments)
+        }
+    </script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-143397381-1"></script>
+    <script>
+        gtag('js', new Date());
+        gtag('config', 'UA-143397381-1');
+
+        var getOutboundLink = function (label) {
+            gtag('event', 'click', {
+                'event_category': 'outbound',
+                'event_label': label,
+                'transport_type': 'beacon'
+            });
+        }
+    </script>
+
+    <!-- CSS  -->
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <link rel="stylesheet" type="text/css" href="/min/style-min.css"/>
+    <style>
+        #discord_info_box {
+            background: #7289da;
+            border-radius: 5px;
+            -webkit-box-shadow: 0 2px 8px 0 rgba(0,0,0,.06);
+            box-shadow: 0 2px 8px 0 rgba(0,0,0,.06);
+            padding: 16px;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+        #discord_info {
+            font-size: 32px;
+            color: #fff;
+            font-weight: 700;
+            min-height: 74px;
+
+            opacity: 1;
+            -webkit-transition: opacity .33s ease;
+            transition: opacity .33s ease;
+        }
+        #discord_avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 32px;
+            background-color: hsla(0,0%,100%,.2);
+            background-size: 74px;
+            vertical-align: middle;
+        }
+        #discord_nitro {
+            height: 24px;
+            vertical-align: baseline;
+        }
+        #discord_tag {
+            opacity: .6;
+        }
+        #discord_login_btn {
+            background-color: #7289da;
+            color: #fff;
+        }
+        #discord_unlink_btn {
+            -webkit-transition: border-color .17s ease;
+            transition: border-color .17s ease;
+            color: #fff;
+            border-width: 1px;
+            border-style: solid;
+            border-color: hsla(0,0%,100%,.3);
+            background: none;
+        }
+        #discord_unlink_btn:hover {
+            border-color: hsla(0,0%,100%,.6);
+        }
+        #form_msg, #discord_msg {
+            color: #F44336;
+            padding-left: 8px;
+        }
+        .invisible {
+            opacity: 0!important;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="navbar-fixed">
+        <nav role="navigation">
+            <div class="nav-wrapper container">
+                <a href="/" class="brand-logo"><h1>Impact</h1></a>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<noscript>This page requires javascript to function</noscript>
+
+<!-- hidden to prevent FOUC, unhidden by JS -->
+<div class="section container hidden unhide">
+    <div class="row">
+        <!-- novalidate doesn't block materialize's error messages but does allow validateForm to take chage of the final validation -->
+        <form novalidate id="form" class="col s12" onsubmit="return validateForm()" method="post" action="https://api.impactclient.net/v1/register/token">
+            <div class="row">
+                <div class="input-field col s12" id="token_field">
+                    <input type="text" name="token" id="token" class="validate" required pattern="[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}">
+                    <label for="token" data-error="Invalid token">
+                        Registration token
+                    </label>
+                    <span class="helper-text">
+                        Impact Accounts require a token generated when you donated
+                    </span>
+                </div>
+                <div class="input-field col s12 m4 l6">
+                    <input type="email" name="email" id="email" class="validate" required/>
+                    <label for="email">
+                        Email
+                    </label>
+                    <span class="helper-text" style="overflow: visible;">
+                        To login with
+                    </span>
+                </div>
+                <div class="input-field col s6 m4 l3">
+                    <!--
+                        regex requires at least one number, lowercase, uppercase and symbol using lookaheads like /(?=.*[0-9])/
+                        It also requires a length of at least 6 using normal pattern matching /.{6,}/
+                    -->
+                    <input type="password" name="password" id="password" class="validate" autocomplete required pattern="(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{6,}" onchange="form.password2.pattern = RegExp.escape(this.value);"/>
+                    <label for="password">
+                        Password
+                    </label>
+                    <span class="helper-text" data-error="Must be 6 characters or more & include lowercase, uppercase, numeric and symbolic characters"></span>
+                </div>
+                <div class="input-field col s6 m4 l3">
+                    <input type="password" name="password2" id="password2" class="validate" autocomplete="off" required pattern="\w"/>
+                    <label for="password2">
+                        Confirm
+                    </label>
+                    <span class="helper-text" data-error="Password does not match"></span>
+                </div>
+                <div class="input-field col s12 m4 l6">
+                    <!-- TODO show a render from mcheads? -->
+                    <input type="text" id="minecraft_name" name="minecraft" class="validate" autocomplete="off" required onkeyup="updateMinecraftInfo()">
+                    <label for="minecraft_name">
+                        Minecraft username
+                    </label>
+                    <span id="minecraft_helper_text" class="helper-text" data-error="Invalid minecraft name">
+                        Your Minecraft UUID or your username. Not your email.
+                    </span>
+                </div>
+                <div class="input-field col s12 m8 l6">
+                    <input type="hidden" name="discord" id="discord" required>
+                    <a id="discord_login_btn" class="btn waves-effect waves-light" onclick="openDiscordOAuth()" href="">Login with discord</a>
+                    <div id="discord_info_box" class="hidden row left-align">
+                        <!-- .invisible allows fade-in to avoid FOUC -->
+                        <div id="discord_info" class="col s12 truncate invisible">
+                            <img id="discord_avatar" src="" alt="avatar">
+                            <span id="discord_username"></span>
+                            <span id="discord_tag"></span>
+                            <img id="discord_nitro" class="hidden" src="https://discordapp.com/assets/386884eecd36164487505ddfbac35a9d.svg" alt="nitro">
+                        </div>
+                        <div class="col s12">
+                            <a id="discord_unlink_btn" class="btn waves-effect waves-light" onclick="deleteDiscordOAuth()" href="">Unlink</a>
+                            <span id="discord_msg"></span>
+                        </div>
+                    </div>
+                    <p class="helper-text">
+                        Please login to Discord to link your account and join our server.
+                        <br>
+                        You may need to disable Privacy Badger or similar browser extensions for this to function.
+                    </p>
+                </div>
+                <div class="input-field col s12">
+                    <button class="btn waves-effect waves-light" type="submit" name="action">
+                        Submit
+                    </button>
+                </div>
+                <p id="form_msg" class="col s12 helper-text error"></p>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/js/materialize.min.js"></script>
+<script>
+    (function () {
+        var token = getToken()
+        if (token) {
+            // Hide the label and set the input value if a token was passed in
+            // We don't care if it is valid at this point
+            document.getElementById("token_field").classList.add("hidden")
+            var tokenField = document.getElementById("token")
+            tokenField.value = token
+            tokenField.type = "hidden"
+        }
+
+        // un-hide stuff tagged with `unhide` to prevent FOUC
+        var unhide = document.getElementsByClassName("unhide")
+        for (var i = 0; i < unhide.length; i++) {
+            var elm = unhide[i]
+            elm.classList.remove("unhide")
+            elm.classList.remove("hidden")
+        }
+    })()
+</script>
+</body>
+</html>

@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 
 	_ "github.com/lib/pq"
@@ -23,10 +24,14 @@ func init() {
 		// so if THAT fails, then that's a real error
 		panic(err)
 	}
+	log.Println("Postgres opened")
 	err = DB.Ping()
 	if err != nil {
 		// apparently this DOUBLE CHECKS that it's up?
 		panic(err)
 	}
+	log.Println("Postgres pinged")
 	initialSetup()
+	log.Println("Postgres schema created")
+	setupListener(url)
 }

@@ -56,6 +56,7 @@ func (user *userRow) makeUser() users.User {
 		ret.PasswordHash = user.passwdHash.String
 	}
 	ret.UserInfo = users.NewUserInfo(ret)
+	ret.ID = user.id
 	return ret
 }
 
@@ -111,8 +112,22 @@ func GetAllUsers() []users.User {
 }
 
 // LookupUserByMinecraftID returns the matching user, or nil if not found
+func LookupUserByID(id uuid.UUID) *users.User {
+	return lookupUserByField("user_id", id)
+}
+
+func LookupUserByEmail(email string) *users.User {
+	return lookupUserByField("email", email)
+}
+
+// LookupUserByMinecraftID returns the matching user, or nil if not found
 func LookupUserByMinecraftID(minecraftID uuid.UUID) *users.User {
 	return lookupUserByField("mc_uuid", minecraftID)
+}
+
+// LookupUserByDiscordID returns the matching user, or nil if not found
+func LookupUserByDiscordID(discordID string) *users.User {
+	return lookupUserByField("discord_id", discordID)
 }
 
 func lookupUserByField(field string, value interface{}) *users.User {

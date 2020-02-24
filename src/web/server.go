@@ -17,8 +17,11 @@ func Server() (e *echo.Echo) {
 	e.GET("/ImpactInstaller.jar", installerForJar, mid.NoCache())
 	e.GET("/ImpactInstaller.exe", installerForExe, mid.NoCache())
 
+	e.POST("/discordverify", discordVerify)
+	e.POST("/recaptchaverify", simpleRecaptchaCheck)
+
 	staticEcho := echo.New()
-	staticEcho.Use(mid.CacheUntilRestart(604800)) // 1 week
+	staticEcho.Use(mid.CacheUntilRestart(3600)) // 1 hour
 	staticEcho.Static("/", "static")
 	e.Any("/*", func(c echo.Context) error {
 		staticEcho.ServeHTTP(c.Response(), c.Request())
