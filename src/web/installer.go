@@ -187,7 +187,7 @@ func analytics(cid string, version InstallerVersion, c echo.Context) {
 		"el":  version.getEXT(),
 		"ua":  c.Request().UserAgent(),
 	}
-	forward := strings.Split(c.Request().Header.Get("X-FORWARDED-FOR"), ",")[0]
+	forward := util.RealIPIfUnambiguous(c)
 	if forward != "" {
 		form["uip"] = forward
 	}

@@ -2,10 +2,10 @@ package middleware
 
 import (
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
+	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/time/rate"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 )
@@ -26,7 +26,7 @@ func Limit(duration time.Duration, bursts int) echo.MiddlewareFunc {
 				key = user.ID.String()
 			} else {
 				// Get the user's ip; can't just use the request address since we are behind proxies
-				key = strings.Split(c.Request().Header.Get("X-FORWARDED-FOR"), ",")[0]
+				key = util.RealIPBestGuess(c)
 			}
 
 			// Check we aren't limited
