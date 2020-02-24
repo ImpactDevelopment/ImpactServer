@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/time/rate"
@@ -22,7 +21,7 @@ func Limit(duration time.Duration, bursts int) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			// key is either user id or user ip depending on if we are logged in
 			var key string
-			if user, ok := c.Get("user").(*users.User); ok && user != nil {
+			if user := GetUser(c); user != nil {
 				key = user.ID.String()
 			} else {
 				// Get the user's ip; can't just use the request address since we are behind proxies
