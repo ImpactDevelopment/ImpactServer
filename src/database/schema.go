@@ -83,7 +83,7 @@ func createTables() error {
 				FROM JSONB_EACH_TEXT(TO_JSONB(users)) tmp(col, val)
 				WHERE
 					tmp.col = ANY(ARRAY['premium', 'pepsi', 'spawnmason', 'staff', 'developer'])
-					AND tmp.val='true'
+					AND tmp.val = 'true'
 			) tmp;
 	`)
 	if err != nil {
