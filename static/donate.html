@@ -200,27 +200,20 @@
         onApprove: function (data, actions) {
             return actions.order.capture().then(function (details) {
                 console.log('Transaction completed ', details);
-                // Call your server to save the transaction
-                // Our server will verify the order id with paypal api:
-                // https://developer.paypal.com/docs/api/orders/v2/#orders_get
-                return fetch('https://api.impactclient.net/v1/paypal/afterpayment', {
+                // TODO move this to api.js
+                return fetch(window.location.protocol + "//api." + window.location.host + '/v1/paypal/afterpayment', {
                     method: 'POST',
                     mode: 'cors',
                     headers: {
                         'content-type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        orderID: data.orderID,
-                        // TODO other info like uuid, impact account email, etc
-                        // This is basically account registration??
-                        // or at least
-                    })
+                    body: JSON.stringify({orderID: data.orderID})
                 }).then(function(response){
                     return response.json();
                 }).then(function(myJson) {
                     console.log(myJson);
                     var token = myJson.token;
-                    if (token && token != "thanks") {
+                    if (token && token !== "thanks") {
                         document.location.href='/register.html?token=' + token;
                     } else {
                         document.getElementsByTagName("body")[0].innerHTML="thanks for the donation. it is less than 5 dollars though.";
