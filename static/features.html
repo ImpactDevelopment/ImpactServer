@@ -65,9 +65,11 @@
             document.getElementById(id).appendChild(div);
             div.innerHTML = "<strong class=\"center\">" + category + "</strong>";
             var ul = document.createElement("ul");
+            ul.style="padding-left:0px;margin-left:0px";
             div.appendChild(ul);
             features[category].forEach(function(module) {
                 var li = document.createElement("li");
+                li.style="padding-left:0px;margin-left:0px";
                 ul.appendChild(li);
                 li.innerHTML = "<a href=\"#mod" + i+"\" style=\"color:black\"><u>" + module.name + "</u></a>";
                 var r = render(module);
