@@ -43,6 +43,7 @@
         </nav>
     </div>
 </header>
+<h5 style="padding-left:30px">Back to <a href="/"><u>Main Page</u></a> for Downloads</h5>
 <h3 class="center">Modules</h3>
 <div class="row" id="modules1"></div>
 
@@ -99,7 +100,7 @@
         }
         function renderValue(value) {
             var div = document.createElement("div");
-            div.innerHTML = "<strong>" + value.name + "</strong>" + (value.description ? "<br>"+value.description : "");
+            div.innerHTML = "<strong>" + value.name + "</strong>" + (value.description ? "<br>"+value.description.replace("\n", "<br>") : "");
             if (value.children) {
                 div.innerHTML += "<br>";
                 div.appendChild(renderListIntoUL(value.children));
