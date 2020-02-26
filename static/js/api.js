@@ -10,6 +10,14 @@
         $.withAuth.setToken(token)
     }
 
+    function messageFromjqXHR(jqXHR) {
+        try {
+            return JSON.parse(jqXHR.responseText).message
+        } catch (e) {
+            return jqXHR.responseText
+        }
+    }
+
     global.api = {
         // get my user object
         me: function() {
@@ -98,10 +106,10 @@
                     },
                     dataType: "json",
                     error: function (jqXHR, textStatus, errorThrown) {
-                        reject(errorThrown)
+                        reject(messageFromjqXHR(jqXHR))
                     },
                     success: function (data, status) {
-                        resolve(data)
+                        resolve(data.message ? data.message : data)
                     }
                 })
             })
@@ -125,10 +133,10 @@
                     },
                     dataType: "json",
                     error: function (jqXHR, textStatus, errorThrown) {
-                        reject(errorThrown)
+                        reject(messageFromjqXHR(jqXHR))
                     },
                     success: function (data, status) {
-                        resolve(data)
+                        resolve(data.message ? data.message : data)
                     }
                 })
             })
