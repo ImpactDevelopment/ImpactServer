@@ -113,12 +113,14 @@
                 token = undefined
             }
             var url = token ? baseUrl + "/password/" + encodeURIComponent(token) : baseUrl + "/password/me"
-            var post = token ? $.post : $.withAuth.post
+            var ajax = token ? $.ajax : $.withAuth
 
             return new Promise(function (resolve, reject) {
-                post({
+                ajax({
                     url: url,
+                    method: "PUT",
                     data: {
+                        token: token,
                         password: password
                     },
                     dataType: "json",

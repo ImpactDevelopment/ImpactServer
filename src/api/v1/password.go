@@ -100,7 +100,7 @@ func putPassword(c echo.Context) error {
 		}
 
 		// ok, matching token so we can trust them now I guess
-		err = setPassword(user.ID, body.Password)
+		err = setPassword(userID, body.Password)
 		if err != nil {
 			return err
 		}
