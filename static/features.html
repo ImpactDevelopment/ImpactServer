@@ -46,9 +46,7 @@
 </header>
 <h5 style="padding-left:30px">Back to <a href="/"><u>Main Page</u></a> for Downloads</h5>
 <h3 class="center">Modules</h3>
-<div class="row" id="modules1"></div>
-
-<div class="row" id="modules2"></div>
+<div class="row" id="modules"></div>
 <hr>
 <h3 class="center">Settings</h3>
 <style>
@@ -63,29 +61,25 @@
     function clean(name) {
       return "mod_" + name.replace(" ", "");
     }
-    function setupModules(categories, id) {
-        categories.forEach(function(category) {
-            var div = document.createElement("div");
-            div.className = "center col s6 m3 black-text med_text";
-            document.getElementById(id).appendChild(div);
-            div.innerHTML = "<strong class=\"center\">" + category + "</strong>";
-            var ul = document.createElement("ul");
-            ul.style="padding-left:0px;margin-left:0px";
-            div.appendChild(ul);
-            features[category].forEach(function(module) {
-                var li = document.createElement("li");
-                li.style="padding-left:0px;margin-left:0px";
-                ul.appendChild(li);
-                li.innerHTML = "<a href=\"#" + clean(module.name) + "\" style=\"color:black\"><u>" + module.name + "</u></a>";
-                
-                moduleNamesToModules[module.name]=module;
-            });
-        });
-    }
     var categories = Object.keys(features);
     categories = categories.sort();
-    setupModules(categories.slice(0, 4), "modules1");
-    setupModules(categories.slice(4, 8), "modules2");
+    categories.forEach(function(category) {
+        var div = document.createElement("div");
+        div.className = "center col s6 m3 black-text med_text";
+        document.getElementById("modules").appendChild(div);
+        div.innerHTML = "<strong class=\"center\">" + category + "</strong>";
+        var ul = document.createElement("ul");
+        ul.style="padding-left:0px;margin-left:0px";
+        div.appendChild(ul);
+        features[category].forEach(function(module) {
+            var li = document.createElement("li");
+            li.style="padding-left:0px;margin-left:0px";
+            ul.appendChild(li);
+            li.innerHTML = "<a href=\"#" + clean(module.name) + "\" style=\"color:black\"><u>" + module.name + "</u></a>";
+            
+            moduleNamesToModules[module.name]=module;
+        });
+    });
     var names = Object.keys(moduleNamesToModules);
     names = names.sort();
     names.forEach(function(name){
