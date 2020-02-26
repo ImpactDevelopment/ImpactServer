@@ -58,8 +58,11 @@
 </div>
 <script>
     var set = document.getElementById("settings");
+    var moduleNamesToModules = {};
+    function clean(name) {
+      return "mod_" + name.replace(" ", "");
+    }
     function setupModules(categories, id) {
-        var i=0;
         categories.forEach(function(category) {
             var div = document.createElement("div");
             div.className = "center col s3";
@@ -72,11 +75,9 @@
                 var li = document.createElement("li");
                 li.style="padding-left:0px;margin-left:0px";
                 ul.appendChild(li);
-                li.innerHTML = "<a href=\"#mod" + i+"\" style=\"color:black\"><u>" + module.name + "</u></a>";
-                var r = render(module);
-                set.innerHTML += "<section class=\"section scrollspy\" id=\"mod" + i + "\"></section>"
-                set.appendChild(r);
-                i++;
+                li.innerHTML = "<a href=\"#" + clean(module.name) + "\" style=\"color:black\"><u>" + module.name + "</u></a>";
+                
+                moduleNamesToModules[module.name]=module;
             });
         });
     }
@@ -84,6 +85,14 @@
     categories = categories.sort();
     setupModules(categories.slice(0, 4), "modules1");
     setupModules(categories.slice(4, 8), "modules2");
+    var names = Object.keys(moduleNamesToModules);
+    names = names.sort();
+    names.forEach(function(name){
+      var module = moduleNamesToModules[name];
+      var r = render(module);
+      set.innerHTML += "<section class=\"section scrollspy\" id=\"" + clean(name) + "\"></section>"
+      set.appendChild(r);
+    })
     function render(module) {
         var div = document.createElement("div");
         div.innerHTML = "<hr><h5>" + module.name + "</h5>" + module.description + "<br>";
