@@ -16,7 +16,6 @@ require (
 	github.com/mailgun/mailgun-go/v3 v3.6.0
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.10 // indirect
-	github.com/pkg/errors v0.8.1
 	github.com/plutov/paypal/v3 v3.0.11
 	github.com/stretchr/testify v1.4.0
 	github.com/valyala/fasttemplate v1.1.0 // indirect
@@ -24,6 +23,7 @@ require (
 	golang.org/x/net v0.0.0-20191009170851-d66e71096ffb // indirect
 	golang.org/x/sys v0.0.0-20191009170203-06d7bd2c5f4f // indirect
 	golang.org/x/text v0.3.2 // indirect
+	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/ezzarghili/recaptcha-go.v4 v4.0.0
 	gopkg.in/yaml.v2 v2.2.4 // indirect

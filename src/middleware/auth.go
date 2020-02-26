@@ -9,7 +9,17 @@ import (
 	"net/http"
 )
 
-// RequireAuth returns a middleware that sets the user key in context and calls next handler.
+const userCtxKey = "user"
+
+// GetUser returns the User object attached to the context, presumably by the RequireAuth middleware.
+// Otherwise it returns nil.
+func GetUser(c echo.Context) (user *users.User) {
+	// Try to cast to *user.User, ignore if it failed, user probably just isn't set
+	user, _ = c.Get(userCtxKey).(*users.User)
+	return
+}
+
+// RequireAuth returns a middleware that sets the user userCtxKey in context and calls next handler.
 // For invalid token, it sends “401 - Unauthorized” response.
 // For missing or invalid Authorization header, it sends “400 - Bad Request”.
 func RequireAuth() echo.MiddlewareFunc {
@@ -20,8 +30,8 @@ func RequireAuth() echo.MiddlewareFunc {
 		if err != nil {
 			return false, err
 		}
-		// Set the user context key
-		c.Set("user", user)
+		// Set the user context userCtxKey
+		c.Set(userCtxKey, user)
 		return true, nil
 	})
 }
@@ -39,26 +49,22 @@ func RequireRole(roles ...string) echo.MiddlewareFunc {
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			if user, ok := c.Get("user").(*users.User); ok {
-				if user == nil {
-					return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Roles required but no user: %v", rolesString))
-				}
+			user := GetUser(c)
+			if user == nil {
+				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Roles required but no user: %v", rolesString))
+			}
 
-				// If any role matches, continue with request
-				for _, role := range user.Roles {
-					for _, required := range roles {
-						if role.ID == required {
-							return next(c)
-						}
+			// If any role matches, continue with request
+			for _, role := range user.Roles {
+				for _, required := range roles {
+					if role.ID == required {
+						return next(c)
 					}
 				}
-
-				// The user doesn't have any matching roles
-				return echo.NewHTTPError(http.StatusUnauthorized, fmt.Sprintf("Required at least one role from %v", rolesString))
-			} else {
-				// Can't cast c.Get("user") from interface{} to *User
-				return echo.NewHTTPError(http.StatusInternalServerError, "Role required but cannot get user from context")
 			}
+
+			// The user doesn't have any matching roles
+			return echo.NewHTTPError(http.StatusUnauthorized, fmt.Sprintf("Required at least one role from %v", rolesString))
 		}
 	}
 }

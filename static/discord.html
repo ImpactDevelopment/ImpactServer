@@ -130,7 +130,7 @@
         <div class="row">
             <div class="col s12 center">
                 <p class="large_text">
-                    Simply <strong><a id="oauth_link" href="#this-is-set-later">login with Discord</a></strong>
+                    Simply <strong><a id="oauth_link" href="#this-is-set-later" onclick="getOutboundLink('discord_oauth'); return true;"><u>login with Discord</u></a></strong>
                     to be added to our Discord server!
                 </p>
                 <p class="med_text">
@@ -145,7 +145,7 @@
                     complicated procedure with zero OAuth:
                 </p>
                 <ol>
-                    <li>Click <a href="https://discord.gg/JA397mC">this invite link</a></li>
+                    <li>Click <a href="https://discord.gg/JA397mC" onclick="getOutboundLink('discord_legacy'); return true;">this invite link</a></li>
                     <li>Open your direct message from Impact Bot</li>
                     <li>Click the link at the top of that message <i class="text-lighten-3">(this is what bypasses OAuth)</i></li>
                     <li>Complete the verification captcha</li>

@@ -88,12 +88,17 @@ func createTables() error {
 			cape_enabled,
 			legacy_enabled,
 			legacy,
-			premium,
-			pepsi,
-			spawnmason,
-			staff,
-			developer
-		FROM users;
+			STRING_TO_ARRAY(
+				CONCAT_WS(',',
+					CASE WHEN premium THEN 'premium' END,
+					CASE WHEN pepsi THEN 'pepsi' END,
+					CASE WHEN spawnmason THEN 'spawnmason' END,
+					CASE WHEN staff THEN 'staff' END,
+					CASE WHEN developer THEN 'developer' END
+				),
+				','
+			) AS roles
+			FROM users;
 	`)
 	if err != nil {
 		log.Println("Unable to create users_view view")

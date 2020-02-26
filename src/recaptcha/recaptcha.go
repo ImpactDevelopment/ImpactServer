@@ -7,7 +7,6 @@ import (
 	"gopkg.in/ezzarghili/recaptcha-go.v4"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -40,12 +39,15 @@ func Verify(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "recaptcha must be provided")
 	}
 
-	remoteIP := strings.Split(c.Request().Header.Get("X-FORWARDED-FOR"), ",")[0]
 	// remoteIP is empty string if not present, which is exactly what this library expects
-	err = captcha.VerifyWithOptions(body.Recaptcha, recaptcha.VerifyOption{RemoteIP: remoteIP, Hostname: util.GetServerURL().Hostname()})
+	err = captcha.VerifyWithOptions(body.Recaptcha, recaptcha.VerifyOption{
+		RemoteIP: util.RealIPIfUnambiguous(c),
+		Hostname: util.GetServerURL().Hostname(),
+	})
 	if err != nil {
 		fmt.Println(err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Recaptcha failed").SetInternal(err)
 	}
+
 	return nil
 }
