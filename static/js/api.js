@@ -25,7 +25,7 @@
                 $.withAuth.get({
                     url: baseUrl + "/user/me",
                     error: function (jqXHR, textStatus, errorThrown) {
-                        reject(errorThrown)
+                        reject(messageFromjqXHR(jqXHR))
                     },
                     success: function (data, status) {
                         resolve(data)

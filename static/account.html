@@ -68,6 +68,7 @@
 
 <div id="fouc" class="section container invisible">
     <div id="login" class="row hidden center">
+        <p id="expired" class="col s12 large_text hidden">Your session expired and you have been logged out.</p>
         <!-- novalidate doesn't block materialize's error messages but does allow validateForm to take chage of the final validation -->
         <form novalidate id="form" class="col s12">
             <div class="row">
@@ -113,6 +114,12 @@
                     $("#info").text(JSON.stringify(user, null, 4))
                 })
                 .catch(function (error) {
+                    if (error === "invalid key") {
+                        $("#dashboard").addClass("hidden")
+                        $("#expired").removeClass("hidden")
+                        $("#login").removeClass("hidden")
+                        api.logout()
+                    }
                     $("#info").text(error)
                 })
         } else {
