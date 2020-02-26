@@ -75,16 +75,17 @@ func createTables() error {
 			cape_enabled,
 			legacy_enabled,
 			legacy,
-			tmp.roles
-			FROM users
-			CROSS JOIN LATERAL (
-				SELECT
-					ARRAY_AGG(col) AS roles
-				FROM JSONB_EACH_TEXT(TO_JSONB(users)) tmp(col, val)
-				WHERE
-					tmp.col = ANY(ARRAY['premium', 'pepsi', 'spawnmason', 'staff', 'developer'])
-					AND tmp.val = 'true'
-			) tmp;
+			STRING_TO_ARRAY(
+				CONCAT_WS(',',
+					CASE WHEN premium THEN 'premium' END,
+					CASE WHEN pepsi THEN 'pepsi' END,
+					CASE WHEN spawnmason THEN 'spawnmason' END,
+					CASE WHEN staff THEN 'staff' END,
+					CASE WHEN developer THEN 'developer' END
+				),
+				','
+			) AS roles
+			FROM users;
 	`)
 	if err != nil {
 		log.Println("Unable to create users_view view")
