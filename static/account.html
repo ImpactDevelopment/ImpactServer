@@ -123,9 +123,16 @@
             $("#login").addClass("hidden")
             api.me()
                 .then(function (user) {
+                    var form = document.getElementById("info")
                     user["user_info"] = undefined // this is irrelevant info here
-                    $("#info").removeClass("invisible")
-                    $("#edit_email").val(user.email)
+                    $(form).removeClass("invisible")
+
+                    $.each(form.elements, function(i, elm) {
+                        if (api.user.hasOwnProperty(elm.name)) {
+                            // FIXME this works for <input> but maybe not checkboxes etc?
+                            elm.value = api.user[elm.name]
+                        }
+                    })
 
                     if (window.Materialize && window.Materialize.updateTextFields) {
                         window.Materialize.updateTextFields()
