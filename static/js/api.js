@@ -28,6 +28,7 @@
                         reject(messageFromjqXHR(jqXHR))
                     },
                     success: function (data, status) {
+                        api.user = data
                         resolve(data)
                     }
                 })
