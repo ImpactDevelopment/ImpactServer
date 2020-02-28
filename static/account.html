@@ -7,6 +7,7 @@
 <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js"></script>
 <script type="text/javascript" src="/min/modernizr-min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script crossorigin="anonymous" src="https://benjamingr.github.io/RegExp.escape/polyfill.js"></script>
 <script type="text/javascript" src="/js/api.js"></script>
 <script>
     // Called by the oauth popup window
@@ -101,6 +102,20 @@
                 <input type="email" name="email" id="edit_email"/>
                 <label for="edit_email">Email</label>
             </div>
+            <div class="input-field col s6">
+                <!--
+                    regex requires at least one number, lowercase, uppercase and symbol using lookaheads like /(?=.*[0-9])/
+                    It also requires a length of at least 6 using normal pattern matching /.{6,}/
+                -->
+                <input type="password" name="password" id="edit_password" class="validate" autocomplete="off" required pattern="(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{6,}" onkeyup="form.password2.pattern = RegExp.escape(this.value);"/>
+                <label for="edit_password">New password</label>
+                <span class="helper-text" data-error="Must be 6 characters or more & include lowercase, uppercase, numeric and symbolic characters">Optionally, change your password</span>
+            </div>
+            <div class="input-field col s6">
+                <input type="password" name="password2" id="edit_password2" class="validate" autocomplete="off" required pattern="\w"/>
+                <label for="edit_password2">Confirm</label>
+                <span class="helper-text" data-error="Password does not match"></span>
+            </div>
             <div class="input-field col s12">
                 <!-- Materialize DOES support checkboxes nested within label, which simplifies things -->
                 <p>
@@ -157,6 +172,9 @@
                         }
                     })
 
+                    // Ensure password fields are empty; sometimes browsers think it is a login form
+                    form.password.value = form.password2.value = "";
+
                     // Update meterialize form magic after pre-filling fields, etc
                     if (window.Materialize && window.Materialize.updateTextFields) {
                         window.Materialize.updateTextFields()
@@ -211,6 +229,29 @@
                 })
         })
 
+        function validateInfo() {
+            var form = document.getElementById("info");
+            var err = []
+
+            // TODO validate email
+
+            // validate passwords
+            var p1 = form.password
+            var p2 = form.password2
+            if (p1.value.length > 0 || p2.value.length > 0) {
+                if (p1.value.length < 6) {
+                    err.push("Password must be at least 6 characters long")
+                }
+                if (!/(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])/.test(p1.value)) {
+                    err.push("Password must contain at least one uppercase, lowercase, numeric and symbolic character")
+                }
+                if (p1.value !== p2.value) {
+                    err.push("Passwords do not match")
+                }
+            }
+
+            return err
+        }
         function onEditInfo (event) {
             // Don't use jquery here; the native DOM API let's us do form[name] and form.elements
             var form = document.getElementById("info");
@@ -233,11 +274,38 @@
                         $(elm).addClass("validate")
                         infoChanged = true
                     }
+                } else if (["password", "password2"].includes(elm.name)) {
+                    var p1 = $("#edit_password")
+                    var p2 = $("#edit_password2")
+
+                    if (p1.val().length > 0) {
+                        infoChanged = true
+                        p1.addClass("validate")
+                        p2.addClass("validate")
+                    } else {
+                        p1.removeClass("validate valid invalid")
+                        p2.removeClass("validate valid invalid")
+                    }
+                }
+
+                if (elm.value.length > 0) {
+                    // Hacky way to force materialize to update validity
+                    // materialize listen to the blur event on input elements,
+                    // so we just dispatch a blur event (even though no blur happened!)
+                    if ("createEvent" in document) {
+                        var onblur = document.createEvent("HTMLEvents");
+                        onblur.initEvent("blur", false, true);
+                        elm.dispatchEvent(onblur);
+                    } else
+                        elm.fireEvent("onblur");
                 }
             })
 
+            var errors = validateInfo()
+            $("#info_msg").html(errors.join("<br>"))
+
             // Disable submit if no change
-            $("#info button[type=submit]").attr("disabled", !infoChanged)
+            $("#info button[type=submit]").attr("disabled", !infoChanged || errors.length > 0)
         }
         $("#info")
             .submit(function (event) {
@@ -251,12 +319,19 @@
                 $.each(document.getElementById("info").elements, function (i, elm) {
                     if (api.user.hasOwnProperty(elm.name)) {
                         data[elm.name] = castToUserType(elm);
+                    } else if (["password"].includes(elm.name)) {
+                        data[elm.name] = elm.value
                     }
                 })
 
                 api.me(data)
                     .then(function (result) {
                         $("#info_msg").text("")
+
+                        // Wipe password fields
+                        $.each(["password", "password2"], function (i, name) {
+                            $("#info [name="+name+"]").val("")
+                        })
 
                         // api.user has been patched, so re-run onEditInfo
                         onEditInfo()
