@@ -25,7 +25,6 @@ func patchUser(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusUnauthorized, "no user found")
 		}
 
-		// Bind the request body to a User struct
 		// Everything is a pointer so we can check what was present in the request
 		// e.g. an unset field defaulting to false might be bad
 		var body struct {
@@ -52,7 +51,6 @@ func patchUser(c echo.Context) error {
 			if err != nil {
 				return err
 			}
-
 			_, err = tx.Exec(`UPDATE users SET email = $2 WHERE user_id = $1`, user.ID, email)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
@@ -64,7 +62,6 @@ func patchUser(c echo.Context) error {
 			if err != nil {
 				return err
 			}
-
 			_, err = tx.Exec(`UPDATE users SET password_hash = $2 WHERE user_id = $1`, user.ID, hashedPassword)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
@@ -76,7 +73,6 @@ func patchUser(c echo.Context) error {
 			if err != nil {
 				return err
 			}
-
 			_, err = tx.Exec(`UPDATE users SET discord_id = $2 WHERE user_id = $1`, user.ID, discordID)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
@@ -88,7 +84,6 @@ func patchUser(c echo.Context) error {
 			if err != nil {
 				return err
 			}
-
 			_, err = tx.Exec(`UPDATE users SET mc_uuid = $2 WHERE user_id = $1`, user.ID, minecraftID)
 			if err != nil {
 				log.Println(err)
