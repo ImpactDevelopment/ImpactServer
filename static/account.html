@@ -87,7 +87,7 @@
             <span class="helper-text"><a href="/forgotpassword.html">Click here if you've forgotten your password</a></span>
         </div>
         <div class="input-field col s2">
-            <button class="btn waves-effect waves-light" type="submit" name="action" disabled>
+            <button class="btn waves-effect waves-light" type="submit" name="action">
                 Login
             </button>
         </div>
@@ -96,9 +96,25 @@
     <div id="dashboard" class="row hidden">
         <h4 class="col s12">Impact Account dashboard</h4>
         <form novalidate id="info" class="row fade-in invisible">
+            <!-- Materialize doesn't support text input nested within label, so we need a for-id relationship -->
             <div class="input-field col s12">
                 <input type="email" name="email" id="edit_email"/>
                 <label for="edit_email">Email</label>
+            </div>
+            <div class="input-field col s12">
+                <!-- Materialize DOES support checkboxes nested within label, which simplifies things -->
+                <p>
+                    <label>
+                        <input name="incognito" class="filled-in" type="checkbox" value="true" />
+                        <span>Incognito mode</span>
+                    </label>
+                </p>
+                <p>
+                    <label>
+                        <input name="legacy_enabled" class="filled-in" type="checkbox" value="true" />
+                        <span>Enable premium on Impact 4.7 and below</span>
+                    </label>
+                </p>
             </div>
             <div class="input-field col s12">
                 <button class="btn waves-effect waves-light" type="submit" name="action" disabled>
@@ -113,8 +129,6 @@
 
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/js/materialize.min.js"></script>
 <script>
-    var infoChanged;
-
     (function init() {
         $("#fouc").addClass("invisible")
 
@@ -123,20 +137,24 @@
             $("#login").addClass("hidden")
             api.me()
                 .then(function (user) {
+                    // Populate the update form with the user's info
                     var form = document.getElementById("info")
-                    user["user_info"] = undefined // this is irrelevant info here
-                    $(form).removeClass("invisible")
-
                     $.each(form.elements, function(i, elm) {
                         if (api.user.hasOwnProperty(elm.name)) {
-                            // FIXME this works for <input> but maybe not checkboxes etc?
-                            elm.value = api.user[elm.name]
+                            var value = api.user[elm.name]
+                            switch (typeof value) {
+                                case "boolean": elm.checked = value; break;
+                                default: elm.value = value;
+                            }
                         }
                     })
 
+                    // Update meterialize form magic after pre-filling fields, etc
                     if (window.Materialize && window.Materialize.updateTextFields) {
                         window.Materialize.updateTextFields()
                     }
+
+                    $(form).removeClass("invisible")
                 })
                 .catch(function (error) {
                     if (error === "invalid key") {
@@ -188,14 +206,24 @@
         function onEditInfo (event) {
             // Don't use jquery here; the native DOM API let's us do form[name] and form.elements
             var form = document.getElementById("info");
-            infoChanged = false;
+            var infoChanged = false;
 
             // Check if the form elements match with the cached user object
             // - If an element matches, disable validation for that element
             // - If any element is different, set infoChanged to true
             $.each(form.elements, function(i, elm) {
                 if (api.user.hasOwnProperty(elm.name)) {
-                    if (api.user[elm.name] === elm.value) {
+                    // Get userValue and cast formValue to its type
+                    var userValue = api.user[elm.name]
+                    var formValue = elm.value
+                    switch (typeof userValue) {
+                        case "boolean": formValue = !!elm.checked; break;
+                        case "number": formValue = 0+formValue; break;
+                    }
+
+                    // If the form matches the user's value, show it without validation
+                    // otherwise enable validation for this field and mark the form as changed
+                    if (userValue === formValue) {
                         $(elm).removeClass("validate valid invalid")
                     } else {
                         $(elm).addClass("validate")
@@ -210,12 +238,12 @@
         $("#info")
             .submit(function (event) {
                 event.preventDefault()
-                if (!infoChanged) return
-                var form = document.getElementById("info");
 
+                // Don't submit if the submit button is disabled (prevent submit-on-enter if no change)
+                if ($("#info button[type=submit]").attr("disabled")) return;
 
                 // TODO send a request to update user info
-                alert("TODO: send this stuff to an API")
+                alert("TODO: send this stuff to an API: " + $("#info").serialize())
             })
             .keyup(onEditInfo).click(onEditInfo).change(onEditInfo)
 
