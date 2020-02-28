@@ -110,7 +110,9 @@ func patchUser(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "error committing changes to the database").SetInternal(err)
 		}
 
-		return c.JSONBlob(http.StatusOK, []byte(`{"message":"success"}`))
+		// Return the updated user
+		user = database.LookupUserByID(user.ID)
+		return c.JSON(http.StatusOK, user)
 	} else {
 		return echo.NewHTTPError(http.StatusInternalServerError, "unable to cast user")
 	}

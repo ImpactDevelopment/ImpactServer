@@ -32,14 +32,7 @@
                         reject(messageFromjqXHR(jqXHR))
                     },
                     success: function (result, status) {
-                        // TODO should PATCH return the resultant user instead of {message:success}?
-                        if (data) {
-                            $.each(data, function (key, value) {
-                                api.user[key] = value
-                            })
-                        } else {
-                            api.user = result
-                        }
+                        api.user = result
                         resolve(result)
                     }
                 })
