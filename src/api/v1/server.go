@@ -20,6 +20,7 @@ func API(api *echo.Group) {
 	api.GET("/minecraft/user/:role/list", getRoleMembers, middleware.CacheUntilPurge())
 	api.GET("/dbtest", dbTest, middleware.NoCache())
 	api.GET("/user/me", getUser, middleware.NoCache(), middleware.RequireAuth())
+	api.PATCH("/user/me", patchUser, middleware.NoCache(), middleware.RequireAuth())
 	api.PUT("/password/me", putPassword, middleware.NoCache(), middleware.RequireAuth())
 	api.PUT("/password/:token", putPassword, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/password/reset", resetPassword, middleware.NoCache()) // TODO ratelimit resets
