@@ -38,6 +38,7 @@ func patchUser(c echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "error starting database transaction").SetInternal(err)
 		}
+		defer tx.Rollback()
 
 		if body.Email != nil && *body.Email != user.Email {
 			email, err := verifyEmail(*body.Email)

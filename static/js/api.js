@@ -25,7 +25,9 @@
                 $.withAuth({
                     url: baseUrl + "/user/me",
                     method: data ? "PATCH" : "GET",
-                    data: data,
+                    // echo sometimes fails to bind form data to *bool, so send json
+                    data: data ? JSON.stringify(data) : undefined,
+                    headers: data ? {"Content-Type": "application/json"} : undefined,
                     error: function (jqXHR, textStatus, errorThrown) {
                         reject(messageFromjqXHR(jqXHR))
                     },
