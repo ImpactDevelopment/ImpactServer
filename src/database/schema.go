@@ -85,7 +85,7 @@ func createTables() error {
 			mc_uuid,
 			discord_id,
 			password_hash,
-			cape_enabled,
+			cape_enabled, --TODO invert this to "incognito"
 			legacy_enabled,
 			legacy,
 			STRING_TO_ARRAY(

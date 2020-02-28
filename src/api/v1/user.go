@@ -41,15 +41,19 @@ func patchUser(c echo.Context) error {
 			return err
 		}
 
-		// TODO use a transaction or compile a query or something
+		// Use a transaction so that the DB can maybe optimise or at least rollback if any one step fails
+		tx, err := database.DB.Begin()
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "error starting database transaction").SetInternal(err)
+		}
+
 		if body.Email != nil {
 			email, err := verifyEmail(*body.Email)
 			if err != nil {
 				return err
 			}
 
-			// Update the DB
-			_, err = database.DB.Exec("UPDATE users SET email = $2 WHERE user_id = $1", user.ID, email)
+			_, err = tx.Exec(`UPDATE users SET email = $2 WHERE user_id = $1`, user.ID, email)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
 			}
@@ -61,8 +65,7 @@ func patchUser(c echo.Context) error {
 				return err
 			}
 
-			// Update the DB
-			_, err = database.DB.Exec("UPDATE users SET password_hash = $2 WHERE user_id = $1", user.ID, hashedPassword)
+			_, err = tx.Exec(`UPDATE users SET password_hash = $2 WHERE user_id = $1`, user.ID, hashedPassword)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
 			}
@@ -74,8 +77,7 @@ func patchUser(c echo.Context) error {
 				return err
 			}
 
-			// Update the DB
-			_, err = database.DB.Exec("UPDATE users SET discord_id = $2 WHERE user_id = $1", user.ID, discordID)
+			_, err = tx.Exec(`UPDATE users SET discord_id = $2 WHERE user_id = $1`, user.ID, discordID)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
 			}
@@ -87,8 +89,7 @@ func patchUser(c echo.Context) error {
 				return err
 			}
 
-			// Update the DB
-			_, err = database.DB.Exec("UPDATE users SET mc_uuid = $2 WHERE user_id = $1", user.ID, minecraftID)
+			_, err = tx.Exec(`UPDATE users SET mc_uuid = $2 WHERE user_id = $1`, user.ID, minecraftID)
 			if err != nil {
 				log.Println(err)
 				return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
@@ -96,20 +97,24 @@ func patchUser(c echo.Context) error {
 		}
 
 		if body.Incognito != nil {
-			// Update the DB
-			// TODO convert capes_enabled to incognito on the db side too
-			_, err = database.DB.Exec("UPDATE users SET capes_enabled = $2 WHERE user_id = $1", user.ID, !*body.Incognito)
+			var capesEnabled = !*body.Incognito // we store this inverted lol
+			_, err = tx.Exec(`UPDATE users SET capes_enabled = $2 WHERE user_id = $1`, user.ID, capesEnabled)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
 			}
 		}
 
 		if body.LegacyEnabled != nil {
-			// Update the DB
-			_, err = database.DB.Exec("UPDATE users SET legacy_enabled = $2 WHERE user_id = $1", user.ID, *body.LegacyEnabled)
+			_, err = tx.Exec(`UPDATE users SET legacy_enabled = $2 WHERE user_id = $1`, user.ID, *body.LegacyEnabled)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
 			}
+		}
+
+		// Update the DB
+		err = tx.Commit()
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "error committing changes to the database").SetInternal(err)
 		}
 
 		return c.JSONBlob(http.StatusOK, []byte(`{"message":"success"}`))
