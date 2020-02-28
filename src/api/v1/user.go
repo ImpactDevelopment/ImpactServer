@@ -85,8 +85,8 @@ func patchUser(c echo.Context) error {
 		}
 
 		if body.Incognito != nil {
-			var capesEnabled = !*body.Incognito // we store this inverted lol
-			_, err = tx.Exec(`UPDATE users SET capes_enabled = $2 WHERE user_id = $1`, user.ID, capesEnabled)
+			var capeEnabled = !*body.Incognito // we store this inverted lol
+			_, err = tx.Exec(`UPDATE users SET cape_enabled = $2 WHERE user_id = $1`, user.ID, capeEnabled)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
 			}

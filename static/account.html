@@ -254,8 +254,16 @@
                     }
                 })
 
-                // TODO send a request to update user info
-                alert("TODO: send this stuff to an API: " + JSON.stringify(data))
+                api.me(data)
+                    .then(function (result) {
+                        $("#info_msg").text("")
+
+                        // api.user has been patched, so re-run onEditInfo
+                        onEditInfo()
+                    })
+                    .catch(function (error) {
+                        $("#info_msg").text(error)
+                    })
             })
             .keyup(onEditInfo).click(onEditInfo).change(onEditInfo)
 

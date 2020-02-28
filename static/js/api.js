@@ -19,17 +19,26 @@
     }
 
     global.api = {
-        // get my user object
-        me: function() {
+        // if data is provided, patches the user otherwise gets the user info
+        me: function(data) {
             return new Promise(function (resolve, reject) {
-                $.withAuth.get({
+                $.withAuth({
                     url: baseUrl + "/user/me",
+                    method: data ? "PATCH" : "GET",
+                    data: data,
                     error: function (jqXHR, textStatus, errorThrown) {
                         reject(messageFromjqXHR(jqXHR))
                     },
-                    success: function (data, status) {
-                        api.user = data
-                        resolve(data)
+                    success: function (result, status) {
+                        // TODO should PATCH return the resultant user instead of {message:success}?
+                        if (data) {
+                            $.each(data, function (key, value) {
+                                api.user[key] = value
+                            })
+                        } else {
+                            api.user = result
+                        }
+                        resolve(result)
                     }
                 })
             })
