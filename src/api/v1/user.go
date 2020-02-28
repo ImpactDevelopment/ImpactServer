@@ -39,7 +39,7 @@ func patchUser(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "error starting database transaction").SetInternal(err)
 		}
 
-		if body.Email != nil {
+		if body.Email != nil && *body.Email != user.Email {
 			email, err := verifyEmail(*body.Email)
 			if err != nil {
 				return err
@@ -66,9 +66,11 @@ func patchUser(c echo.Context) error {
 			if err != nil {
 				return err
 			}
-			_, err = tx.Exec(`UPDATE users SET discord_id = $2 WHERE user_id = $1`, user.ID, discordID)
-			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
+			if discordID != user.DiscordID {
+				_, err = tx.Exec(`UPDATE users SET discord_id = $2 WHERE user_id = $1`, user.ID, discordID)
+				if err != nil {
+					return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
+				}
 			}
 		}
 
@@ -77,14 +79,16 @@ func patchUser(c echo.Context) error {
 			if err != nil {
 				return err
 			}
-			_, err = tx.Exec(`UPDATE users SET mc_uuid = $2 WHERE user_id = $1`, user.ID, minecraftID)
-			if err != nil {
-				log.Println(err)
-				return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
+			if minecraftID != user.MinecraftID {
+				_, err = tx.Exec(`UPDATE users SET mc_uuid = $2 WHERE user_id = $1`, user.ID, minecraftID)
+				if err != nil {
+					log.Println(err)
+					return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
+				}
 			}
 		}
 
-		if body.Incognito != nil {
+		if body.Incognito != nil && *body.Incognito != user.Incognito {
 			var capeEnabled = !*body.Incognito // we store this inverted lol
 			_, err = tx.Exec(`UPDATE users SET cape_enabled = $2 WHERE user_id = $1`, user.ID, capeEnabled)
 			if err != nil {
@@ -92,7 +96,7 @@ func patchUser(c echo.Context) error {
 			}
 		}
 
-		if body.LegacyEnabled != nil {
+		if body.LegacyEnabled != nil && *body.LegacyEnabled != user.LegacyEnabled {
 			_, err = tx.Exec(`UPDATE users SET legacy_enabled = $2 WHERE user_id = $1`, user.ID, *body.LegacyEnabled)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
