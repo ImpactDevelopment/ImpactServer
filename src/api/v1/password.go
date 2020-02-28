@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"github.com/ImpactDevelopment/ImpactServer/src/mailgun"
+	"github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/ImpactDevelopment/ImpactServer/src/recaptcha"
-	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -80,11 +80,8 @@ func putPassword(c echo.Context) error {
 		return err
 	}
 
-	if user, ok := c.Get("user").(*users.User); ok {
+	if user := middleware.GetUser(c); user != nil {
 		// We are authenticated so trust the user
-		if user == nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, "no user found")
-		}
 		err = setPassword(user.ID, body.Password)
 		if err != nil {
 			return err

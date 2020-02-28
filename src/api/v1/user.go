@@ -2,17 +2,14 @@ package v1
 
 import (
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
-	"github.com/ImpactDevelopment/ImpactServer/src/users"
+	"github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/labstack/echo/v4"
 	"log"
 	"net/http"
 )
 
 func getUser(c echo.Context) error {
-	if user, ok := c.Get("user").(*users.User); ok {
-		if user == nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, "no user found")
-		}
+	if user := middleware.GetUser(c); user != nil {
 		return c.JSON(http.StatusOK, user)
 	} else {
 		return echo.NewHTTPError(http.StatusInternalServerError, "unable to cast user")
@@ -20,11 +17,7 @@ func getUser(c echo.Context) error {
 }
 
 func patchUser(c echo.Context) error {
-	if user, ok := c.Get("user").(*users.User); ok {
-		if user == nil {
-			return echo.NewHTTPError(http.StatusUnauthorized, "no user found")
-		}
-
+	if user := middleware.GetUser(c); user != nil {
 		// Everything is a pointer so we can check what was present in the request
 		// e.g. an unset field defaulting to false might be bad
 		var body struct {
