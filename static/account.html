@@ -105,13 +105,13 @@
                 <!-- Materialize DOES support checkboxes nested within label, which simplifies things -->
                 <p>
                     <label>
-                        <input name="incognito" class="filled-in" type="checkbox" value="true" />
+                        <input name="incognito" class="filled-in" type="checkbox"/>
                         <span>Incognito mode</span>
                     </label>
                 </p>
                 <p>
                     <label>
-                        <input name="legacy_enabled" class="filled-in" type="checkbox" value="true" />
+                        <input name="legacy_enabled" class="filled-in" type="checkbox"/>
                         <span>Enable premium on Impact 4.7 and below</span>
                     </label>
                 </p>
@@ -131,6 +131,14 @@
 <script>
     (function init() {
         $("#fouc").addClass("invisible")
+
+        function castToUserType(formElement) {
+            switch (typeof api.user[formElement.name]) {
+                case "boolean": return !!formElement.checked;
+                case "number": return 0+formElement.value;
+                default: return formElement.value;
+            }
+        }
 
         if (api.isLoggedIn()) {
             $("#dashboard").removeClass("hidden")
@@ -215,11 +223,7 @@
                 if (api.user.hasOwnProperty(elm.name)) {
                     // Get userValue and cast formValue to its type
                     var userValue = api.user[elm.name]
-                    var formValue = elm.value
-                    switch (typeof userValue) {
-                        case "boolean": formValue = !!elm.checked; break;
-                        case "number": formValue = 0+formValue; break;
-                    }
+                    var formValue = castToUserType(elm)
 
                     // If the form matches the user's value, show it without validation
                     // otherwise enable validation for this field and mark the form as changed
@@ -242,8 +246,16 @@
                 // Don't submit if the submit button is disabled (prevent submit-on-enter if no change)
                 if ($("#info button[type=submit]").attr("disabled")) return;
 
+                // jquery's serialize() method won't include unchecked checkboxes, so we should handle this ourselves
+                var data = {}
+                $.each(document.getElementById("info").elements, function (i, elm) {
+                    if (api.user.hasOwnProperty(elm.name)) {
+                        data[elm.name] = castToUserType(elm);
+                    }
+                })
+
                 // TODO send a request to update user info
-                alert("TODO: send this stuff to an API: " + $("#info").serialize())
+                alert("TODO: send this stuff to an API: " + JSON.stringify(data))
             })
             .keyup(onEditInfo).click(onEditInfo).change(onEditInfo)
 
