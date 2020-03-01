@@ -12,6 +12,9 @@ import (
 type Order struct {
 	*paypal.Order
 
+	PayerID    string
+	PayerEmail string
+
 	// Remember the requested order id for validation purposes
 	// Overkill tbh
 	requestedId string
@@ -40,21 +43,21 @@ func (o Order) Total() (cent int) {
 	return
 }
 
-// Authorize will authorize "approved" orders and return an error if it fails
-func (o *Order) Authorize() error {
-	if o.Intent == paypal.OrderIntentAuthorize {
+// Capture will capture "approved" orders and return an error if it fails
+func (o *Order) Capture() error {
+	if o.Intent == paypal.OrderIntentCapture {
 		switch o.Status {
 		case "COMPLETED":
-			// Nothing to do, already authorized
+			// Nothing to do, already captured
 		case "APPROVED":
-			authorization, err := client.AuthorizeOrder(o.ID, paypal.AuthorizeOrderRequest{})
+			capture, err := client.CaptureOrder(o.ID, paypal.CaptureOrderRequest{})
 			if err != nil {
 				return err
 			}
 
-			// Check the authorization was a success
-			if authorization.Status != "COMPLETED" {
-				return errors.New("intent was AUTHORIZE but status is still not COMPLETED after authorizing")
+			// Check the capture was a success
+			if capture.Status != "COMPLETED" {
+				return errors.New("intent was CAPTURE but status is still not COMPLETED after capturing")
 			}
 
 			// Update the Order struct
@@ -63,6 +66,11 @@ func (o *Order) Authorize() error {
 				return err
 			}
 			o.Order = newOrder
+
+			if capture.Payer != nil {
+				o.PayerID = capture.Payer.PayerID
+				o.PayerEmail = capture.Payer.EmailAddress
+			}
 		default:
 			return errors.New("Unknown order status " + o.Status)
 		}
