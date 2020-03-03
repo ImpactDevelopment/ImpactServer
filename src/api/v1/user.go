@@ -67,7 +67,7 @@ func getUser(c echo.Context) error {
 			Roles:         user.Roles,
 		})
 	} else {
-		return echo.NewHTTPError(http.StatusInternalServerError, "not logged in")
+		return echo.NewHTTPError(http.StatusUnauthorized, "not authenticated")
 	}
 }
 
@@ -173,11 +173,11 @@ func patchUser(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "error committing changes to the database").SetInternal(err)
 		}
 
-		// Return the updated user
-		user = database.LookupUserByID(user.ID)
-		return c.JSON(http.StatusOK, user)
+		// update context and then defer to getUser
+		c.Set("user", database.LookupUserByID(user.ID))
+		return getUser(c)
 	} else {
-		return echo.NewHTTPError(http.StatusInternalServerError, "unable to cast user")
+		return echo.NewHTTPError(http.StatusUnauthorized, "not authenticated")
 	}
 }
 
