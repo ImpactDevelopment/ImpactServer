@@ -145,6 +145,52 @@
                     }
                 })
             })
+        },
+        /*
+            {
+                id: the user's id
+                email: the user's account email
+                username: the user's username (not nickname)
+                tag: the user's #1234 tag
+                avatar: the user's avatar url (PNG or GIF)
+                nitro: whether or not the user has nitro
+            }
+         */
+        getDiscordUser: function (token) {
+            // TODO get from user info if token is omitted
+            return new Promise(function (resolve, reject) {
+
+                $.get({
+                    url: "https://discordapp.com/api/v6/users/@me",
+                    dataType: "json",
+                    headers: {
+                        // https://discordapp.com/developers/docs/reference#http-api
+                        "Authorization": "Bearer " + token
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        reject(errorThrown)
+                    },
+                    success: function (data, status) {
+                        // get avatar url https://discordapp.com/developers/docs/reference#image-formatting
+                        var avatar = ""
+                        if (data && data.avatar && data.id) {
+                            var ext = "a_" === data.avatar.substring(0, 2) ? ".gif" : ".png"
+                            var base = "https://cdn.discordapp.com/avatars/"
+                            avatar = base + data.id + "/" + data.avatar + ext
+                        }
+
+                        // Pass a serialize the user object
+                        resolve({
+                            id: data.id || "",
+                            email: data.email || "",
+                            username: data.username || "",
+                            tag: data.discriminator ? "#" + data.discriminator : "",
+                            avatar: avatar,
+                            nitro: data.premium_type && data.premium_type > 0
+                        })
+                    }
+                })
+            })
         }
     }
 })(window, window.jQuery);

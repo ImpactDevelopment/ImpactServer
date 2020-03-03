@@ -9,31 +9,6 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script crossorigin="anonymous" src="https://benjamingr.github.io/RegExp.escape/polyfill.js"></script>
 <script type="text/javascript" src="/js/api.js"></script>
-<script>
-    // Called by the oauth popup window
-    function discordCallback(discordToken) {
-        api.login(discordToken)
-        .then(function(result) {
-            // TODO instead or reloading just call an init() func
-            window.location.reload(false)
-        })
-        .catch(function(error) {
-            $("#discord_login_msg").text(error)
-        })
-    }
-
-    // popup centered on window
-    // https://stackoverflow.com/a/32261263
-    function popupOverWindow(url, title, w, h) {
-        var y = window.top.outerHeight / 2 + window.top.screenY - ( h / 2)
-        var x = window.top.outerWidth / 2 + window.top.screenX - ( w / 2)
-        var newWindow = window.open(url, title, 'toolbar=no,location=no,directories=no,status=no,menubar=no,copyhistory=no,width='+w+',height='+h+',top='+y+',left='+x)
-        if (window.focus) {
-            newWindow.focus()
-        }
-        return newWindow
-    }
-</script>
 
 <!-- CSS  -->
 <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
@@ -48,9 +23,59 @@
     .invisible {
         opacity: 0!important;
     }
-    #discord_login_btn {
+    #discord_info_box {
+        background: #7289da;
+        border-radius: 5px;
+        -webkit-box-shadow: 0 2px 8px 0 rgba(0,0,0,.06);
+        box-shadow: 0 2px 8px 0 rgba(0,0,0,.06);
+        padding: 16px;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+    #discord_info {
+        font-size: 32px;
+        color: #fff;
+        font-weight: 700;
+        min-height: 74px;
+
+        opacity: 1;
+        -webkit-transition: opacity .33s ease;
+        transition: opacity .33s ease;
+    }
+    #discord_avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 32px;
+        background-color: hsla(0,0%,100%,.2);
+        background-size: 74px;
+        vertical-align: middle;
+    }
+    #discord_nitro {
+        height: 24px;
+        vertical-align: baseline;
+    }
+    #discord_tag {
+        opacity: .6;
+    }
+    #discord_login_btn, #discord_login_btn_2 {
         background-color: #7289da;
         color: #fff;
+    }
+    #discord_unlink_btn {
+        -webkit-transition: border-color .17s ease;
+        transition: border-color .17s ease;
+        color: #fff;
+        border-width: 1px;
+        border-style: solid;
+        border-color: hsla(0,0%,100%,.3);
+        background: none;
+    }
+    #discord_unlink_btn:hover {
+        border-color: hsla(0,0%,100%,.6);
+    }
+    #form_msg, #discord_msg {
+        color: #F44336;
+        padding-left: 8px;
     }
 </style>
 </head>
@@ -97,6 +122,28 @@
     <div id="dashboard" class="row hidden">
         <h4 class="col s12">Impact Account dashboard</h4>
         <form novalidate id="info" class="row fade-in invisible">
+            <div class="input-field col s12 m8 l6">
+                <a id="discord_login_btn_2" class="btn waves-effect waves-light">Link Discord</a>
+                <div id="discord_info_box" class="hidden row left-align">
+                    <!-- .invisible allows fade-in to avoid FOUC -->
+                    <!-- TODO move away from an id for everything and take advantage of jquery's nested class selector memes -->
+                    <div id="discord_info" class="col s12 truncate invisible">
+                        <img id="discord_avatar" src="" alt="avatar">
+                        <span id="discord_username"></span>
+                        <span id="discord_tag"></span>
+                        <img id="discord_nitro" class="hidden" src="https://discordapp.com/assets/386884eecd36164487505ddfbac35a9d.svg" alt="nitro">
+                    </div>
+                    <div class="col s12">
+                        <a id="discord_unlink_btn" class="btn waves-effect waves-light">Unlink</a>
+                        <span id="discord_msg"></span>
+                    </div>
+                </div>
+                <p class="helper-text">
+                    Link your Discord account for cool reasons X, Y and Z!
+                    <br>
+                    You may need to disable Privacy Badger or similar browser extensions for this to function.
+                </p>
+            </div>
             <!-- Materialize doesn't support text input nested within label, so we need a for-id relationship -->
             <div class="input-field col s12">
                 <input type="email" name="email" id="edit_email"/>
@@ -155,55 +202,101 @@
             }
         }
 
-        if (api.isLoggedIn()) {
-            $("#dashboard").removeClass("hidden")
-            $("#login").addClass("hidden")
-            api.me()
-                .then(function (user) {
-                    // Populate the update form with the user's info
-                    var form = document.getElementById("info")
-                    $.each(form.elements, function(i, elm) {
-                        if (api.user.hasOwnProperty(elm.name)) {
-                            var value = api.user[elm.name]
-                            switch (typeof value) {
-                                case "boolean": elm.checked = value; break;
-                                default: elm.value = value;
-                            }
-                        }
-                    })
-
-                    // Ensure password fields are empty; sometimes browsers think it is a login form
-                    form.password.value = form.password2.value = "";
-
-                    // Update meterialize form magic after pre-filling fields, etc
-                    if (window.Materialize && window.Materialize.updateTextFields) {
-                        window.Materialize.updateTextFields()
-                    }
-
-                    $(form).removeClass("invisible")
-                })
-                .catch(function (error) {
-                    if (error === "invalid key") {
-                        $("#dashboard").addClass("hidden")
-                        $("#expired").removeClass("hidden")
-                        $("#login").removeClass("hidden")
-                        api.logout()
-                    }
-                    $("#info")
-                        .text(error)
-                        .removeClass("invisible")
-                })
-        } else {
-            $("#dashboard").addClass("hidden")
-            $("#login").removeClass("hidden")
+        // popup centered on window
+        // https://stackoverflow.com/a/32261263
+        function popupOverWindow(url, title, w, h) {
+            var y = window.top.outerHeight / 2 + window.top.screenY - ( h / 2)
+            var x = window.top.outerWidth / 2 + window.top.screenX - ( w / 2)
+            var newWindow = window.open(url, title, 'toolbar=no,location=no,directories=no,status=no,menubar=no,copyhistory=no,width='+w+',height='+h+',top='+y+',left='+x)
+            if (window.focus) {
+                newWindow.focus()
+            }
+            return newWindow
         }
 
-        $("#discord_login_btn").click(function (event) {
+        // Called by the oauth popup window
+        window.discordCallback = function(discordToken) {
+            // Either trying to login, or trying to link discord with existing account
+            if (api.isLoggedIn()) {
+                $("#discord_msg").text("")
+                $("#discord_info").addClass("invisible")
+                $("#discord_login_btn_2").addClass("hidden")
+                $("#discord_info_box").removeClass("hidden")
+
+                // AJAX to our api and discord's api in parallel
+
+                // Ours saves the info to the DB
+                api.me({discord: discordToken})
+                .then(function(result) {
+                    // TODO signify that it has been saved - maybe show a loading animation until now?
+                })
+                .catch(function(error) {
+                    $("#discord_msg").text("Error saving discord info: " + error)
+                })
+
+                // Discord's gives us enough info to show username & icon
+                // TODO instead of looking this up clientside, we could have the /me endpoint return username etc from discord id? We might need this anyway for showing discord info on load.
+                api.getDiscordUser(discordToken)
+                    .then(function (user) {
+                        // Update user info, then fade in
+                        setDiscordInfo(user)
+                        $("#discord_info").removeClass("invisible")
+                    })
+                    .catch(function(error) {
+                        $("#discord_msg").text("Error fetching discord info: " + error)
+                    })
+            } else {
+                api.login(discordToken)
+                    .then(function(result) {
+                        init()
+                    })
+                    .catch(function(error) {
+                        $("#discord_login_msg").text(error)
+                    })
+            }
+        }
+
+        // Updates the discord info box's content to match the given discord user
+        function setDiscordInfo(user) {
+            $("#discord_username").text(user.username || "")
+            $("#discord_tag").text(user.tag || "")
+
+            var avatarImg = $("#discord_avatar")
+            if (user.hasOwnProperty("avatar")) {
+                avatarImg.attr("src", user.avatar)
+                avatarImg.removeClass("hidden")
+            } else {
+                avatarImg.addClass("hidden")
+            }
+
+            var nitroImg = $("#discord_nitro")
+            if (user.hasOwnProperty("nitro") && user.nitro) {
+                nitroImg.removeClass("hidden")
+            } else {
+                nitroImg.addClass("hidden")
+            }
+        }
+
+        // Open the discord oauth popup window
+        $("#discord_login_btn_2").click(function (event) {
             event.preventDefault()
             popupOverWindow(
                 "/discord_oauth.html",
                 "oauth", 600, 800
             )
+        })
+
+        $("#discord_unlink_btn").click(function (event) {
+            event.preventDefault()
+            api.me({discord: "false"})
+            .then(function (result) {
+                $("#discord_info_box").addClass("hidden")
+                $("#discord_login_btn_2").removeClass("hidden")
+                setDiscordInfo()
+            })
+            .catch(function (error) {
+                $("#discord_msg").text("Error unlinking discord: " + error)
+            })
         })
 
         $("#login").submit(function (event) {
@@ -296,8 +389,9 @@
                         var onblur = document.createEvent("HTMLEvents");
                         onblur.initEvent("blur", false, true);
                         elm.dispatchEvent(onblur);
-                    } else
+                    } else {
                         elm.fireEvent("onblur");
+                    }
                 }
             })
 
@@ -346,6 +440,67 @@
             event.preventDefault()
             api.logout()
             init()
+        })
+
+        // TODO lets separate this from all the other crap
+        if (api.isLoggedIn()) {
+            $("#dashboard").removeClass("hidden")
+            $("#login").addClass("hidden")
+            api.me()
+                .then(function (user) {
+                    // Populate the update form with the user's info
+                    var form = document.getElementById("info")
+                    $.each(form.elements, function(i, elm) {
+                        if (api.user.hasOwnProperty(elm.name)) {
+                            var value = api.user[elm.name]
+                            switch (typeof value) {
+                                case "boolean": elm.checked = value; break;
+                                default: elm.value = value;
+                            }
+                        }
+                    })
+
+                    if (api.user.discord) {
+                        // TODO load discord props from api.user
+                        $("#discord_login_btn_2").addClass("hidden")
+                        $("#discord_info_box").removeClass("hidden")
+                    } else {
+                        $("#discord_login_btn_2").removeClass("hidden")
+                        $("#discord_info_box").addClass("hidden")
+                    }
+
+                    // Ensure password fields are empty; sometimes browsers think it is a login form
+                    form.password.value = form.password2.value = "";
+
+                    // Update meterialize form magic after pre-filling fields, etc
+                    if (window.Materialize && window.Materialize.updateTextFields) {
+                        window.Materialize.updateTextFields()
+                    }
+
+                    $(form).removeClass("invisible")
+                })
+                .catch(function (error) {
+                    if (error === "invalid key") {
+                        $("#dashboard").addClass("hidden")
+                        $("#expired").removeClass("hidden")
+                        $("#login").removeClass("hidden")
+                        api.logout()
+                    }
+                    $("#info")
+                        .text(error)
+                        .removeClass("invisible")
+                })
+        } else {
+            $("#dashboard").addClass("hidden")
+            $("#login").removeClass("hidden")
+        }
+
+        $("#discord_login_btn").click(function (event) {
+            event.preventDefault()
+            popupOverWindow(
+                "/discord_oauth.html",
+                "oauth", 600, 800
+            )
         })
 
         // Fade in

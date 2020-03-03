@@ -1,11 +1,13 @@
 package v1
 
 import (
+	"database/sql"
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/labstack/echo/v4"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func getUser(c echo.Context) error {
@@ -63,11 +65,19 @@ func patchUser(c echo.Context) error {
 		}
 
 		if body.DiscordToken != nil {
-			discordID, err := getDiscordID(*body.DiscordToken)
-			if err != nil {
-				return err
+			// Don't lookup id if the token is empty or falsy; instead set discord_id to NullString's default: NULL
+			var discordID sql.NullString
+			if token := strings.TrimSpace(strings.ToLower(*body.DiscordToken)); token != "" && token != "false" && token != "null" && token != "0" {
+				id, err := getDiscordID(strings.TrimSpace(*body.DiscordToken))
+				if err != nil {
+					return err
+				}
+				discordID = sql.NullString{
+					String: id,
+					Valid:  true,
+				}
 			}
-			if discordID != user.DiscordID {
+			if discordID.String != user.DiscordID {
 				_, err = tx.Exec(`UPDATE users SET discord_id = $2 WHERE user_id = $1`, user.ID, discordID)
 				if err != nil {
 					return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
