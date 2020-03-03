@@ -25,6 +25,11 @@ var discordOAuthToken = regexp.MustCompile(`^[A-Za-z0-9]+$`)
 // Where to notify donations
 const donationMsgChannel = "678230156091064330"
 
+type User struct {
+	discordgo.User
+	Avatar string `json:"avatar"`
+}
+
 func init() {
 	token := os.Getenv("DISCORD_BOT_TOKEN")
 	if token == "" {
@@ -80,6 +85,20 @@ func GetUserId(accessToken string) (userId string, err error) {
 	}
 
 	return discordUser.ID, nil
+}
+
+func GetUser(id string) (user *User, err error) {
+	discordUser, err := discord.User(id)
+	if err != nil {
+		var restErr *discordgo.RESTError
+		if errors.As(err, &restErr) {
+			return nil, echo.NewHTTPError(http.StatusUnauthorized, fmt.Sprintf(`error authenticating with discord "%s"`, restErr.Message.Message))
+		}
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "error authenticating with discord").SetInternal(err)
+	}
+
+	return &User{*discordUser, discordUser.AvatarURL("")}, nil
+
 }
 
 func JoinOurServer(accessToken string, discordID string, donator bool) error {
