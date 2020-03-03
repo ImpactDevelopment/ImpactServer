@@ -24,7 +24,7 @@ func MinecraftLoginHandler(c echo.Context) error {
 	}
 	uuidStr, err := util.HasJoinedServer(body.Username, body.Hash)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "failed authentication with mojang").SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "failed authentication with mojang").SetInternal(err)
 	}
 	minecraftID, err := uuid.Parse(uuidStr)
 	if err != nil {
