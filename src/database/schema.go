@@ -42,8 +42,7 @@ func createTables() error {
 		CREATE TABLE IF NOT EXISTS password_resets (
 			token  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			user_id UUID NOT NULL REFERENCES users(user_id) ,
-			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT, -- unix seconds
-			used BOOL NOT NULL DEFAULT FALSE
+			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT -- unix seconds
 		);
 	`)
 	if err != nil {

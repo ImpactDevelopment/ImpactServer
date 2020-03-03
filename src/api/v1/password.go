@@ -2,6 +2,7 @@ package v1
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"github.com/ImpactDevelopment/ImpactServer/src/mailgun"
@@ -63,12 +64,13 @@ func resetPassword(c echo.Context) error {
 	message.SetHtml(fmt.Sprintf(html, resetUrl.String(), resetUrl.String()))
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	resp, id, err := mailgun.MG.Send(ctx, message)
+	_, _, err = mailgun.MG.Send(ctx, message)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "failed to send reset email")
 	}
-	fmt.Printf("Successful password reset email sent to %s, mailgun id %s, resp %s", user.Email, id, resp)
-	return c.JSONBlob(http.StatusOK, []byte(`{"message":"success"}`))
+	return c.JSON(http.StatusOK, struct {
+		Message string `json:"message"`
+	}{"success"})
 }
 
 func putPassword(c echo.Context) error {
@@ -91,24 +93,33 @@ func putPassword(c echo.Context) error {
 		// We are not authenticated... They should provide a reset token
 		token := strings.TrimSpace(c.Param("token"))
 		var userID uuid.UUID
-		err = database.DB.QueryRow(`SELECT user_id FROM password_resets WHERE token = $1`, token).Scan(&userID)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "invalid reset token").SetInternal(err)
+		var createdAt int64
+		err = database.DB.QueryRow(`DELETE FROM password_resets WHERE token = $1 RETURNING user_id, created_at`, token).Scan(&userID, &createdAt)
+
+		// Check the token actually exists
+		if err == sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusNotFound, "invalid reset token").SetInternal(err)
 		}
 
-		// ok, matching token so we can trust them now I guess
+		// If the error  is some other error, that probably means we failed to delete the token
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "unable to delete reset token").SetInternal(err)
+		}
+
+		// Also check when the token was created: should be in the past, but not too far in the past...
+		if now, then := time.Now(), time.Unix(createdAt, 0); now.Before(then) || now.After(then.Add(24*time.Hour)) {
+			return echo.NewHTTPError(http.StatusUnauthorized, "expired reset token")
+		}
+
+		// OK, valid token so we can trust them now, I guess
 		err = setPassword(userID, body.Password)
 		if err != nil {
 			return err
 		}
 
-		// Delete the token so it can't be used more than once
-		_, err := database.DB.Exec(`DELETE FROM password_resets WHERE token = $1`, token)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "unable to delete reset token").SetInternal(err)
-		}
-
-		return c.JSONBlob(http.StatusOK, []byte(`{"message":"success"}`))
+		return c.JSON(http.StatusOK, struct {
+			Message string `json:"message"`
+		}{"success"})
 	}
 }
 
