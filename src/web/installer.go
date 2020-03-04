@@ -242,15 +242,22 @@ func installer(c echo.Context, version InstallerVersion) error {
 	awaitStartup() // in case we get an early request, block until startup is done
 
 	referer := c.Request().Referer()
-	if referer != "" && !strings.HasPrefix(referer, "https://impactclient.net/") && !strings.Contains(referer, "brady-money-grubbing-completed") {
+	if referer != "" && !strings.HasPrefix(referer, util.GetServerURL().String()) && !strings.Contains(referer, "brady-money-grubbing-completed") {
 		fmt.Println("BLOCKING referer", referer)
 		return echo.NewHTTPError(http.StatusUnauthorized, "no hotlinking >:(")
 	}
 
+	nightlies := c.QueryParam("nightlies") == "1" || c.QueryParam("nightlies") == "true"
+	filename := "Impact"
+	if nightlies {
+		filename += "Nightly"
+	}
+	filename += "Installer-" + installerVersion + "." + version.getEXT()
+
 	res := c.Response()
 	header := res.Header()
 	header.Set(echo.HeaderContentType, echo.MIMEOctetStream)
-	header.Set(echo.HeaderContentDisposition, "attachment; filename=ImpactInstaller-"+installerVersion+"."+version.getEXT())
+	header.Set(echo.HeaderContentDisposition, "attachment; filename="+filename)
 	header.Set("Content-Transfer-Encoding", "binary")
 	res.WriteHeader(http.StatusOK)
 
@@ -269,7 +276,7 @@ func installer(c echo.Context, version InstallerVersion) error {
 			return err
 		}
 	}
-	if nightlies := c.QueryParam("nightlies"); nightlies == "1" || nightlies == "true" {
+	if nightlies {
 		const properties = "# Enable nightly builds\n" +
 			"noGPG = true\n" +
 			"prereleases = true\n"

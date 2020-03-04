@@ -121,6 +121,16 @@
     </form>
     <div id="dashboard" class="row hidden">
         <h4 class="col s12">Impact Account dashboard</h4>
+        <div class="col s12">
+            <p>
+                Hate adfly? Want to download Impact Installer without ads? Well, here you go!
+                <br><a href="/ImpactInstaller.exe" download>EXE version for Windows</a> or <a href="/ImpactInstaller.jar" download>JAR version for everyone else</a>
+            </p>
+            <p>
+                Want the latest and greatest development snapshots? Here's an installer that will download nightly builds!
+                <br><a href="/ImpactInstaller.exe?nightlies=true" download>EXE version for Windows</a> or <a href="/ImpactInstaller.jar?nightlies=true" download>JAR version for everyone else</a>
+            </p>
+        </div>
         <form novalidate id="info" class="row fade-in invisible">
             <div class="input-field col s12 m8 l6">
                 <a id="discord_login_btn_2" class="btn waves-effect waves-light">Link Discord</a>
@@ -188,7 +198,9 @@
             </div>
             <p id="info_msg" class="col s12 helper-text error"></p>
         </form>
-        <a id="logout" class="btn waves-effect waves-light" href="#">Logout</a>
+        <div class="col s12">
+            <a id="logout" class="btn waves-effect waves-light" href="#">Logout</a>
+        </div>
     </div>
 </div>
 
