@@ -192,9 +192,8 @@ func patchUser(c echo.Context) error {
 		// update context and then defer to getUser
 		c.Set("user", database.LookupUserByID(user.ID))
 		return getUser(c)
-	} else {
-		return echo.NewHTTPError(http.StatusUnauthorized, "not authenticated")
 	}
+	return echo.NewHTTPError(http.StatusUnauthorized, "not authenticated")
 }
 
 func lookupDiscordInfo(id string) resultDiscord {

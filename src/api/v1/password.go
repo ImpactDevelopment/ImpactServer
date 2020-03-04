@@ -55,13 +55,13 @@ func resetPassword(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	resetUrl := util.GetServerURL()
-	resetUrl.Path = "/forgotpassword.html"
-	resetUrl.RawQuery = url.Values{"token": {token.String()}}.Encode()
+	resetURL := util.GetServerURL()
+	resetURL.Path = "/forgotpassword.html"
+	resetURL.RawQuery = url.Values{"token": {token.String()}}.Encode()
 
 	// Send user an email, don't just give anyone a token lol
-	message := mailgun.MG.NewMessage("Impact <noreply@impactclient.net>", "Password reset", fmt.Sprintf(text, resetUrl.String()), user.Email)
-	message.SetHtml(fmt.Sprintf(html, resetUrl.String(), resetUrl.String()))
+	message := mailgun.MG.NewMessage("Impact <noreply@impactclient.net>", "Password reset", fmt.Sprintf(text, resetURL.String()), user.Email)
+	message.SetHtml(fmt.Sprintf(html, resetURL.String(), resetURL.String()))
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	_, _, err = mailgun.MG.Send(ctx, message)
@@ -88,7 +88,6 @@ func putPassword(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		return c.JSONBlob(http.StatusOK, []byte(`{"message":"success"}`))
 	} else {
 		// We are not authenticated... They should provide a reset token
 		token := strings.TrimSpace(c.Param("token"))
@@ -116,11 +115,10 @@ func putPassword(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-
-		return c.JSON(http.StatusOK, struct {
-			Message string `json:"message"`
-		}{"success"})
 	}
+	return c.JSON(http.StatusOK, struct {
+		Message string `json:"message"`
+	}{"success"})
 }
 
 func genToken(userID uuid.UUID) (token uuid.UUID, err error) {

@@ -29,6 +29,7 @@ type request struct {
 	Recaptcha string `json:"g-recaptcha-response" form:"g-recaptcha-response" query:"g-recaptcha-response"`
 }
 
+// Verify returns a HTTP error if the provided g-recaptcha-response is invalid
 func Verify(c echo.Context) error {
 	body := &request{}
 	err := c.Bind(body)

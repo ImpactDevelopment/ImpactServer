@@ -97,10 +97,14 @@ func getRolesSorted(roles []Role) (sorted []Role) {
 	return
 }
 
+// MarshalJSON implements the json.Marshaler interface
+// it marshals the role to just the role id as a json string
 func (role Role) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf(`"%s"`, role.ID)), nil
 }
 
+// UnmarshalJSON implements the json.Unmarshaler interface
+// it allows unmarshalling a full role from just the role id json string
 func (role *Role) UnmarshalJSON(bytes []byte) error {
 	var id string
 	err := json.Unmarshal(bytes, &id)
