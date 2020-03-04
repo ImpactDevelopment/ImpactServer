@@ -132,9 +132,24 @@ func patchUser(c echo.Context) error {
 				}
 			}
 			if discordID.String != user.DiscordID {
+				// Revoke roles from current linked discord
+				if user.DiscordID != "" {
+					err := discord.RemoveDonator(user.DiscordID)
+					if err != nil {
+						return echo.NewHTTPError(http.StatusInternalServerError, "Unable to remove roles from current Discord account").SetInternal(err)
+					}
+				}
+				// Update the database
 				_, err = tx.Exec(`UPDATE users SET discord_id = $2 WHERE user_id = $1`, user.ID, discordID)
 				if err != nil {
 					return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
+				}
+				// Grant roles to the new discord user
+				if discordID.Valid {
+					err := discord.GiveDonator(discordID.String)
+					if err != nil {
+						return echo.NewHTTPError(http.StatusInternalServerError, "Unable to grant roles to new Discord account").SetInternal(err)
+					}
 				}
 			}
 		}

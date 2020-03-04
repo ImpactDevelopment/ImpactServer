@@ -117,6 +117,10 @@ func GiveDonator(discordID string) error {
 	return discord.GuildMemberRoleAdd(guildID, discordID, donatorRole)
 }
 
+func RemoveDonator(discordID string) error {
+	return discord.GuildMemberRoleRemove(guildID, discordID, donatorRole)
+}
+
 func GiveVerified(discordID string) error {
 	return discord.GuildMemberRoleAdd(guildID, discordID, verifiedRole)
 }
