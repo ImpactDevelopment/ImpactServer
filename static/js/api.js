@@ -59,7 +59,7 @@
                     url: url,
                     data: fields,
                     error: function (jqXHR, textStatus, errorThrown) {
-                        reject(errorThrown)
+                        reject(messageFromjqXHR(jqXHR))
                     },
                     success: function (data, status) {
                         setToken(data)
