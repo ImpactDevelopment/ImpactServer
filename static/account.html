@@ -132,6 +132,16 @@
             </p>
         </div>
         <form novalidate id="info" class="row fade-in invisible">
+            <div class="input-field col s12 m4 l6">
+                <!-- TODO show a render from mcheads? -->
+                <input type="text" id="minecraft_name" name="minecraft" class="validate" autocomplete="off" required>
+                <label for="minecraft_name">
+                    Minecraft username
+                </label>
+                <span id="minecraft_helper_text" class="helper-text" data-error="Invalid minecraft name">
+                        Your Minecraft UUID or your username. Not your email.
+                    </span>
+            </div>
             <div class="input-field col s12 m8 l6">
                 <a id="discord_login_btn_2" class="btn waves-effect waves-light">Link Discord</a>
                 <div id="discord_info_box" class="hidden row left-align">
@@ -235,6 +245,68 @@
                 newWindow.focus()
             }
             return newWindow
+        }
+
+
+        function updateMinecraftInfo(event) {
+            var field = $("#minecraft_name")
+
+            if (!field.val()) {
+                return
+            }
+
+            field.addClass("loading")
+            getMinecraftUser(field.val(), function (user, error) {
+                if (error || !user.uuid) {
+                    field.addClass("invalid")
+                } else {
+                    $("#minecraft_helper_text").attr("data-success", user.name)
+                    field.removeClass("invalid")
+                    // TODO also update some kinda user avatar?
+                }
+                field.removeClass("loading")
+
+            }, true)
+        }
+        $("#minecraft_name").keyup(updateMinecraftInfo).blur(updateMinecraftInfo)
+
+        function getMinecraftUser(name, callback, useFallback) {
+            // Get the user profile from mcheads or minetools
+            // luckily both APIs have name and id json properties and accept either name or uuid input
+            var main = "https://api.minetools.eu/uuid/"
+            var fallback = "https://mc-heads.net/minecraft/profile/"
+
+            // Generate a function here to aid recursion when fallback is enabled
+            // base is either main or fallback
+            function req(base) {
+                $.get({
+                    url: base + encodeURIComponent(("" + name).trim()),
+                    dataType: "json",
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        // If fallback is enabled, recurse one level
+                        if (useFallback && base !== fallback) {
+                            console.warn("MineTools API failed, falling back to MC Heads for UUID lookup")
+                            req(fallback)
+                        } else {
+                            callback(null, errorThrown)
+                        }
+                    },
+                    success: function (data, status) {
+                        if (!data ||
+                            !data.id || data.id === "null" ||
+                            (data.status && (""+data.status).toLowerCase() !== "ok")) {
+                            callback(null, "No user found")
+                        } else {
+                            callback({
+                                name: data.name || "",
+                                uuid: data.id || ""
+                            })
+                        }
+                    }
+                })
+            }
+
+            req(main)
         }
 
         // Called by the oauth popup window
@@ -373,8 +445,11 @@
             $.each(form.elements, function(i, elm) {
                 if (api.user.hasOwnProperty(elm.name)) {
                     // Get userValue and cast formValue to its type
-                    var userValue = api.user[elm.name]
                     var formValue = castToUserType(elm)
+                    var userValue = api.user[elm.name]
+                    if (elm.name === "minecraft") {
+                        userValue = formValue.replace(/-/g, "") === userValue.id.replace(/-/g, "") ? userValue.id : userValue.name
+                    }
 
                     // If the form matches the user's value, show it without validation
                     // otherwise enable validation for this field and mark the form as changed
@@ -429,7 +504,12 @@
                 var data = {}
                 $.each(document.getElementById("info").elements, function (i, elm) {
                     if (api.user.hasOwnProperty(elm.name)) {
-                        data[elm.name] = castToUserType(elm);
+                        var value = castToUserType(elm)
+                        // Don't send minecraft if it is unchanged
+                        if (elm.name === "minecraft" && value === api.user.minecraft.name) {
+                            return
+                        }
+                        data[elm.name] = value;
                     } else if (["password"].includes(elm.name)) {
                         data[elm.name] = elm.value
                     }
@@ -470,6 +550,9 @@
                     $.each(form.elements, function(i, elm) {
                         if (api.user.hasOwnProperty(elm.name)) {
                             var value = api.user[elm.name]
+                            if (elm.name === "minecraft") {
+                                value = value.name
+                            }
                             switch (typeof value) {
                                 case "boolean": elm.checked = value; break;
                                 default: elm.value = value;
