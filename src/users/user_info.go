@@ -19,10 +19,6 @@ type UserInfo struct {
 
 // NewUserInfo creates a UserInfo based on a User's roles and any special cases that apply to them
 func NewUserInfo(user User) *UserInfo {
-	if user.Incognito {
-		return nil
-	}
-
 	var info UserInfo
 
 	if user.MinecraftID != nil {

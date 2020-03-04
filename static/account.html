@@ -165,18 +165,21 @@
             </div>
             <div class="input-field col s12">
                 <!-- Materialize DOES support checkboxes nested within label, which simplifies things -->
+                <p>By default other Impact users will see <span id="incognito_features">nothing</span>. You can enable Incognito Mode to appear like a normal (non-Impact) user instead.</p>
                 <p>
                     <label>
                         <input name="incognito" class="filled-in" type="checkbox"/>
                         <span>Incognito mode</span>
                     </label>
                 </p>
+                <p>Before 4.8, Impact used a different system to show capes and enable premium features. For privacy reasons we don't recommend enabling this. Incognito mode has no effect on this setting.</p>
                 <p>
                     <label>
                         <input name="legacy_enabled" class="filled-in" type="checkbox"/>
                         <span>Enable premium on Impact 4.7 and below</span>
                     </label>
                 </p>
+                <p>Read about <a href="/account_explanation.html">how Impact Accounts work</a> to better understand what these options do.</p>
             </div>
             <div class="input-field col s12">
                 <button class="btn waves-effect waves-light" type="submit" name="action" disabled>
@@ -200,6 +203,16 @@
                 case "number": return 0+formElement.value;
                 default: return formElement.value;
             }
+        }
+
+        function oxfordJoin(arr){
+            let l = arr.length;
+            if (l < 1) return "";
+            if (l === 1) return arr[0];
+            if (l === 2) return arr.join(" & ");
+            arr = arr.slice(); // Don't mutate the original
+            arr[l-1] = "& "+arr[l-1];
+            return arr.join(", ");
         }
 
         // popup centered on window
@@ -462,6 +475,22 @@
                     } else {
                         $("#discord_login_btn_2").removeClass("hidden")
                         $("#discord_info_box").addClass("hidden")
+                    }
+
+                    // Update what incognito mode would hide
+                    if (api.user.info) {
+                        var i = api.user.info
+                        var features = []
+                        if (i.cape) {
+                            features.push((features.length > 0 ? "" : "a ") + "cape")
+                        }
+                        if (i.icon) {
+                            features.push((features.length > 0 ? "" : "an ") + "icon")
+                        }
+                        if (i.text_color || i.bg_color || i.border_color) {
+                            features.push((features.length > 0 ? "" : "a ") + "custom nametag")
+                        }
+                        $("#incognito_features").text(oxfordJoin(features))
                     }
 
                     // Ensure password fields are empty; sometimes browsers think it is a login form

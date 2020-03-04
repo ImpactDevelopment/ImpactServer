@@ -33,13 +33,13 @@ type resultMC struct {
 func getUser(c echo.Context) error {
 	if user := middleware.GetUser(c); user != nil {
 		type resp struct {
-			Email         string        `json:"email"`
-			Minecraft     *mcuser       `json:"minecraft,omitempty"`
-			Discord       *discord.User `json:"discord,omitempty"`
-			LegacyEnabled bool          `json:"legacy_enabled"`
-			Incognito     bool          `json:"incognito"`
-			Roles         []users.Role  `json:"roles,omitempty"`
-			// TODO include user_info?
+			Email         string          `json:"email"`
+			Minecraft     *mcuser         `json:"minecraft,omitempty"`
+			Discord       *discord.User   `json:"discord,omitempty"`
+			LegacyEnabled bool            `json:"legacy_enabled"`
+			Incognito     bool            `json:"incognito"`
+			Roles         []users.Role    `json:"roles,omitempty"`
+			Info          *users.UserInfo `json:"info,omitempty"`
 		}
 
 		// Lookup minecraft and discord in parallel
@@ -65,6 +65,7 @@ func getUser(c echo.Context) error {
 			LegacyEnabled: user.LegacyEnabled,
 			Incognito:     user.Incognito,
 			Roles:         user.Roles,
+			Info:          user.UserInfo,
 		})
 	} else {
 		return echo.NewHTTPError(http.StatusUnauthorized, "not authenticated")
