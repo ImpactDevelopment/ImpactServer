@@ -31,6 +31,7 @@ var defaultRoleTemplates = map[string]UserInfo{
 		Cape: "https://files.impactclient.net/img/texture/staff_cape.png",
 		Editions: []Edition{{
 			Text: "Staff",
+			TextColor: "#FF734eb",
 		}},
 	},
 	"pepsi": {
