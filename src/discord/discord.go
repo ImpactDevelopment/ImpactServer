@@ -116,17 +116,21 @@ func JoinOurServer(accessToken string, discordID string, donator bool) error {
 	return discord.GuildMemberAdd(accessToken, guildID, discordID, "", roles, false, false)
 }
 
+// SetDonator updates the roles for the given discord user without treating it like a new donation
+func SetDonator(discordID string, donator bool) error {
+	if donator {
+		return discord.GuildMemberRoleAdd(guildID, discordID, donatorRole)
+	} else {
+		return discord.GuildMemberRoleRemove(guildID, discordID, donatorRole)
+	}
+}
+
 // GiveDonator grants the donator role to the user and verifies them
 func GiveDonator(discordID string) error {
 	defer logDonation(discordID, false)
 	GiveVerified(discordID)
 	// dont return early & fail to give donator role if we cant give verified
 	return discord.GuildMemberRoleAdd(guildID, discordID, donatorRole)
-}
-
-// RemoveDonator revokes the user's donator role (but not their verified status)
-func RemoveDonator(discordID string) error {
-	return discord.GuildMemberRoleRemove(guildID, discordID, donatorRole)
 }
 
 // GiveVerified grants the user the verified role which allows them to see channels and talk in them.

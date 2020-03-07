@@ -133,8 +133,8 @@ func patchUser(c echo.Context) error {
 			}
 			if discordID.String != user.DiscordID {
 				// Revoke roles from current linked discord
-				if user.DiscordID != "" {
-					err := discord.RemoveDonator(user.DiscordID)
+				if user.DiscordID != "" && discord.CheckServerMembership(user.DiscordID) {
+					err := discord.SetDonator(user.DiscordID, false)
 					if err != nil {
 						return echo.NewHTTPError(http.StatusInternalServerError, "Unable to remove roles from current Discord account").SetInternal(err)
 					}
@@ -146,9 +146,13 @@ func patchUser(c echo.Context) error {
 				}
 				// Grant roles to the new discord user
 				if discordID.Valid {
-					err := discord.GiveDonator(discordID.String)
-					if err != nil {
-						return echo.NewHTTPError(http.StatusInternalServerError, "Unable to grant roles to new Discord account").SetInternal(err)
+					if discord.CheckServerMembership(discordID.String) {
+						err := discord.SetDonator(discordID.String, true)
+						if err != nil {
+							return echo.NewHTTPError(http.StatusInternalServerError, "Unable to grant roles to new Discord account").SetInternal(err)
+						}
+					} else {
+						// TODO join guild? Or maybe include "not joined" in response so the client can know to show a "join" button?
 					}
 				}
 			}
