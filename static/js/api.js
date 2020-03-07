@@ -177,6 +177,9 @@
                             var ext = "a_" === data.avatar.substring(0, 2) ? ".gif" : ".png"
                             var base = "https://cdn.discordapp.com/avatars/"
                             avatar = base + data.id + "/" + data.avatar + ext
+                        } else if (data && data.discriminator) {
+                            // Users without avatars use a "Default User Avatar"
+                            avatar = "https://cdn.discordapp.com/embed/avatars/" + (data.discriminator % 5) + ".png"
                         }
 
                         // Pass a serialize the user object
