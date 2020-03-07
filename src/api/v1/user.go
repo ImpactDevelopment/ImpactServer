@@ -252,8 +252,8 @@ func lookupMinecraftInfo(id *uuid.UUID) resultMC {
 		}
 	}
 
-	// Find the most recent name, this is probably body[len(body)-1] but this is safer
-	var newest name
+	// Find the most recent name, this is probably body[len(body)-1] but let's explicitly check changedToAt
+	newest := body[0]
 	for _, it := range body {
 		if it.At > newest.At {
 			newest = it
