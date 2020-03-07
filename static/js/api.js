@@ -184,12 +184,48 @@
                             id: data.id || "",
                             email: data.email || "",
                             username: data.username || "",
-                            tag: data.discriminator ? "#" + data.discriminator : "",
+                            discriminator: data.discriminator || "",
                             avatar: avatar,
                             nitro: data.premium_type && data.premium_type > 0
                         })
                     }
                 })
+            })
+        },
+        getMinecraftUser: function(name) {
+            // Get the user profile from mcheads or minetools
+            // luckily both APIs have name and id json properties and accept either name or uuid input
+            var main = "https://api.minetools.eu/uuid/"
+            var fallback = "https://mc-heads.net/minecraft/profile/"
+            return new Promise(function (resolve, reject) {
+                // Generate a function here to aid recursion when fallback is enabled
+                // base is either main or fallback
+                function req(base) {
+                    $.get({
+                        url: base + encodeURIComponent(("" + name).trim()),
+                        dataType: "json",
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            // If fallback is enabled, recurse one level
+                            if (useFallback && base !== fallback) {
+                                console.warn("MineTools API failed, falling back to MC Heads for UUID lookup")
+                                req(fallback)
+                            } else {
+                                callback(null, errorThrown)
+                            }
+                        },
+                        success: function (data, status) {
+                            if (!data ||
+                                !data.id || data.id === "null" ||
+                                (data.status && (""+data.status).toLowerCase() !== "ok")) {
+                                reject("No user found")
+                            } else {
+                                resolve(data)
+                            }
+                        }
+                    })
+                }
+
+                req(main)
             })
         }
     }

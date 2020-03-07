@@ -185,10 +185,10 @@
                             <span id="discord_username"></span>
                             <span id="discord_tag"></span>
                             <img id="discord_nitro" class="hidden" src="https://discordapp.com/assets/386884eecd36164487505ddfbac35a9d.svg" alt="nitro">
-                        </p>
+                        </p>`
                     </div>
                     <div class="card-action">
-                        <a id="discord_login_btn_2" class="waves-effect waves-light hide-if-linked">Link Discord</a>
+                        <a id="discord_link_btn" class="waves-effect waves-light hide-if-linked">Link Discord</a>
                         <a id="discord_unlink_btn" class="waves-effect waves-light hide-if-unlinked">Unlink</a>
                         <span id="discord_msg"></span>
                     </div>
@@ -279,7 +279,6 @@
             return newWindow
         }
 
-
         function updateMinecraftInfo(event) {
             var field = $("#minecraft_name")
 
@@ -288,58 +287,18 @@
             }
 
             field.addClass("loading")
-            getMinecraftUser(field.val(), function (user, error) {
-                if (error || !user.uuid) {
-                    field.addClass("invalid")
-                } else {
-                    $("#minecraft_helper_text").attr("data-success", user.name)
-                    field.removeClass("invalid")
-                    // TODO also update some kinda user avatar?
-                }
+            api.getMinecraftUser(field.val())
+                .then(function (user, error) {
+                $("#minecraft_helper_text").attr("data-success", user.name)
+                field.removeClass("invalid")
                 field.removeClass("loading")
-
-            }, true)
+            })
+            .catch(function (error) {
+                field.addClass("invalid")
+                field.removeClass("loading")
+            })
         }
         $("#minecraft_name").keyup(updateMinecraftInfo).blur(updateMinecraftInfo)
-
-        function getMinecraftUser(name, callback, useFallback) {
-            // Get the user profile from mcheads or minetools
-            // luckily both APIs have name and id json properties and accept either name or uuid input
-            var main = "https://api.minetools.eu/uuid/"
-            var fallback = "https://mc-heads.net/minecraft/profile/"
-
-            // Generate a function here to aid recursion when fallback is enabled
-            // base is either main or fallback
-            function req(base) {
-                $.get({
-                    url: base + encodeURIComponent(("" + name).trim()),
-                    dataType: "json",
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        // If fallback is enabled, recurse one level
-                        if (useFallback && base !== fallback) {
-                            console.warn("MineTools API failed, falling back to MC Heads for UUID lookup")
-                            req(fallback)
-                        } else {
-                            callback(null, errorThrown)
-                        }
-                    },
-                    success: function (data, status) {
-                        if (!data ||
-                            !data.id || data.id === "null" ||
-                            (data.status && (""+data.status).toLowerCase() !== "ok")) {
-                            callback(null, "No user found")
-                        } else {
-                            callback({
-                                name: data.name || "",
-                                uuid: data.id || ""
-                            })
-                        }
-                    }
-                })
-            }
-
-            req(main)
-        }
 
         // Called by the oauth popup window
         window.discordCallback = function(discordToken) {
@@ -424,7 +383,7 @@
         }
 
         // Open the discord oauth popup window
-        $("#discord_login_btn_2").click(function (event) {
+        $("#discord_link_btn").click(function (event) {
             event.preventDefault()
             popupOverWindow(
                 "/discord_oauth.html",
