@@ -145,7 +145,7 @@ func patchUser(c echo.Context) error {
 					return echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
 				}
 				// Grant roles to the new discord user
-				if discordID.Valid {
+				if discordID.Valid && user.HasRoleWithID("premium") {
 					if discord.CheckServerMembership(discordID.String) {
 						err := discord.SetDonator(discordID.String, true)
 						if err != nil {
