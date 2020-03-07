@@ -317,3 +317,16 @@ nav a.button-collapse {
 .grey-text.text-lighten-3:hover, .card-avatar:hover {
     transform: translateY(-1px);
 }
+
+[type="checkbox"].filled-in:checked+span:not(.lever):after {
+    border: 2px solid #2196F3;
+    background-color: #2196F3;
+}
+
+.btn {
+    background-color: #2196F3;
+}
+
+.btn:hover {
+    background-color: #1e86da;
+}
