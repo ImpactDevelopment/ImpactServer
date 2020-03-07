@@ -82,6 +82,30 @@
     .card.minecraft {
         background: url("https://www.minecraft.net/content/dam/archive/backgrounds/bg-wool-white.png");
     }
+    .btn.minecraft {
+        background-color: #6f6f6f;
+    }
+    .btn.minecraft:hover {
+        background-color: #7e88bf;
+    }
+    .btn.discord {
+        background-color: #7289da;
+    }
+    .btn.discord:hover {
+        background-color: #677bc4;
+    }
+    .card-action .btn.discord {
+        -webkit-transition: border-color .17s ease;
+        transition: border-color .17s ease;
+        border-width: 1px;
+        border-style: solid;
+        border-color: hsla(0,0%,100%,.3);
+        background: none;
+    }
+    .card-action .btn.discord:hover {
+        border-color: hsla(0,0%,100%,.6);
+        background: none;
+    }
     .unlinked.hide-if-unlinked, .unlinked .hide-if-unlinked {
         display: none!important;
     }
@@ -108,7 +132,7 @@
     <form id="login" class="row hidden center" novalidate>
         <p id="expired" class="col s12 large_text hidden">Your session expired and you have been logged out.</p>
         <div class="input-field col s12">
-            <a id="discord_login_btn" class="btn waves-effect waves-light">Login with discord</a>
+            <a id="discord_login_btn" class="btn discord waves-effect waves-light">Login with discord</a>
             <p id="discord_login_msg"></p>
         </div>
         <div class="input-field col s12 center grey-text">
@@ -167,8 +191,8 @@
                             </div>
                     </div>
                     <div class="card-action">
-                        <a id="minecraft_link_btn" class="waves-effect waves-light hide-if-linked">Link Minecraft</a>
-                        <a id="minecraft_unlink_btn" class="waves-effect waves-light hide-if-unlinked">Unlink</a>
+                        <a id="minecraft_link_btn" class="btn minecraft waves-effect waves-light hide-if-linked">Link Minecraft</a>
+                        <a id="minecraft_unlink_btn" class="btn minecraft waves-effect waves-light hide-if-unlinked">Unlink</a>
                         <span id="minecraft_msg"></span>
                     </div>
                 </div>
@@ -185,11 +209,11 @@
                             <span id="discord_username"></span>
                             <span id="discord_tag"></span>
                             <img id="discord_nitro" class="hidden" src="https://discordapp.com/assets/386884eecd36164487505ddfbac35a9d.svg" alt="nitro">
-                        </p>`
+                        </p>
                     </div>
                     <div class="card-action">
-                        <a id="discord_link_btn" class="waves-effect waves-light hide-if-linked">Link Discord</a>
-                        <a id="discord_unlink_btn" class="waves-effect waves-light hide-if-unlinked">Unlink</a>
+                        <a id="discord_link_btn" class="btn discord waves-effect waves-light hide-if-linked">Link Discord</a>
+                        <a id="discord_unlink_btn" class="btn discord waves-effect waves-light hide-if-unlinked">Unlink</a>
                         <span id="discord_msg"></span>
                     </div>
                 </div>
