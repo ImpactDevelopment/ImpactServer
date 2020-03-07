@@ -161,16 +161,6 @@ func registerWithToken(c echo.Context) error {
 			log.Printf("Error adding donator to discord: %s\n", err.Error())
 			return err
 		}
-	} else {
-		var msg strings.Builder
-		msg.WriteString("Someone just donated, but they didn't link their discord account")
-		if minecraftID == nil {
-			msg.WriteString(" or")
-		} else {
-			msg.WriteString(", but they did link")
-		}
-		msg.WriteString(" their minecraft account!")
-		discord.Log(msg.String())
 	}
 
 	// Get the user so we can log them in

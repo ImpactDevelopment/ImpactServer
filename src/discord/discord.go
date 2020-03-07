@@ -152,9 +152,5 @@ func logDonation(discordID string, join bool) {
 	}
 	msg.WriteString(" donated and received Impact Premium!")
 
-	Log(msg.String())
-}
-
-func Log(msg string) {
-	go discord.ChannelMessageSend(donationMsgChannel, msg)
+	go discord.ChannelMessageSend(donationMsgChannel, msg.String())
 }
