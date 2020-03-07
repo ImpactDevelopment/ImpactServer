@@ -170,6 +170,30 @@
         .card.minecraft {
             background: url("https://www.minecraft.net/content/dam/archive/backgrounds/bg-wool-white.png");
         }
+        .btn.minecraft {
+            background-color: #6f6f6f;
+        }
+        .btn.minecraft:hover {
+            background-color: #7e88bf;
+        }
+        .btn.discord {
+            background-color: #7289da;
+        }
+        .btn.discord:hover {
+            background-color: #677bc4;
+        }
+        .card-action .btn.discord {
+            -webkit-transition: border-color .17s ease;
+            transition: border-color .17s ease;
+            border-width: 1px;
+            border-style: solid;
+            border-color: hsla(0,0%,100%,.3);
+            background: none;
+        }
+        .card-action .btn.discord:hover {
+            border-color: hsla(0,0%,100%,.6);
+            background: none;
+        }
         .unlinked.hide-if-unlinked, .unlinked .hide-if-unlinked {
             display: none!important;
         }
@@ -220,8 +244,8 @@
                     </div>
                 </div>
                 <div class="card-action">
-                    <a id="minecraft_link_btn" class="waves-effect waves-light hide-if-linked">Link Minecraft</a>
-                    <a id="minecraft_unlink_btn" class="waves-effect waves-light hide-if-unlinked">Unlink</a>
+                    <a id="minecraft_link_btn" class="btn minecraft waves-effect waves-light hide-if-linked">Link Minecraft</a>
+                    <a id="minecraft_unlink_btn" class="btn minecraft waves-effect waves-light hide-if-unlinked">Unlink</a>
                     <span id="minecraft_msg"></span>
                 </div>
             </div>
@@ -242,8 +266,8 @@
                     </p>
                 </div>
                 <div class="card-action">
-                    <a id="discord_link_btn" class="waves-effect waves-light hide-if-linked">Link Discord</a>
-                    <a id="discord_unlink_btn" class="waves-effect waves-light hide-if-unlinked">Unlink</a>
+                    <a id="discord_link_btn" class="btn discord waves-effect waves-light hide-if-linked">Link Discord</a>
+                    <a id="discord_unlink_btn" class="btn discord waves-effect waves-light hide-if-unlinked">Unlink</a>
                     <span id="discord_msg"></span>
                 </div>
             </div>
