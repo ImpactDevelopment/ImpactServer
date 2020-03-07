@@ -19,6 +19,11 @@ func API(api *echo.Group) {
 	api.GET("/minecraft/user/info", getUserInfo, middleware.CacheUntilPurge())
 	api.GET("/minecraft/user/:role/list", getRoleMembers, middleware.CacheUntilPurge())
 	api.GET("/dbtest", dbTest, middleware.NoCache())
+	api.GET("/user/me", getUser, middleware.NoCache(), middleware.RequireAuth())
+	api.PATCH("/user/me", patchUser, middleware.NoCache(), middleware.RequireAuth())
+	api.PUT("/password/me", putPassword, middleware.NoCache(), middleware.RequireAuth())
+	api.PUT("/password/:token", putPassword, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/password/reset", resetPassword, middleware.NoCache()) // TODO ratelimit resets
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/password", jwt.PasswordLoginHandler, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/minecraft", jwt.MinecraftLoginHandler, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/discord", jwt.DiscordLoginHandler, middleware.NoCache())

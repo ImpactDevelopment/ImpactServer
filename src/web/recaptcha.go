@@ -1,60 +1,14 @@
 package web
 
 import (
-	"fmt"
-	"net/http"
-	"os"
-	"time"
-
 	"github.com/ImpactDevelopment/ImpactServer/src/discord"
-	"github.com/ImpactDevelopment/ImpactServer/src/util"
+	"github.com/ImpactDevelopment/ImpactServer/src/recaptcha"
 	"github.com/labstack/echo/v4"
-	"gopkg.in/ezzarghili/recaptcha-go.v4"
+	"net/http"
 )
 
-var captcha recaptcha.ReCAPTCHA
-
-func init() {
-	recaptchaSecret := os.Getenv("RECAPTCHA_SECRET_KEY")
-	if recaptchaSecret == "" {
-		fmt.Println("WARNING: No recaptcha secret; discord verification is disabled!")
-		return
-	}
-	var err error
-	captcha, err = recaptcha.NewReCAPTCHA(recaptchaSecret, recaptcha.V2, 10*time.Second)
-	if err != nil {
-		panic(err)
-	}
-}
-
-type recaptchaBinder struct {
-	Recaptcha string `json:"g-recaptcha-response" form:"g-recaptcha-response" query:"g-recaptcha-response"`
-}
-
-func verifyRecaptcha(c echo.Context) error {
-	body := &recaptchaBinder{}
-	err := c.Bind(body)
-	if err != nil {
-		return err
-	}
-	if body.Recaptcha == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "recaptcha must be provided")
-	}
-
-	// remoteIP is empty string if not present, which is exactly what this library expects
-	err = captcha.VerifyWithOptions(body.Recaptcha, recaptcha.VerifyOption{
-		RemoteIP: util.RealIPIfUnambiguous(c),
-		Hostname: util.GetServerURL().Hostname(),
-	})
-	if err != nil {
-		fmt.Println(err)
-		return echo.NewHTTPError(http.StatusBadRequest, "Recaptcha failed").SetInternal(err)
-	}
-	return nil
-}
-
 func simpleRecaptchaCheck(c echo.Context) error {
-	err := verifyRecaptcha(c)
+	err := recaptcha.Verify(c)
 	if err != nil {
 		return err
 	}
@@ -72,7 +26,7 @@ func discordVerify(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	err = verifyRecaptcha(c)
+	err = recaptcha.Verify(c)
 	if err != nil {
 		return err
 	}

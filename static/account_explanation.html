@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Impact Account</title>
+
+    <!-- CSS  -->
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <link rel="stylesheet" type="text/css" href="/min/style-min.css"/>
+</head>
+<body>
+<header>
+    <div class="navbar-fixed">
+        <nav role="navigation">
+            <div class="nav-wrapper container">
+                <a href="/" class="brand-logo"><h1>Impact</h1></a>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<section class="section container">
+    <div class="row">
+        <h4 class="col s12">How Impact Accounts work</h4>
+        <div class="col s12">
+            <h5>The current system</h5>
+            <p>
+                The newer (4.8+) Impact Account system separates enabling premium and listing info (such as capes). It also adds a layer of privacy to showing info.
+            </p><p>
+                <a href="//api.impactclient.net/v1/minecraft/user/info?pretty=1" target="_blank">Our API shows a SHA hashed version of your Minecraft ID</a>, which prevents somebody from easily getting a list of Impact Account holders.
+                However, it is still possible for them to check if individual Minecraft accounts have Impact Account features.
+                They can do this by hashing the Minecraft ID and then looking through the API's list to see if the resultant hash is in the list.
+                <b>If you don't want this to be possible, you can enable Incognito Mode</b> and you won't be included in the list.
+                Not being in the list means no one can tell if you have an Impact Account or not, including other Impact users.
+            </p><p>
+                Because listing info and enabling premium now separated, if you enable Incognito Mode you will still get access to other Impact Account features, such as donation perks like <b>Ignite</b> and <b>nightly builds</b>.
+                These features use <b>Minecraft's authentication system</b> (the same one used by Multiplayer Servers). This means you must launch Impact while online and logged in to the Minecraft account that is linked to your Impact Account.
+            </p>
+            <h5>The legacy system</h5>
+            <p>
+                The legacy (pre 4.8) Impact Account system uses <a href="//api.impactclient.net/v1/minecraft/user/premium/list" target="_blank">plain text lists</a> that list all Minecraft IDs with a given "role" (e.g. the <code>premium</code> role for donators).
+            </p>
+            <p>
+                The problem with this is that <b>anyone can easily get a list of Impact Accounts holders</b>.
+                For example an overzealous moderator might set up a system that bans anyone with an Impact Account automatically.
+            </p>
+            <p>
+                An additional issue is that the same list is used for enabling all features, from capes to Ignite, so it's not possible to have an "Incognito Mode" that doesn't disable everything.
+                Luckily <b>there's little reason to use an Impact version before 4.8</b>, since 4.8 supports 1.12.2, 1.13.2 and 1.14.4.
+                Therefore we <b>don't</b> recommend having "Legacy mode" enabled unless you understand the privacy concerns and want Impact Account features on Impact versions prior to 4.8.1.
+            </p>
+            <h5>Open Source</h5>
+            <p>
+                This website and all the code that makes it run, including the Impact Account code, is open source.
+                If you know how to read code why not browse <a href="https://github.com/ImpactDevelopment/ImpactServer" target="_blank">our GitHub repo</a>?
+            </p><p>
+                Even better if you spot something that could be improved, you can report an Issue or even contribute directly by proposing a Pull Request!
+            </p>
+        </div>
+    </div>
+</section>
+</body>
+</html>

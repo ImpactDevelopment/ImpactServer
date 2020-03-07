@@ -22,7 +22,7 @@ func createTables() error {
 
 	_, err = DB.Exec(`
 		CREATE TABLE IF NOT EXISTS pending_donations (
-			token  UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
+			token  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT, -- unix seconds
 			paypal_order_id TEXT UNIQUE, -- can be null in case we want to make a "gift card" with no paypal order id attached
 			paypal_payer_id TEXT,
@@ -30,7 +30,7 @@ func createTables() error {
 			amount INTEGER, -- can be null for the same reason
 
 			used BOOL NOT NULL DEFAULT FALSE,
-			used_by UUID -- user_id, not mcuuid
+			used_by UUID REFERENCES users(user_id)
 		);
 	`)
 	if err != nil {
@@ -39,17 +39,29 @@ func createTables() error {
 	}
 
 	_, err = DB.Exec(`
+		CREATE TABLE IF NOT EXISTS password_resets (
+			token  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			user_id UUID NOT NULL REFERENCES users(user_id) ,
+			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT -- unix seconds
+		);
+	`)
+	if err != nil {
+		log.Println("Unable to create password_resets table")
+		return err
+	}
+
+	_, err = DB.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
-			user_id  UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
+			user_id  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			email TEXT UNIQUE,
 			password_hash TEXT,
 			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT, -- unix seconds
 
 			mc_uuid UUID UNIQUE,
+			discord_id TEXT UNIQUE,
+
 			legacy_enabled BOOL NOT NULL DEFAULT FALSE, -- list this mc uuid in the premium list for 4.7 and below. this determines if you get a cape shown to other users who are using 4.7-
 			cape_enabled BOOL NOT NULL DEFAULT TRUE, -- show a cape to others on 4.8+
-
-			discord_id TEXT UNIQUE,
 
 			legacy BOOL NOT NULL DEFAULT TRUE, -- this defaults to true e.g. for manual inserts. register.go overrides this to false however!
 			premium BOOL NOT NULL DEFAULT TRUE,
@@ -74,7 +86,7 @@ func createTables() error {
 			mc_uuid,
 			discord_id,
 			password_hash,
-			cape_enabled,
+			cape_enabled, --TODO invert this to "incognito"
 			legacy_enabled,
 			legacy,
 			STRING_TO_ARRAY(

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Donate to impact</title>
 
-
     <!-- CSS  -->
     <link rel="stylesheet" type="text/css"
           href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
@@ -17,6 +16,13 @@
             content: '$';
         }
     </style>
+
+    <!-- Dependencies -->
+    <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js"></script>
+    <script type="text/javascript" src="/min/modernizr-min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/api.js"></script>
+
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-143397381-1"></script>
     <script>
@@ -45,7 +51,6 @@
         </nav>
     </div>
 </header>
-<script src="https://www.paypal.com/sdk/js?client-id=AaIwV_K_wsv1FUcoee2uHxfYptMhWXLVG6wFbdYEFBY2Ub94kM3m-8yzBOdKHMplLIES6BLGVB3yWJ7J"></script>
  <div class="container">
     <div class="row">
         <form class="col s12">
@@ -68,18 +73,20 @@
                 <div class="col s12">
                     <div id="paypal-button-container"></div>
                 </div>
+                <div class="col s12" id="msg">
+                </div>
             </div>
         </form>
     </div>
 </div>
 
+<script src="https://www.paypal.com/sdk/js?client-id=AaIwV_K_wsv1FUcoee2uHxfYptMhWXLVG6wFbdYEFBY2Ub94kM3m-8yzBOdKHMplLIES6BLGVB3yWJ7J"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/js/materialize.min.js"></script>
 <script>
     // TODO accept local currency?
     var currency = 'USD'; // https://www.currency-iso.org/dam/downloads/lists/list_one.xml
-    var currencyInput = document.querySelector('#amount');
-    var currencySlider = document.querySelector('#amountslider');
-    var mcUuid = "";
-
+    var currencyInput = document.getElementById('amount');
+    var currencySlider = document.getElementById('amountslider');
 
     currencyInput.addEventListener('input', () => {
         if (currencySlider.value !== currencyInput.value)
@@ -195,33 +202,28 @@
         });
     }
 
-    paypal.Buttons({
-        createOrder: createOrder,
-        onApprove: function (data, actions) {
-            return actions.order.capture().then(function (details) {
-                console.log('Transaction completed ', details);
-                // TODO move this to api.js
-                return fetch(window.location.protocol + "//api." + window.location.host + '/v1/paypal/afterpayment', {
-                    method: 'POST',
-                    mode: 'cors',
-                    headers: {
-                        'content-type': 'application/json'
-                    },
-                    body: JSON.stringify({orderID: data.orderID})
-                }).then(function(response){
-                    return response.json();
-                }).then(function(myJson) {
-                    console.log(myJson);
-                    var token = myJson.token;
+    function onApprove(data, actions) {
+        return actions.order.capture().then(function (details) {
+            // Send our server the order ID to get a registration token
+            return api.confirmPayment(data.orderID)
+                .then(function(token) {
                     if (token && token !== "thanks") {
+                        // TODO show "thank you" page with token and link instead
                         document.location.href='/register.html?token=' + token;
                     } else {
-                        document.getElementsByTagName("body")[0].innerHTML="thanks for the donation. it is less than 5 dollars though.";
+                        document.getElementById("msg").innerText = "thanks for the donation.";
                     }
-                });
-            });
-        }
-    }).render('#paypal-button-container');
+                })
+                .catch(function (error) {
+                    document.getElementById("msg").innerText = error;
+                })
+        })
+    }
+
+    paypal.Buttons({
+        createOrder: createOrder,
+        onApprove: onApprove
+    }).render('#paypal-button-container')
 </script>
 </body>
 </html>

@@ -5,16 +5,16 @@ import (
 )
 
 type User struct {
-	ID            uuid.UUID
-	Email         string
-	MinecraftID   *uuid.UUID
-	DiscordID     string
-	PasswordHash  string
-	LegacyEnabled bool
-	Incognito     bool
-	Legacy        bool
-	Roles         []Role
-	UserInfo      *UserInfo
+	ID            uuid.UUID  `json:"-"`
+	Email         string     `json:"email"`
+	MinecraftID   *uuid.UUID `json:"minecraft"`
+	DiscordID     string     `json:"discord"`
+	PasswordHash  string     `json:"-"`
+	LegacyEnabled bool       `json:"legacy_enabled"`
+	Incognito     bool       `json:"incognito"`
+	Legacy        bool       `json:"legacy"`
+	Roles         []Role     `json:"roles"`
+	UserInfo      *UserInfo  `json:"user_info"`
 }
 
 func (user User) RoleIDs() []string {
