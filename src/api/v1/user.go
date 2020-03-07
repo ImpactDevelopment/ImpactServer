@@ -159,11 +159,25 @@ func patchUser(c echo.Context) error {
 		}
 
 		if body.Minecraft != nil {
-			minecraftID, err := getMinecraftID(*body.Minecraft)
-			if err != nil {
-				return err
+			var minecraftID *uuid.UUID
+			if *body.Minecraft != "" {
+				id, err := getMinecraftID(*body.Minecraft)
+				if err != nil {
+					return err
+				}
+				minecraftID = id
 			}
-			if minecraftID != user.MinecraftID {
+
+			var changed bool
+			if minecraftID == nil {
+				changed = user.MinecraftID != nil
+			} else if user.MinecraftID == nil {
+				changed = true
+			} else {
+				changed = minecraftID.String() != user.MinecraftID.String()
+			}
+
+			if changed {
 				_, err = tx.Exec(`UPDATE users SET mc_uuid = $2 WHERE user_id = $1`, user.ID, minecraftID)
 				if err != nil {
 					log.Println(err)
