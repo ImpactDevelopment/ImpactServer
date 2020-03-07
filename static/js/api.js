@@ -18,6 +18,12 @@
         }
     }
 
+    function addDashesToUUID(id) {
+        // Sanitize first, then add dashes where we want them
+        id = id.replace(/-/g, "")
+        return id.substr(0,8)+"-"+id.substr(8,4)+"-"+id.substr(12,4)+"-"+id.substr(16,4)+"-"+id.substr(20)
+    }
+
     global.api = {
         // if data is provided, patches the user otherwise gets the user info
         me: function(data) {
@@ -209,11 +215,11 @@
                         dataType: "json",
                         error: function (jqXHR, textStatus, errorThrown) {
                             // If fallback is enabled, recurse one level
-                            if (useFallback && base !== fallback) {
+                            if (base !== fallback) {
                                 console.warn("MineTools API failed, falling back to MC Heads for UUID lookup")
                                 req(fallback)
                             } else {
-                                callback(null, errorThrown)
+                                reject(errorThrown)
                             }
                         },
                         success: function (data, status) {
@@ -222,7 +228,10 @@
                                 (data.status && (""+data.status).toLowerCase() !== "ok")) {
                                 reject("No user found")
                             } else {
-                                resolve(data)
+                                resolve({
+                                    id: addDashesToUUID(data.id),
+                                    name: data.name
+                                })
                             }
                         }
                     })
