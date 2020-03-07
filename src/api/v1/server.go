@@ -2,7 +2,6 @@ package v1
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
 
@@ -20,17 +19,17 @@ func API(api *echo.Group) {
 	api.GET("/minecraft/user/info", getUserInfo, middleware.CacheUntilPurge())
 	api.GET("/minecraft/user/:role/list", getRoleMembers, middleware.CacheUntilPurge())
 	api.GET("/dbtest", dbTest, middleware.NoCache())
-	api.GET("/user/me", getUser, middleware.NoCache(), middleware.RequireAuth(), middleware.Limit(10*time.Microsecond, 5))
-	api.PATCH("/user/me", patchUser, middleware.NoCache(), middleware.RequireAuth(), middleware.Limit(50*time.Millisecond, 5))
-	api.PUT("/password/me", putPassword, middleware.NoCache(), middleware.RequireAuth(), middleware.Limit(50*time.Millisecond, 5))
-	api.PUT("/password/:token", putPassword, middleware.NoCache(), middleware.Limit(50*time.Millisecond, 5))
-	api.Match([]string{http.MethodGet, http.MethodPost}, "/password/reset", resetPassword, middleware.NoCache(), middleware.Limit(100*time.Millisecond, 5))
-	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/password", jwt.PasswordLoginHandler, middleware.NoCache(), middleware.Limit(10*time.Millisecond, 5))
-	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/minecraft", jwt.MinecraftLoginHandler, middleware.NoCache(), middleware.Limit(10*time.Microsecond, 5))
-	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/discord", jwt.DiscordLoginHandler, middleware.NoCache(), middleware.Limit(10*time.Microsecond, 5))
+	api.GET("/user/me", getUser, middleware.NoCache(), middleware.RequireAuth())
+	api.PATCH("/user/me", patchUser, middleware.NoCache(), middleware.RequireAuth())
+	api.PUT("/password/me", putPassword, middleware.NoCache(), middleware.RequireAuth())
+	api.PUT("/password/:token", putPassword, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/password/reset", resetPassword, middleware.NoCache()) // TODO ratelimit resets
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/password", jwt.PasswordLoginHandler, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/minecraft", jwt.MinecraftLoginHandler, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/discord", jwt.DiscordLoginHandler, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/paypal/afterpayment", afterDonation, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/checktoken", checkToken, middleware.NoCache())
-	api.Match([]string{http.MethodGet, http.MethodPost}, "/register/token", registerWithToken, middleware.NoCache(), middleware.Limit(10*time.Microsecond, 5))
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/register/token", registerWithToken, middleware.NoCache())
 	api.GET("/emailtest", emailTest, middleware.NoCache())
 	api.GET("/premiumcheck", premiumCheck, middleware.NoCache())
 	api.GET("/integration/futureclient/masonlist", futureIntegration, middleware.NoCache())
