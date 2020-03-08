@@ -50,8 +50,8 @@ func registerWithToken(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	// Allow creating account without discord or minecraft
-	if body.Token == "" || body.Email == "" || body.Password == "" {
+	// TODO allow creating account without discord or minecraft
+	if body.Token == "" || body.DiscordToken == "" || body.Minecraft == "" || body.Email == "" || body.Password == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "empty field(s)")
 	}
 
@@ -85,101 +85,31 @@ func registerWithToken(c echo.Context) error {
 		return err
 	}
 
-	// Check if a user exists
-	var userID *uuid.UUID
-	if user := database.LookupUserByEmail(email); user != nil {
-		// If a user matches email, let's check their password before making changes
-		if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(body.Password)); err != nil {
-			return echo.NewHTTPError(http.StatusConflict, "user already exists with email and password doesn't match")
-		}
-		userID = &user.ID
-	} else if user = database.LookupUserByMinecraftID(*minecraftID); user != nil {
-		userID = &user.ID
-	} else if user = database.LookupUserByDiscordID(discordID); user != nil {
-		userID = &user.ID
-	}
-
-	// Make DB changes in a transaction
-	tx, err := database.DB.Begin()
+	// Insert the user, TODO check if they exist first
+	var userID uuid.UUID
+	err = database.DB.QueryRow("INSERT INTO users(legacy, email, password_hash, mc_uuid, discord_id) VALUES (false, $1, $2, $3, $4) RETURNING user_id", email, hashedPassword, minecraftID, discordID).Scan(&userID)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
-	defer tx.Rollback()
-
-	// Create the user if it doesn't exist
-	if userID == nil {
-		err = tx.QueryRow("INSERT INTO users(legacy) VALUES (false) RETURNING user_id").Scan(&userID)
-		if err != nil {
-			log.Print(err.Error())
-			return err
-		}
-	}
-
-	// TODO set roles based on token roles array
-	premium := true
-	_, err = tx.Exec(`UPDATE users SET premium=$2 WHERE user_id = $1`, userID, premium)
+	_, err = database.DB.Exec("UPDATE pending_donations SET used = true, used_by = $1 WHERE token = $2", userID, body.Token)
 	if err != nil {
-		log.Print(err.Error())
-		return err
-	}
-	_, err = tx.Exec(`UPDATE users SET email=$2, password_hsah=$3 WHERE user_id = $1`, userID, email, hashedPassword)
-	if err != nil {
-		log.Print(err.Error())
-		return err
-	}
-	if discordID != "" {
-		_, err := tx.Exec(`UPDATE users SET discord_id=$2 WHERE user_id = $1`, userID, discordID)
-		if err != nil {
-			log.Print(err.Error())
-			return err
-		}
-	}
-	if minecraftID != nil {
-		_, err := tx.Exec(`UPDATE users SET mc_uuid=$2 WHERE user_id = $1`, userID, minecraftID)
-		if err != nil {
-			log.Print(err.Error())
-			return err
-		}
-	}
-
-	// TODO should we just DELETE the token?
-	_, err = tx.Exec("UPDATE pending_donations SET used = true, used_by = $1 WHERE token = $2", userID, body.Token)
-	if err != nil {
-		log.Print(err.Error())
+		log.Println(err)
 		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		log.Print(err.Error())
-		return err
-	}
-
-	if discordID != "" {
-		// TODO grant donator status based on token roles
-		if discord.CheckServerMembership(discordID) {
-			err = discord.GiveDonator(discordID)
-		} else {
-			err = discord.JoinOurServer(body.DiscordToken, discordID, true)
-		}
-		if err != nil {
-			log.Printf("Error adding donator to discord: %s\n", err.Error())
-			return err
-		}
+	if discord.CheckServerMembership(discordID) {
+		err = discord.GiveDonator(discordID)
 	} else {
-		var msg strings.Builder
-		msg.WriteString("Someone just donated, but they didn't link their discord account")
-		if minecraftID == nil {
-			msg.WriteString(" or")
-		} else {
-			msg.WriteString(", but they did link")
-		}
-		msg.WriteString(" their minecraft account!")
-		discord.Log(msg.String())
+		err = discord.JoinOurServer(body.DiscordToken, discordID, true)
+	}
+	if err != nil {
+		log.Printf("Error adding donator to discord: %s\n", err.Error())
+		return err
 	}
 
 	// Get the user so we can log them in
-	user := database.LookupUserByID(*userID)
+	user := database.LookupUserByID(userID)
 	if user == nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "successfully registered, but can't find user")
 	}
