@@ -2,6 +2,7 @@ package api
 
 import (
 	v1 "github.com/ImpactDevelopment/ImpactServer/src/api/v1"
+	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -12,9 +13,7 @@ func Server() (e *echo.Echo) {
 
 	// Allow browser clients to use the API
 	e.Use(middleware.CORS())
-	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Format: "${status} ${method} ${uri} latency=${latency_human} error=${error}\n",
-	}))
+	e.Use(mid.Log)
 
 	v1.API(e.Group("/v1"))
 

@@ -1,7 +1,6 @@
 package web
 
 import (
-	"github.com/labstack/echo/v4/middleware"
 	"net/http"
 
 	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
@@ -11,9 +10,7 @@ import (
 func Server() (e *echo.Echo) {
 	e = echo.New()
 
-	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Format: "${status} ${method} ${uri} latency=${latency_human} error=${error}\n",
-	}))
+	e.Use(mid.Log)
 
 	e.Match([]string{http.MethodHead, http.MethodGet}, "/changelog", changelog)
 	e.Any("/Impact/*", impactRedirect)
