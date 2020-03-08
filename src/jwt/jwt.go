@@ -19,9 +19,10 @@ import (
 
 type impactUserJWT struct {
 	jwt.Payload
-	Roles       []string `json:"roles"`
-	Legacy      bool     `json:"legacy"`
-	MinecraftID string   `json:"mcuuid,omitempty"`
+	Roles       []string   `json:"roles"`
+	Legacy      bool       `json:"legacy"`
+	MinecraftID *uuid.UUID `json:"mcuuid,omitempty"`
+	DiscordID   string     `json:"discordid,omitempty"`
 }
 type donationJWT struct {
 	jwt.Payload
@@ -113,8 +114,9 @@ func CreateUserJWT(user *users.User) string {
 			ExpirationTime: jwt.NumericDate(now.Add(24 * time.Hour)),
 			IssuedAt:       jwt.NumericDate(now),
 		},
+		MinecraftID: user.MinecraftID,
+		DiscordID:   user.DiscordID,
 		Roles:       user.RoleIDs(),
-		MinecraftID: user.MinecraftID.String(),
 		Legacy:      user.Legacy,
 	})
 }

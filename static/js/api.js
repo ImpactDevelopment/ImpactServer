@@ -81,7 +81,7 @@
                     url: baseUrl + "/register/token",
                     data: fields,
                     error: function (jqXHR, textStatus, errorThrown) {
-                        reject(errorThrown)
+                        reject(errorThrown + ": " + messageFromjqXHR(jqXHR))
                     },
                     success: function (data, status) {
                         setToken(data)

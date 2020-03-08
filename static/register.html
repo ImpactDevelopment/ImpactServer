@@ -44,6 +44,34 @@
                 return false
             }
 
+            // First check linked accounts, unlinked will be set to boolean when done
+            var unlinked = []
+            if (!form.discord.value) {
+                unlinked.push("Discord")
+            }
+            if (!form.minecraft.value) {
+                unlinked.push("Minecraft")
+            }
+            if (unlinked.length > 0) {
+                var warnText = []
+                if (unlinked.includes("Minecraft")) {
+                    warnText.push("If you don't link your Minecraft account you will be unable to access in-game perks such as capes and you will not be able to play nightly builds of Impact.")
+                }
+                if (unlinked.includes("Discord")) {
+                    warnText.push("If you don't link you Discord account you will require your password to login to your Impact Account and you won't receive any Discord related perks, like the gold name or exclusive channels.")
+                }
+                warnText.push("You can link these accounts in the future by loggin into your Impact Account dashboard.")
+                $("#linkec_acc_warn_text").html(warnText.join("<br>"))
+                $("#linkec_acc_list").text(unlinked.join(" and "))
+
+                // Convert unlinked to a bool for the meme
+                unlinked = !form["bypass_linked_accs"].checked
+                $("#linked_acc_warn").removeClass("hidden")
+            } else {
+                unlinked = false
+                $("#linked_acc_warn").addClass("hidden")
+            }
+
             // Lets compile a list of errors so we can tell the user about all of them
             // TODO use the same regexs as html5 validation, right now we only check stuff is present
             var errors = []
@@ -53,17 +81,11 @@
             if (!form.email.value) {
                 errors.push("No email")
             }
-            if (!form.discord.value) {
-                errors.push("No discord account")
-            }
             if (!form.password.value) {
                 errors.push("No password")
             }
             if (form.password.value !== form.password2.value) {
                 errors.push("Passwords don't match")
-            }
-            if (!form.minecraft.value) {
-                errors.push("No Minecraft account")
             }
 
             if (errors.length > 0) {
@@ -72,7 +94,7 @@
                 msg.innerHTML = ""
             }
 
-            return errors.length < 1
+            return errors.length < 1 && !unlinked
         }
 
         function gtag() {
@@ -312,6 +334,13 @@
             <button class="btn waves-effect waves-light" type="submit" name="action">
                 Submit
             </button>
+        </div>
+        <div id="linked_acc_warn" class="col s12 helper-text hidden">
+            <p id="linkec_acc_warn_text"></p>
+            <label>
+                <input name="bypass_linked_accs" class="filled-in" type="checkbox"/>
+                <span>Yes I am sure I want to register without linking my <span id="linkec_acc_list"></span>.</span>
+            </label>
         </div>
         <p id="form_msg" class="col s12 helper-text error"></p>
     </form>

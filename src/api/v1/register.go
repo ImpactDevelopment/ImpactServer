@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
+	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"log"
 	"net/http"
 	"net/url"
@@ -50,18 +51,24 @@ func registerWithToken(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	// TODO allow creating account without discord or minecraft
-	if body.Token == "" || body.DiscordToken == "" || body.Minecraft == "" || body.Email == "" || body.Password == "" {
+	// Allow creating account without discord or minecraft
+	if body.Token == "" || body.Email == "" || body.Password == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "empty field(s)")
 	}
 
 	// Verify the registration token
 	// TODO get roles from token
 	body.Token = strings.TrimSpace(body.Token)
-	var createdAt int64
-	err = database.DB.QueryRow("SELECT created_at FROM pending_donations WHERE token = $1 AND NOT used", body.Token).Scan(&createdAt)
+	var (
+		createdAt int64
+		used      bool
+	)
+	err = database.DB.QueryRow("SELECT created_at, used FROM pending_donations WHERE token = $1", body.Token).Scan(&createdAt, &used)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid token")
+	}
+	if used {
+		return echo.NewHTTPError(http.StatusConflict, "token already used")
 	}
 
 	email, err := verifyEmail(body.Email)
@@ -74,42 +81,114 @@ func registerWithToken(c echo.Context) error {
 		return err
 	}
 
-	// get discord user id
-	discordID, err := getDiscordID(body.DiscordToken)
-	if err != nil {
-		return err
+	var discordID string
+	if body.DiscordToken != "" {
+		discordID, err = getDiscordID(body.DiscordToken)
+		if err != nil {
+			return err
+		}
 	}
 
-	minecraftID, err := getMinecraftID(body.Minecraft)
-	if err != nil {
-		return err
+	var minecraftID *uuid.UUID
+	if body.Minecraft != "" {
+		minecraftID, err = getMinecraftID(body.Minecraft)
+		if err != nil {
+			return err
+		}
 	}
 
-	// Insert the user, TODO check if they exist first
-	var userID uuid.UUID
-	err = database.DB.QueryRow("INSERT INTO users(legacy, email, password_hash, mc_uuid, discord_id) VALUES (false, $1, $2, $3, $4) RETURNING user_id", email, hashedPassword, minecraftID, discordID).Scan(&userID)
+	// Make DB changes in a transaction
+	tx, err := database.DB.Begin()
 	if err != nil {
-		log.Println(err)
 		return err
 	}
-	_, err = database.DB.Exec("UPDATE pending_donations SET used = true, used_by = $1 WHERE token = $2", userID, body.Token)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
+	defer tx.Rollback()
 
-	if discord.CheckServerMembership(discordID) {
-		err = discord.GiveDonator(discordID)
+	// Find or create the user
+	var userID *uuid.UUID
+	if user, err := findAccountFromIDs(email, discordID, minecraftID); err == nil && user == nil {
+		// no error, but user is nil, so create a new user
+		err = tx.QueryRow("INSERT INTO users(legacy) VALUES (false) RETURNING user_id").Scan(&userID)
+		if err != nil {
+			log.Print(err.Error())
+			return err
+		}
+	} else if err == nil && user != nil {
+		// no error and found a user, so use their id
+		userID = &user.ID
 	} else {
-		err = discord.JoinOurServer(body.DiscordToken, discordID, true)
-	}
-	if err != nil {
-		log.Printf("Error adding donator to discord: %s\n", err.Error())
 		return err
+	}
+
+	// TODO set roles based on token roles array
+	premium := true
+	_, err = tx.Exec(`UPDATE users SET premium=$2 WHERE user_id = $1`, userID, premium)
+	if err != nil {
+		log.Print(err.Error())
+		return err
+	}
+	_, err = tx.Exec(`UPDATE users SET email=$2, password_hash=$3 WHERE user_id = $1`, userID, email, hashedPassword)
+	if err != nil {
+		log.Print(err.Error())
+		return err
+	}
+	if discordID != "" {
+		_, err := tx.Exec(`UPDATE users SET discord_id=$2 WHERE user_id = $1`, userID, discordID)
+		if err != nil {
+			log.Print(err.Error())
+			return err
+		}
+	}
+	if minecraftID != nil {
+		_, err := tx.Exec(`UPDATE users SET mc_uuid=$2 WHERE user_id = $1`, userID, minecraftID)
+		if err != nil {
+			log.Print(err.Error())
+			return err
+		}
+	}
+
+	// TODO should we just DELETE the token?
+	_, err = tx.Exec("UPDATE pending_donations SET used = true, used_by = $1 WHERE token = $2", userID, body.Token)
+	if err != nil {
+		log.Print(err.Error())
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Print(err.Error())
+		return err
+	}
+
+	if discordID != "" {
+		// TODO grant donator status based on token roles
+		if discord.CheckServerMembership(discordID) {
+			err = discord.GiveDonator(discordID)
+		} else {
+			err = discord.JoinOurServer(body.DiscordToken, discordID, true)
+		}
+		if err != nil {
+			log.Printf("Error adding donator to discord: %s\n", err.Error())
+			return err
+		}
+	} else {
+		var msg strings.Builder
+		msg.WriteString("Someone just donated,")
+		if minecraftID == nil {
+			msg.WriteString(" but")
+		}
+		msg.WriteString(" they didn't link their discord account")
+		if minecraftID == nil {
+			msg.WriteString(" or")
+		} else {
+			msg.WriteString(" but they did link")
+		}
+		msg.WriteString(" their minecraft account!")
+		discord.Log(msg.String())
 	}
 
 	// Get the user so we can log them in
-	user := database.LookupUserByID(userID)
+	user := database.LookupUserByID(*userID)
 	if user == nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "successfully registered, but can't find user")
 	}
@@ -187,4 +266,80 @@ func getMinecraftID(minecraft string) (*uuid.UUID, error) {
 	}
 
 	return &minecraftID, nil
+}
+
+func findAccountFromIDs(email string, discordID string, minecraftID *uuid.UUID) (*users.User, error) {
+	var (
+		emailUser     *users.User
+		discordUser   *users.User
+		minecraftUser *users.User
+	)
+
+	// Lookup the users TODO do these lookups concurrently?
+	if minecraftID != nil {
+		minecraftUser = database.LookupUserByMinecraftID(*minecraftID)
+	}
+	if discordID != "" {
+		discordUser = database.LookupUserByDiscordID(discordID)
+	}
+	if email != "" {
+		emailUser = database.LookupUserByEmail(email)
+	}
+
+	// Validation; ensure all matched users are the same as each other
+	// yes, this is horrible
+	if discordUser != nil {
+		if emailUser != nil && discordUser.ID != emailUser.ID {
+			return nil, echo.NewHTTPError(http.StatusConflict, "discord belongs to a different account to email")
+		}
+		if minecraftUser != nil && discordUser.ID != minecraftUser.ID {
+			return nil, echo.NewHTTPError(http.StatusConflict, "discord belongs to a different account to minecraft")
+		}
+		if discordUser.Email != "" && email != discordUser.Email {
+			return nil, echo.NewHTTPError(http.StatusForbidden, "cannot modify account email")
+		}
+	}
+
+	if minecraftUser != nil {
+		if emailUser != nil && minecraftUser.ID != emailUser.ID {
+			return nil, echo.NewHTTPError(http.StatusConflict, "minecraft belongs to a different account to email")
+		}
+		if discordUser != nil && minecraftUser.ID != discordUser.ID {
+			return nil, echo.NewHTTPError(http.StatusConflict, "minecraft belongs to a different account to discord")
+		}
+		if minecraftUser.Email != "" && email != minecraftUser.Email {
+			return nil, echo.NewHTTPError(http.StatusForbidden, "cannot modify account email")
+		}
+	}
+
+	if emailUser != nil {
+		if discordUser != nil && emailUser.ID != discordUser.ID {
+			return nil, echo.NewHTTPError(http.StatusConflict, "email belongs to a different account to discord")
+		}
+		if minecraftUser != nil && emailUser.ID != minecraftUser.ID {
+			return nil, echo.NewHTTPError(http.StatusConflict, "email belongs to a different account to minecraft")
+		}
+		// If the user has a password (and they didn't also auth with the matching discord account) we should treat this as an attempt to hijack their account
+		// TODO should we also compare the provided password with the password hash?
+		// TODO should we provide an alternative method for existing (non-donator) users to donate?
+		//      e.g. if logged in, just associate donations with the logged in user?
+		//      or allow users to enter a token in their account dashboard?
+		if emailUser.PasswordHash != "" && discordUser == nil {
+			return nil, echo.NewHTTPError(http.StatusConflict, "email belongs to a user with a password set")
+		}
+	}
+
+	// Validation done, return whichever user isn't nil
+	if emailUser != nil {
+		return emailUser, nil
+	}
+	if discordUser != nil {
+		return discordUser, nil
+	}
+	if minecraftUser != nil {
+		return minecraftUser, nil
+	}
+
+	// No user found, but also no error
+	return nil, nil
 }
