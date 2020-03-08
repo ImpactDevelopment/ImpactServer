@@ -45,6 +45,8 @@
             }
 
             // First check linked accounts, unlinked will be set to boolean when done
+            $("#linkec_acc_warn_text").html("")
+            $("#linkec_acc_list").text("")
             var unlinked = []
             if (!form.discord.value) {
                 unlinked.push("Discord")
@@ -60,9 +62,9 @@
                 if (unlinked.includes("Discord")) {
                     warnText.push("If you don't link you Discord account you will require your password to login to your Impact Account and you won't receive any Discord related perks, like the gold name or exclusive channels.")
                 }
-                warnText.push("You can link these accounts in the future by loggin into your Impact Account dashboard.")
+                warnText.push("You can link " + (unlinked.length > 1 ? "these accounts" : "this account") + " in the future by loggin into your Impact Account dashboard.")
                 $("#linkec_acc_warn_text").html(warnText.join("<br>"))
-                $("#linkec_acc_list").text(unlinked.join(" and "))
+                $("#linkec_acc_list").text(unlinked.join(" and ") + (unlinked.length > 1 ? " accounts" : " account"))
 
                 // Convert unlinked to a bool for the meme
                 unlinked = !form["bypass_linked_accs"].checked
@@ -339,7 +341,7 @@
             <p id="linkec_acc_warn_text"></p>
             <label>
                 <input name="bypass_linked_accs" class="filled-in" type="checkbox"/>
-                <span>Yes I am sure I want to register without linking my <span id="linkec_acc_list"></span>.</span>
+                <span>Yes, I am sure I want to register without linking my <span id="linkec_acc_list"></span>.</span>
             </label>
         </div>
         <p id="form_msg" class="col s12 helper-text error"></p>
