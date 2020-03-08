@@ -1,6 +1,7 @@
 package s3proxy
 
 import (
+	"github.com/labstack/echo/v4/middleware"
 	"net/http"
 	"net/url"
 	"time"
@@ -17,6 +18,10 @@ var AWSSession = session.Must(session.NewSession(&aws.Config{Region: aws.String(
 
 func Server() (e *echo.Echo) {
 	e = echo.New()
+
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: "${status} ${method} ${uri} latency=${latency_human} error=${error}\n",
+	}))
 
 	e.Match([]string{http.MethodHead, http.MethodGet}, "/*", proxyHandler)
 

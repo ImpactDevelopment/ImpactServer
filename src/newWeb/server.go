@@ -1,6 +1,7 @@
 package newWeb
 
 import (
+	"github.com/labstack/echo/v4/middleware"
 	"net/http"
 	"net/url"
 
@@ -12,6 +13,10 @@ import (
 
 func Server() (e *echo.Echo) {
 	e = echo.New()
+
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: "${status} ${method} ${uri} latency=${latency_human} error=${error}\n",
+	}))
 
 	e.GET("/ImpactInstaller.*", redirect(http.StatusFound, "https://impactclient.net/"), mid.NoCache())
 	e.Any("/*", proxy("https://impact-web.herokuapp.com/"))

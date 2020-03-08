@@ -12,6 +12,9 @@ func Server() (e *echo.Echo) {
 
 	// Allow browser clients to use the API
 	e.Use(middleware.CORS())
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: "${status} ${method} ${uri} latency=${latency_human} error=${error}\n",
+	}))
 
 	v1.API(e.Group("/v1"))
 
