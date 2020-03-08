@@ -10,6 +10,8 @@ import (
 func Server() (e *echo.Echo) {
 	e = echo.New()
 
+	e.Use(mid.Log)
+
 	e.Match([]string{http.MethodHead, http.MethodGet}, "/changelog", changelog)
 	e.Any("/Impact/*", impactRedirect)
 	e.GET("/releases.json", releases, mid.CacheUntilPurge())

@@ -1,6 +1,7 @@
 package s3proxy
 
 import (
+	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"net/http"
 	"net/url"
 	"time"
@@ -17,6 +18,8 @@ var AWSSession = session.Must(session.NewSession(&aws.Config{Region: aws.String(
 
 func Server() (e *echo.Echo) {
 	e = echo.New()
+
+	e.Use(mid.Log)
 
 	e.Match([]string{http.MethodHead, http.MethodGet}, "/*", proxyHandler)
 

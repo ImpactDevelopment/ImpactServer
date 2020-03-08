@@ -13,6 +13,8 @@ import (
 func Server() (e *echo.Echo) {
 	e = echo.New()
 
+	e.Use(mid.Log)
+
 	e.GET("/ImpactInstaller.*", redirect(http.StatusFound, "https://impactclient.net/"), mid.NoCache())
 	e.Any("/*", proxy("https://impact-web.herokuapp.com/"))
 
