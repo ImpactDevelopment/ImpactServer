@@ -45,35 +45,33 @@ func (o Order) Total() (cent int) {
 
 // Capture will capture "approved" orders and return an error if it fails
 func (o *Order) Capture() error {
-	if o.Intent == paypal.OrderIntentCapture {
-		switch o.Status {
-		case "COMPLETED":
-			// Nothing to do, already captured
-		case "APPROVED":
-			capture, err := client.CaptureOrder(o.ID, paypal.CaptureOrderRequest{})
-			if err != nil {
-				return err
-			}
-
-			// Check the capture was a success
-			if capture.Status != "COMPLETED" {
-				return errors.New("intent was CAPTURE but status is still not COMPLETED after capturing")
-			}
-
-			// Update the Order struct
-			newOrder, err := client.GetOrder(o.ID)
-			if err != nil {
-				return err
-			}
-			o.Order = newOrder
-
-			if capture.Payer != nil {
-				o.PayerID = capture.Payer.PayerID
-				o.PayerEmail = capture.Payer.EmailAddress
-			}
-		default:
-			return errors.New("Unknown order status " + o.Status)
+	switch o.Status {
+	case "COMPLETED":
+		// Nothing to do, already captured
+	case "APPROVED":
+		capture, err := client.CaptureOrder(o.ID, paypal.CaptureOrderRequest{})
+		if err != nil {
+			return err
 		}
+
+		// Check the capture was a success
+		if capture.Status != "COMPLETED" {
+			return errors.New("intent was CAPTURE but status is still not COMPLETED after capturing")
+		}
+
+		// Update the Order struct
+		newOrder, err := client.GetOrder(o.ID)
+		if err != nil {
+			return err
+		}
+		o.Order = newOrder
+
+		if capture.Payer != nil {
+			o.PayerID = capture.Payer.PayerID
+			o.PayerEmail = capture.Payer.EmailAddress
+		}
+	default:
+		return errors.New("Unknown order status " + o.Status)
 	}
 
 	return nil
