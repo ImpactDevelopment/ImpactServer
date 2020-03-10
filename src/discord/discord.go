@@ -157,11 +157,17 @@ func LogDonationEvent(msg string, discordID string, minecraftID string, amount i
 	}
 
 	if discordID != "" {
-		m.Embed.Fields = append(m.Embed.Fields, &discordgo.MessageEmbedField{
-			Name:   "Discord",
-			Value:  (&discordgo.User{ID: discordID}).Mention(),
-			Inline: true,
-		})
+		if user, err := discord.User(discordID); err == nil {
+			m.Embed.Author = &discordgo.MessageEmbedAuthor{
+				Name:    user.Username,
+				IconURL: user.AvatarURL(""),
+			}
+			m.Embed.Fields = append(m.Embed.Fields, &discordgo.MessageEmbedField{
+				Name:   "Discord",
+				Value:  user.Mention(),
+				Inline: true,
+			})
+		}
 	}
 
 	if minecraftID != "" {
