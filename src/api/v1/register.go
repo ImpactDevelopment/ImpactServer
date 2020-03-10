@@ -61,9 +61,10 @@ func registerWithToken(c echo.Context) error {
 	body.Token = strings.TrimSpace(body.Token)
 	var (
 		createdAt int64
+		amount    int64
 		used      bool
 	)
-	err = database.DB.QueryRow("SELECT created_at, used FROM pending_donations WHERE token = $1", body.Token).Scan(&createdAt, &used)
+	err = database.DB.QueryRow("SELECT created_at, amount, used FROM pending_donations WHERE token = $1", body.Token).Scan(&createdAt, &amount, &used)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid token")
 	}
@@ -160,31 +161,33 @@ func registerWithToken(c echo.Context) error {
 		return err
 	}
 
-	if discordID != "" {
-		// TODO grant donator status based on token roles
-		if discord.CheckServerMembership(discordID) {
-			err = discord.GiveDonator(discordID)
-		} else {
-			err = discord.JoinOurServer(body.DiscordToken, discordID, true)
+	{
+		var isMember bool
+		var mcID string
+		if minecraftID != nil {
+			mcID = minecraftID.String()
 		}
-		if err != nil {
-			log.Printf("Error adding donator to discord: %s\n", err.Error())
-			return err
+
+		if discordID != "" {
+			// TODO grant donator status based on token roles
+			if isMember = discord.CheckServerMembership(discordID); isMember {
+				err = discord.GiveDonator(discordID)
+			} else {
+				err = discord.JoinOurServer(body.DiscordToken, discordID, true)
+			}
+			if err != nil {
+				go discord.LogDonationEvent("Error adding donator to discord: "+err.Error(), discordID, mcID, amount)
+				return err
+			}
 		}
-	} else {
+
 		var msg strings.Builder
-		msg.WriteString("Someone just donated,")
-		if minecraftID == nil {
-			msg.WriteString(" but")
+		msg.WriteString("Someone just")
+		if discordID != "" && !isMember {
+			msg.WriteString(" joined the server and")
 		}
-		msg.WriteString(" they didn't link their discord account")
-		if minecraftID == nil {
-			msg.WriteString(" or")
-		} else {
-			msg.WriteString(" but they did link")
-		}
-		msg.WriteString(" their minecraft account!")
-		discord.Log(msg.String())
+		msg.WriteString(" registered an Impact Account")
+		go discord.LogDonationEvent(msg.String(), discordID, mcID, amount)
 	}
 
 	// Get the user so we can log them in

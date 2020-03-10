@@ -3,12 +3,10 @@ package discord
 import (
 	"errors"
 	"fmt"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"os"
 	"regexp"
-	"strings"
-
-	"github.com/labstack/echo/v4"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -110,7 +108,6 @@ func GetUser(id string) (user *User, err error) {
 func JoinOurServer(accessToken string, discordID string, donator bool) error {
 	roles := []string{verifiedRole}
 	if donator {
-		defer logDonation(discordID, true) // log once added
 		roles = append(roles, donatorRole)
 	}
 	return discord.GuildMemberAdd(accessToken, guildID, discordID, "", roles, false, false)
@@ -127,7 +124,6 @@ func SetDonator(discordID string, donator bool) error {
 
 // GiveDonator grants the donator role to the user and verifies them
 func GiveDonator(discordID string) error {
-	defer logDonation(discordID, false)
 	GiveVerified(discordID)
 	// dont return early & fail to give donator role if we cant give verified
 	return discord.GuildMemberRoleAdd(guildID, discordID, donatorRole)
@@ -144,17 +140,39 @@ func CheckServerMembership(discordID string) bool {
 	return err == nil && member != nil
 }
 
-func logDonation(discordID string, join bool) {
-	var msg strings.Builder
-	msg.WriteString("<@" + discordID + "> just")
-	if join {
-		msg.WriteString(" joined the server,")
+func LogDonationEvent(msg string, discordID string, minecraftID string, amount int64) error {
+	m := discordgo.MessageSend{Content: msg}
+	if discordID != "" || minecraftID != "" || amount > 0 {
+		m.Embed = &discordgo.MessageEmbed{}
 	}
-	msg.WriteString(" donated and received Impact Premium!")
 
-	Log(msg.String())
-}
+	if amount > 0 {
+		m.Embed.Fields = append(m.Embed.Fields, &discordgo.MessageEmbedField{
+			Name:   "Donation",
+			Value:  fmt.Sprintf("$%01d.%02d", amount/100, amount%100),
+			Inline: false,
+		})
+	}
 
-func Log(msg string) {
-	go discord.ChannelMessageSend(donationMsgChannel, msg)
+	if discordID != "" {
+		m.Embed.Fields = append(m.Embed.Fields, &discordgo.MessageEmbedField{
+			Name:   "Discord",
+			Value:  discordgo.User{ID: discordID}.Mention(),
+			Inline: true,
+		})
+	}
+
+	if minecraftID != "" {
+		m.Embed.Fields = append(m.Embed.Fields, &discordgo.MessageEmbedField{
+			Name:   "Minecraft",
+			Value:  fmt.Sprintf(`[%s](https://namemc.com/profile/%s)`, minecraftID, minecraftID),
+			Inline: true,
+		})
+		m.Embed.Image = &discordgo.MessageEmbedImage{
+			URL: "https://crafatar.com/avatars/" + minecraftID,
+		}
+	}
+
+	_, err := discord.ChannelMessageSendComplex(donationMsgChannel, &m)
+	return err
 }
