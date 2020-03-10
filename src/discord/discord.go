@@ -157,7 +157,7 @@ func LogDonationEvent(msg string, discordID string, minecraftID string, amount i
 	if discordID != "" {
 		m.Embed.Fields = append(m.Embed.Fields, &discordgo.MessageEmbedField{
 			Name:   "Discord",
-			Value:  discordgo.User{ID: discordID}.Mention(),
+			Value:  (&discordgo.User{ID: discordID}).Mention(),
 			Inline: true,
 		})
 	}
