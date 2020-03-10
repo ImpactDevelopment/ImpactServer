@@ -116,7 +116,7 @@ func CreateUserJWT(user *users.User) string {
 		},
 		MinecraftID: user.MinecraftID,
 		DiscordID:   user.DiscordID,
-		Roles:       user.RoleIDs(),
+		Roles:       user.RoleIDs(true), // 4.8.3
 		Legacy:      user.Legacy,
 	})
 }

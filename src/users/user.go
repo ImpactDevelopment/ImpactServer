@@ -17,13 +17,14 @@ type User struct {
 	UserInfo      *UserInfo  `json:"user_info"`
 }
 
-func (user User) RoleIDs() []string {
+func (user User) RoleIDs(legacyOnly bool) []string {
 	roles := user.Roles
 	arr := make([]string, 0)
 	for _, role := range roles {
-		if role.LegacyList {
-			arr = append(arr, role.ID)
+		if !role.LegacyList && legacyOnly {
+			continue
 		}
+		arr = append(arr, role.ID)
 	}
 	return arr
 }

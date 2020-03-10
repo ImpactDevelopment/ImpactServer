@@ -22,5 +22,5 @@ func premiumCheck(c echo.Context) error {
 	if user == nil || len(user.Roles) <= 0 {
 		return echo.NewHTTPError(http.StatusForbidden, "no premium user found for uuid "+minecraftID.String())
 	}
-	return c.JSON(http.StatusOK, user.RoleIDs())
+	return c.JSON(http.StatusOK, user.RoleIDs(false)) // ALL role IDs
 }
