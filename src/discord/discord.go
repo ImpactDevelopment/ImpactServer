@@ -143,7 +143,9 @@ func CheckServerMembership(discordID string) bool {
 func LogDonationEvent(msg string, discordID string, minecraftID string, amount int64) error {
 	m := discordgo.MessageSend{Content: msg}
 	if discordID != "" || minecraftID != "" || amount > 0 {
-		m.Embed = &discordgo.MessageEmbed{}
+		m.Embed = &discordgo.MessageEmbed{
+			Type: "",
+		}
 	}
 
 	if amount > 0 {
@@ -168,7 +170,7 @@ func LogDonationEvent(msg string, discordID string, minecraftID string, amount i
 			Value:  fmt.Sprintf(`[%s](https://namemc.com/profile/%s)`, minecraftID, minecraftID),
 			Inline: true,
 		})
-		m.Embed.Image = &discordgo.MessageEmbedImage{
+		m.Embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
 			URL: "https://crafatar.com/avatars/" + minecraftID,
 		}
 	}
