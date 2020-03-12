@@ -58,6 +58,7 @@ func registerWithToken(c echo.Context) error {
 
 	// Verify the registration token
 	// TODO get roles from token
+	// TODO allow not having a token if logged in
 	body.Token = strings.TrimSpace(body.Token)
 	var (
 		createdAt int64
@@ -116,12 +117,14 @@ func registerWithToken(c echo.Context) error {
 		}
 	} else if err == nil && user != nil {
 		// no error and found a user, so use their id
+		// TODO require being logged in to edit an existing user
 		userID = &user.ID
 	} else {
 		return err
 	}
 
 	// TODO set roles based on token roles array
+	// TODO only set roles if a token is present
 	premium := true
 	_, err = tx.Exec(`UPDATE users SET premium=$2 WHERE user_id = $1`, userID, premium)
 	if err != nil {

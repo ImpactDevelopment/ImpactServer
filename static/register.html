@@ -78,6 +78,7 @@
             // TODO use the same regexs as html5 validation, right now we only check stuff is present
             var errors = []
             if (!form.token.value) {
+                // TODO allow no token if logged in
                 errors.push("No registration token")
             }
             if (!form.email.value) {
@@ -355,18 +356,55 @@
         if (token) {
             // Hide the label and set the input value if a token was passed in
             // We don't care if it is valid at this point
-            document.getElementById("token_field").classList.add("hidden")
+            $("#token_field").addClass("hidden")
             var tokenField = document.getElementById("token")
             tokenField.value = token
             tokenField.type = "hidden"
         }
 
-        // un-hide stuff tagged with `unhide` to prevent FOUC
-        var unhide = document.getElementsByClassName("unhide")
-        for (var i = 0; i < unhide.length; i++) {
-            var elm = unhide[i]
-            elm.classList.remove("unhide")
-            elm.classList.remove("hidden")
+        if (api.isLoggedIn()) {
+            api.me()
+            .then(function (user) {
+                if (api.isFullAccount(user)) {
+                    // TODO show a warning? Or redirect to some "I have an account but i want to link a donation with it" form?
+
+                }
+
+                // TODO Populate any existing fields
+                if (user.email) {
+                    $("#email").val(user.email)
+                    if (window.Materialize) {
+                        window.Materialize.updateTextFields()
+                    }
+                }
+                if (user.minecraft) {
+                    setMinecraftInfo(user.minecraft)
+                    $("#minecraft_info").removeClass("invisible")
+                }
+                if (user.discord) {
+                    setDiscordInfo(user.discord)
+                    $("#discord_info").removeClass("invisible")
+                }
+                // TODO show some info about account? Hm, thinking about it what is there to show?
+
+                // ensure token is hidden
+                $("#token_field").addClass("hidden")
+
+                unhideStuff()
+            })
+            .catch(function (error) {
+                // This isn't that critical, but we should probably show an error warning the user something went wrong
+                unhideStuff()
+            })
+        } else {
+            unhideStuff()
+        }
+
+        function unhideStuff() {
+            // un-hide stuff tagged with `unhide` to prevent FOUC
+            $(".unhide").each(function (index, elm) {
+                elm.removeClass("unhide hidden")
+            })
         }
 
         // Called by the oauth popup window

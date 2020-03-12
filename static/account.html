@@ -606,11 +606,24 @@
         })
 
         // TODO lets separate this from all the other crap
+        var jwt = new URLSearchParams(window.location.search).get("access_token")
+        if (jwt) {
+            // If a token has been passed in via a url param, use it instead of localstorage
+            // This allows the "open account dashboard" link in the client to work
+            api.setToken(jwt)
+        }
         if (api.isLoggedIn()) {
             $("#dashboard").removeClass("hidden")
             $("#login").addClass("hidden")
             api.me()
                 .then(function (user) {
+                    // First things first, check if the user is a full account or not
+                    if (!api.isFullAccount()) {
+                        // If not, redirect to register so they can upgrade from legacy to full
+                        // The login session is in localstorage, so we can redirect without setting any params
+                        redirect("/register.html")
+                    }
+
                     // Populate the update form with the user's info
                     var form = document.getElementById("info_form")
                     $.each(form.elements, function(i, elm) {
