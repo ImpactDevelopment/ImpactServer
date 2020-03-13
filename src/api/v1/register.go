@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"database/sql"
 	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"log"
@@ -63,7 +64,7 @@ func registerWithToken(c echo.Context) error {
 		createdAt int64
 		amount    int64
 		used      bool
-		logID     string
+		logID     sql.NullString
 	)
 	err = database.DB.QueryRow("SELECT created_at, amount, used, log_msg_id FROM pending_donations WHERE token = $1", body.Token).Scan(&createdAt, &amount, &used, &logID)
 	if err != nil {
@@ -177,14 +178,14 @@ func registerWithToken(c echo.Context) error {
 				err = discord.JoinOurServer(body.DiscordToken, discordID, true)
 			}
 			if err != nil {
-				discord.LogDonationEvent(logID, "Error adding donator to discord: "+err.Error(), discordID, mcID, amount)
+				discord.LogDonationEvent(logID.String, "Error adding donator to discord: "+err.Error(), discordID, mcID, amount)
 				return
 			}
 		}
 
 		var msg strings.Builder
 		msg.WriteString("Someone just")
-		if logID != "" {
+		if logID.String != "" {
 			// TODO get this bit _from_ the previous log msg?
 			msg.WriteString(" donated")
 		}
@@ -198,7 +199,7 @@ func registerWithToken(c echo.Context) error {
 			msg.WriteString(" and")
 		}
 		msg.WriteString(" registered an Impact Account")
-		_, _ = discord.LogDonationEvent(logID, msg.String(), discordID, mcID, amount)
+		_, _ = discord.LogDonationEvent(logID.String, msg.String(), discordID, mcID, amount)
 	}()
 
 	// Get the user so we can log them in
