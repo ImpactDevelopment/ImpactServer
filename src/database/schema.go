@@ -28,6 +28,12 @@ func createTables() error {
 			paypal_payer_id TEXT,
 			paypal_payer_email TEXT,
 			amount INTEGER, -- can be null for the same reason
+			
+			-- ROLES to be granted
+			premium BOOL NOT NULL DEFAULT FALSE,
+			pepsi BOOL NOT NULL DEFAULT FALSE,
+			spawnmason BOOL NOT NULL DEFAULT FALSE,
+			staff BOOL NOT NULL DEFAULT FALSE,
 
 			used BOOL NOT NULL DEFAULT FALSE,
 			used_by UUID REFERENCES users(user_id),

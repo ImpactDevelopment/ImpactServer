@@ -60,12 +60,16 @@ func registerWithToken(c echo.Context) error {
 	// TODO get roles from token
 	body.Token = strings.TrimSpace(body.Token)
 	var (
-		createdAt int64
-		amount    int64
-		used      bool
-		logID     string
+		createdAt  int64
+		amount     int64
+		used       bool
+		logID      string
+		premium    bool
+		pepsi      bool
+		spawnmason bool
+		staff      bool
 	)
-	err = database.DB.QueryRow("SELECT created_at, amount, used, log_msg_id FROM pending_donations WHERE token = $1", body.Token).Scan(&createdAt, &amount, &used, &logID)
+	err = database.DB.QueryRow("SELECT created_at, amount, used, log_msg_id, premium, pepsi, spawnmason, staff FROM pending_donations WHERE token = $1", body.Token).Scan(&createdAt, &amount, &used, &logID, &premium, &pepsi, &spawnmason, &staff)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid token")
 	}
@@ -122,9 +126,8 @@ func registerWithToken(c echo.Context) error {
 		return err
 	}
 
-	// TODO set roles based on token roles array
-	premium := true
-	_, err = tx.Exec(`UPDATE users SET premium=$2 WHERE user_id = $1`, userID, premium)
+	// Set roles based on token
+	_, err = tx.Exec(`UPDATE users SET premium=$2, pepsi=$3, spawnmason=$4, staff=$5 WHERE user_id = $1`, userID, premium, pepsi, spawnmason, staff)
 	if err != nil {
 		log.Print(err.Error())
 		return err
@@ -184,7 +187,7 @@ func registerWithToken(c echo.Context) error {
 
 		var msg strings.Builder
 		msg.WriteString("Someone just")
-		if logID != "" {
+		if premium && logID != "" {
 			// TODO get this bit _from_ the previous log msg?
 			msg.WriteString(" donated")
 		}

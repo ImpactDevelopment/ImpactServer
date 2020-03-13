@@ -49,7 +49,7 @@ func afterDonation(c echo.Context) error {
 	}
 
 	var token uuid.UUID
-	err = database.DB.QueryRow("INSERT INTO pending_donations(paypal_order_id, paypal_payer_id, paypal_payer_email, amount) VALUES ($1, $2, $3, $4) RETURNING token",
+	err = database.DB.QueryRow("INSERT INTO pending_donations(paypal_order_id, paypal_payer_id, paypal_payer_email, amount, premium) VALUES ($1, $2, $3, $4, TRUE) RETURNING token",
 		order.ID, order.PayerID, order.PayerEmail, order.Total()).Scan(&token)
 	if err != nil {
 		log.Println(err)
