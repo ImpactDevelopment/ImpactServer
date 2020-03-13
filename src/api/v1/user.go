@@ -15,20 +15,23 @@ import (
 	"strings"
 )
 
-type mcuser struct {
-	ID   uuid.UUID `json:"id"`
-	Name string    `json:"name"`
-}
-
-type resultDiscord struct {
-	Discord *discord.User
-	Error   error
-}
-
-type resultMC struct {
-	User  *mcuser
-	Error error
-}
+type (
+	mcuser struct {
+		ID   uuid.UUID `json:"id"`
+		Name string    `json:"name"`
+	}
+	resultDiscord struct {
+		Discord *discord.User
+		Error   error
+	}
+	resultMC struct {
+		User  *mcuser
+		Error error
+	}
+	resultEdition struct {
+		Edition *users.Edition
+	}
+)
 
 func getUser(c echo.Context) error {
 	if user := middleware.GetUser(c); user != nil {
@@ -36,6 +39,7 @@ func getUser(c echo.Context) error {
 			Email         string          `json:"email"`
 			Minecraft     *mcuser         `json:"minecraft,omitempty"`
 			Discord       *discord.User   `json:"discord,omitempty"`
+			Edition       *users.Edition  `json:"edition,omitempty"`
 			LegacyEnabled bool            `json:"legacy_enabled"`
 			Incognito     bool            `json:"incognito"`
 			Roles         []users.Role    `json:"roles,omitempty"`
@@ -45,11 +49,14 @@ func getUser(c echo.Context) error {
 		// Lookup minecraft and discord in parallel
 		minecraftCh := make(chan resultMC)
 		discordCh := make(chan resultDiscord)
+		editionCh := make(chan resultEdition)
 		go func() { minecraftCh <- lookupMinecraftInfo(user.MinecraftID) }()
 		go func() { discordCh <- lookupDiscordInfo(user.DiscordID) }()
+		go func() { editionCh <- resultEdition{Edition: user.Edition()} }()
 		var (
 			minecraftResult = <-minecraftCh
 			discordResult   = <-discordCh
+			editionResult   = <-editionCh
 		)
 		if minecraftResult.Error != nil {
 			return minecraftResult.Error
@@ -62,6 +69,7 @@ func getUser(c echo.Context) error {
 			Email:         user.Email,
 			Minecraft:     minecraftResult.User,
 			Discord:       discordResult.Discord,
+			Edition:       editionResult.Edition,
 			LegacyEnabled: user.LegacyEnabled,
 			Incognito:     user.Incognito,
 			Roles:         user.Roles,

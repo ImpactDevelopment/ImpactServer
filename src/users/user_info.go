@@ -13,8 +13,6 @@ type UserInfo struct {
 	BackgroundColor string `json:"bg_color,omitempty"`
 	// Numeric ARGB color of the nametag border. Empty string for default. e.g. -1761673216 for pepsi's red
 	BorderColor string `json:"border_color,omitempty"`
-	// A list of editions for use in e.g. watermarks
-	Editions []Edition `json:"editions,omitempty"`
 }
 
 // NewUserInfo creates a UserInfo based on a User's roles and any special cases that apply to them
