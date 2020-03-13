@@ -35,7 +35,7 @@ func GetOrder(id string) (*Order, error) {
 }
 
 // Total returns the total amount in US cent
-func (o Order) Total() (cent int) {
+func (o Order) Total() (cent int64) {
 	cent = 0
 	for _, purchase := range o.PurchaseUnits {
 		cent += amountAsCent(purchase.Amount)
@@ -96,7 +96,7 @@ func (o Order) Validate() error {
 }
 
 // amountAsCent is a helper method used by Order.Total()
-func amountAsCent(amount *paypal.PurchaseUnitAmount) int {
+func amountAsCent(amount *paypal.PurchaseUnitAmount) int64 {
 	if amount.Currency != "USD" {
 		// We can only sum up USD amounts since we don't know what the exchange rate is
 		// FIXME this means foreign donations don't qualify for perks
@@ -108,5 +108,5 @@ func amountAsCent(amount *paypal.PurchaseUnitAmount) int {
 		return 0
 	}
 
-	return cent
+	return int64(cent)
 }

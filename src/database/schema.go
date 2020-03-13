@@ -30,7 +30,8 @@ func createTables() error {
 			amount INTEGER, -- can be null for the same reason
 
 			used BOOL NOT NULL DEFAULT FALSE,
-			used_by UUID REFERENCES users(user_id)
+			used_by UUID REFERENCES users(user_id),
+			log_msg_id TEXT
 		);
 	`)
 	if err != nil {
