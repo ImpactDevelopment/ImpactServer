@@ -5,7 +5,8 @@ import "strings"
 type Edition struct {
 	// The edition icon, will be drawn left of the text
 	Icon string `json:"icon,omitempty"`
-	// The edition text, will be followed by " Edition"
+	// The edition text, User.Edition() concatenates these into a list and appends "Edition"
+	// e.g. "Pepsi Premium Edition"
 	Text string `json:"text,omitempty"`
 	// Colour of the edition text
 	TextColor string `json:"text_color,omitempty"`

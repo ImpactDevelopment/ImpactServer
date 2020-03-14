@@ -85,10 +85,10 @@ func (role Role) applyDefaults(info *UserInfo) {
 		return
 	}
 	if t.info == nil {
-
+		return
 	}
-	template := t.info
 
+	template := t.info
 	if template.Icon != "" && info.Icon == "" {
 		info.Icon = template.Icon
 	}
