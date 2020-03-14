@@ -14,13 +14,13 @@ type Edition struct {
 func (user User) Edition() *Edition {
 	// Start by building a list of editions
 	var editions []Edition
-	//TODO make specialCases use the role template meme?
-	// if special, ok := specialCases[user.MinecraftID]; ok {
-	//   e := special.edition
-	//	 if e != nil {
-	//	 	editions = append(editions, *e)
-	//	 }
-	// }
+	if user.MinecraftID != nil {
+		if special, ok := specialCases[*user.MinecraftID]; ok {
+			if e := special.edition; e != nil {
+				editions = append(editions, *e)
+			}
+		}
+	}
 	for _, role := range getRolesSorted(user.Roles) {
 		if template, ok := defaultRoleTemplates[role.ID]; ok {
 			e := template.edition

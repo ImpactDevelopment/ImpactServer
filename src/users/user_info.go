@@ -21,7 +21,9 @@ func NewUserInfo(user User) *UserInfo {
 
 	if user.MinecraftID != nil {
 		if special, ok := specialCases[*user.MinecraftID]; ok {
-			info = special
+			if special.info != nil {
+				info = *special.info
+			}
 		}
 	}
 
@@ -32,22 +34,33 @@ func NewUserInfo(user User) *UserInfo {
 	return &info
 }
 
-var specialCases = map[uuid.UUID]UserInfo{ // TODO this should basically just be a SELECT * FROM customizations;
+var specialCases = map[uuid.UUID]roleTemplate{ // TODO this should basically just be a SELECT * FROM customizations;
 	// catgorl
 	uuid.MustParse("2c3174fc-0c6b-4cfb-bb2b-0069bf7294d1"): {
-		TextColor: "LIGHT_PURPLE",
+		info: &UserInfo{
+			TextColor: "LIGHT_PURPLE",
+		},
 	},
 	// leijurv
 	uuid.MustParse("51dcd870-d33b-40e9-9fc1-aecdcff96081"): {
-		TextColor: "RED",
-		Icon:      "https://files.impactclient.net/img/texture/speckles128.png",
+		info: &UserInfo{
+			TextColor: "RED",
+			Icon:      "https://files.impactclient.net/img/texture/speckles128.png",
+		},
+		edition: &Edition{
+			Icon: "https://files.impactclient.net/img/texture/speckles128.png",
+		},
 	},
 	// triibu popstonia
 	uuid.MustParse("8e563236-c7f5-4c82-aa27-c95bf3f4c322"): {
-		Icon: "https://files.impactclient.net/img/texture/popstonia.png",
+		info: &UserInfo{
+			Icon: "https://files.impactclient.net/img/texture/popstonia.png",
+		},
 	},
 	// popstonia (rebane)
 	uuid.MustParse("342fc44b-1fd1-4272-a4c3-a98a2df98abc"): {
-		Icon: "https://files.impactclient.net/img/texture/popstonia.png",
+		info: &UserInfo{
+			Icon: "https://files.impactclient.net/img/texture/popstonia.png",
+		},
 	},
 }
