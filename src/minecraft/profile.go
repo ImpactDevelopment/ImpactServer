@@ -9,6 +9,9 @@ import (
 	"strings"
 )
 
+const urlNames = "https://api.mojang.com/user/profiles/<UUID>/names"
+const urlProfile = "https://api.mojang.com/users/profiles/minecraft/<name>"
+
 // Profile includes both the minecraft user's ID and their name
 type Profile struct {
 	ID   uuid.UUID `json:"id"`
@@ -26,7 +29,8 @@ func GetProfile(minecraft string) (*Profile, error) {
 		var bad = echo.NewHTTPError(http.StatusBadRequest, "bad minecraft uuid")
 
 		// Lookup minecraft name
-		req, err := util.GetRequest("https://api.mojang.com/user/profiles/" + url.PathEscape(strings.Replace(minecraftID.String(), "-", "", -1)) + "/names")
+		reqUrl := strings.Replace(urlNames, "<UUID>", url.PathEscape(strings.Replace(minecraftID.String(), "-", "", -1)), 1)
+		req, err := util.GetRequest(reqUrl)
 		if err != nil {
 			return nil, bad
 		}
@@ -68,7 +72,8 @@ func GetProfile(minecraft string) (*Profile, error) {
 		// minecraft must be a name, look up the id
 		var bad = echo.NewHTTPError(http.StatusBadRequest, "bad minecraft username")
 
-		req, err := util.GetRequest("https://api.mojang.com/users/profiles/minecraft/" + url.PathEscape(strings.TrimSpace(minecraft)))
+		reqUrl := strings.Replace(urlProfile, "<name>", url.PathEscape(strings.TrimSpace(minecraft)), 1)
+		req, err := util.GetRequest(reqUrl)
 		if err != nil {
 			return nil, bad
 		}
