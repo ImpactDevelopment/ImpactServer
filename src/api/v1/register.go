@@ -95,6 +95,8 @@ func registerWithToken(c echo.Context) error {
 		if err != nil {
 			return err
 		}
+	} else if authedUser != nil {
+		discordID = authedUser.DiscordID
 	}
 
 	var minecraftID *uuid.UUID
@@ -103,6 +105,8 @@ func registerWithToken(c echo.Context) error {
 		if err != nil {
 			return err
 		}
+	} else if authedUser != nil {
+		minecraftID = authedUser.MinecraftID
 	}
 
 	// Make DB changes in a transaction
