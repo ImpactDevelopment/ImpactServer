@@ -15,6 +15,11 @@ type Role struct {
 	LegacyList bool
 }
 
+type roleTemplate struct {
+	info    *UserInfo
+	edition *Edition
+}
+
 var Roles = map[string]Role{
 	"pepsi":      {ID: "pepsi", rank: 1, LegacyList: true},
 	"spawnmason": {ID: "spawnmason", rank: 0, LegacyList: false},
@@ -23,51 +28,67 @@ var Roles = map[string]Role{
 	"premium":    {ID: "premium", rank: 4, LegacyList: true},
 }
 
-var defaultRoleTemplates = map[string]UserInfo{
+var defaultRoleTemplates = map[string]roleTemplate{
 	"developer": {
-		Cape: "https://files.impactclient.net/img/texture/developer_cape.png",
+		info: &UserInfo{
+			Cape: "https://files.impactclient.net/img/texture/developer_cape.png",
+		},
 	},
 	"staff": {
-		Cape: "https://files.impactclient.net/img/texture/staff_cape.png",
-		Editions: []Edition{{
+		info: &UserInfo{
+			Cape: "https://files.impactclient.net/img/texture/staff_cape.png",
+		},
+		edition: &Edition{
 			Text:      "Staff",
 			TextColor: "#FF7734EB",
-		}},
+		},
 	},
 	"pepsi": {
-		Icon:            "https://files.impactclient.net/img/texture/pepsi32.png",
-		Cape:            "https://files.impactclient.net/img/texture/pepsi_cape.png",
-		TextColor:       "BLUE", // #FF004B93 is the official pepsi blue
-		BackgroundColor: "#50FFFFFF",
-		BorderColor:     "#FFC9002B",
-		Editions: []Edition{{
+		info: &UserInfo{
+			Icon:            "https://files.impactclient.net/img/texture/pepsi32.png",
+			Cape:            "https://files.impactclient.net/img/texture/pepsi_cape.png",
+			TextColor:       "BLUE", // #FF004B93 is the official pepsi blue
+			BackgroundColor: "#50FFFFFF",
+			BorderColor:     "#FFC9002B",
+		},
+		edition: &Edition{
+			Icon:      "https://files.impactclient.net/img/texture/pepsi32.png",
 			Text:      "Pepsi",
 			TextColor: "#FFC9002B",
-		}},
+		},
 	},
 	"spawnmason": {
-		Icon:            "https://files.impactclient.net/img/texture/spawnmason128.png",
-		Cape:            "https://files.impactclient.net/img/texture/spawnmason_cape_elytra.png",
-		TextColor:       "GOLD",
-		BackgroundColor: "#90404040",
-		BorderColor:     "RED",
+		info: &UserInfo{
+			Icon:            "https://files.impactclient.net/img/texture/spawnmason128.png",
+			Cape:            "https://files.impactclient.net/img/texture/spawnmason_cape_elytra.png",
+			TextColor:       "GOLD",
+			BackgroundColor: "#90404040",
+			BorderColor:     "RED",
+		},
 	},
 	"premium": {
-		Cape: "https://files.impactclient.net/img/texture/premium_cape.png",
-		Editions: []Edition{{
+		info: &UserInfo{
+			Cape: "https://files.impactclient.net/img/texture/premium_cape.png",
+		},
+		edition: &Edition{
 			Text:      "Premium",
 			TextColor: "GOLD",
-		}},
+		},
 	},
 }
 
 func (role Role) applyDefaults(info *UserInfo) {
-	template, ok := defaultRoleTemplates[role.ID]
+	t, ok := defaultRoleTemplates[role.ID]
 	if !ok {
 		fmt.Println("ERROR idk how to apply", role.ID)
 		// No default template to apply
 		return
 	}
+	if t.info == nil {
+		return
+	}
+
+	template := t.info
 	if template.Icon != "" && info.Icon == "" {
 		info.Icon = template.Icon
 	}
@@ -82,9 +103,6 @@ func (role Role) applyDefaults(info *UserInfo) {
 	}
 	if template.BorderColor != "" && info.BorderColor == "" {
 		info.BorderColor = template.BorderColor
-	}
-	if len(template.Editions) > 0 {
-		info.Editions = append(info.Editions, template.Editions...)
 	}
 }
 
