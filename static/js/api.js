@@ -81,9 +81,10 @@
         },
         // register an account. fields should be usable as jQuery's ajax body data
         register: function(fields) {
-            // TODO set post method to withAuth.post if logged in
+            var post = api.isLoggedIn() ? $.withAuth.post : $.post
+
             return new Promise(function (resolve, reject) {
-                $.post({
+                post({
                     url: baseUrl + "/register/token",
                     data: fields,
                     error: function (jqXHR, textStatus, errorThrown) {
