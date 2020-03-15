@@ -3,6 +3,7 @@ package v1
 import (
 	"database/sql"
 	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
+	"github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"log"
 	"net/http"
@@ -47,19 +48,19 @@ func checkToken(c echo.Context) error {
 }
 
 func registerWithToken(c echo.Context) error {
+	authedUser := middleware.GetUser(c)
 	body := &registration{}
 	err := c.Bind(body)
 	if err != nil {
 		return err
 	}
 	// Allow creating account without discord or minecraft
-	if body.Token == "" || body.Email == "" || body.Password == "" {
+	if (authedUser == nil && body.Token == "") || body.Email == "" || body.Password == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "empty field(s)")
 	}
 
 	// Verify the registration token
 	// TODO get roles from token
-	// TODO allow not having a token if logged in
 	body.Token = strings.TrimSpace(body.Token)
 	var (
 		createdAt int64
@@ -67,12 +68,15 @@ func registerWithToken(c echo.Context) error {
 		used      bool
 		logID     sql.NullString
 	)
-	err = database.DB.QueryRow("SELECT created_at, amount, used, log_msg_id FROM pending_donations WHERE token = $1", body.Token).Scan(&createdAt, &amount, &used, &logID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid token")
-	}
-	if used {
-		return echo.NewHTTPError(http.StatusConflict, "token already used")
+	// token can be omitted if logged in
+	if body.Token != "" {
+		err = database.DB.QueryRow("SELECT created_at, amount, used, log_msg_id FROM pending_donations WHERE token = $1", body.Token).Scan(&createdAt, &amount, &used, &logID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid token")
+		}
+		if used {
+			return echo.NewHTTPError(http.StatusConflict, "token already used")
+		}
 	}
 
 	email, err := verifyEmail(body.Email)
@@ -118,20 +122,26 @@ func registerWithToken(c echo.Context) error {
 			return err
 		}
 	} else if err == nil && user != nil {
+		if authedUser == nil {
+			return echo.NewHTTPError(http.StatusUnauthorized, "email, minecraft or discord is in use by an existing user")
+		}
+		if authedUser.ID != user.ID {
+			return echo.NewHTTPError(http.StatusConflict, "something is being used by a different user (email, minecraft or discord)")
+		}
 		// no error and found a user, so use their id
-		// TODO require being logged in to edit an existing user
 		userID = &user.ID
 	} else {
 		return err
 	}
 
 	// TODO set roles based on token roles array
-	// TODO only set roles if a token is present
-	premium := true
-	_, err = tx.Exec(`UPDATE users SET premium=$2 WHERE user_id = $1`, userID, premium)
-	if err != nil {
-		log.Print(err.Error())
-		return err
+	if body.Token != "" {
+		premium := true
+		_, err = tx.Exec(`UPDATE users SET premium=$2 WHERE user_id = $1`, userID, premium)
+		if err != nil {
+			log.Print(err.Error())
+			return err
+		}
 	}
 	_, err = tx.Exec(`UPDATE users SET email=$2, password_hash=$3 WHERE user_id = $1`, userID, email, hashedPassword)
 	if err != nil {
