@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"database/sql"
 	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"log"
@@ -64,8 +65,9 @@ func registerWithToken(c echo.Context) error {
 		createdAt int64
 		amount    int64
 		used      bool
+		logID     sql.NullString
 	)
-	err = database.DB.QueryRow("SELECT created_at, amount, used FROM pending_donations WHERE token = $1", body.Token).Scan(&createdAt, &amount, &used)
+	err = database.DB.QueryRow("SELECT created_at, amount, used, log_msg_id FROM pending_donations WHERE token = $1", body.Token).Scan(&createdAt, &amount, &used, &logID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid token")
 	}
@@ -164,7 +166,7 @@ func registerWithToken(c echo.Context) error {
 		return err
 	}
 
-	{
+	go func() {
 		var isMember bool
 		var mcID string
 		if minecraftID != nil {
@@ -179,19 +181,29 @@ func registerWithToken(c echo.Context) error {
 				err = discord.JoinOurServer(body.DiscordToken, discordID, true)
 			}
 			if err != nil {
-				go discord.LogDonationEvent("Error adding donator to discord: "+err.Error(), discordID, mcID, amount)
-				return err
+				discord.LogDonationEvent(logID.String, "Error adding donator to discord: "+err.Error(), discordID, mcID, amount)
+				return
 			}
 		}
 
 		var msg strings.Builder
 		msg.WriteString("Someone just")
+		if logID.String != "" {
+			// TODO get this bit _from_ the previous log msg?
+			msg.WriteString(" donated")
+		}
 		if discordID != "" && !isMember {
-			msg.WriteString(" joined the server and")
+			if msg.String() != "Someone just" {
+				msg.WriteString(",")
+			}
+			msg.WriteString(" joined the server")
+		}
+		if msg.String() != "Someone just" {
+			msg.WriteString(" and")
 		}
 		msg.WriteString(" registered an Impact Account")
-		go discord.LogDonationEvent(msg.String(), discordID, mcID, amount)
-	}
+		_, _ = discord.LogDonationEvent(logID.String, msg.String(), discordID, mcID, amount)
+	}()
 
 	// Get the user so we can log them in
 	user := database.LookupUserByID(*userID)

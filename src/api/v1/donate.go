@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/ImpactDevelopment/ImpactServer/src/discord"
 	"log"
 	"net/http"
 
@@ -54,6 +55,13 @@ func afterDonation(c echo.Context) error {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error saving pending donation").SetInternal(err)
 	}
+
+	go func() {
+		logID, err := discord.LogDonationEvent("", "Someone just donated", "", "", order.Total())
+		if err == nil {
+			database.DB.Exec(`UPDATE pending_donations SET log_msg_id = $2 WHERE token = $1`, token, logID)
+		}
+	}()
 
 	if order.Total() < 500 {
 		// if the donation is too small, save it

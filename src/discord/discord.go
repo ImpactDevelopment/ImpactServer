@@ -140,7 +140,7 @@ func CheckServerMembership(discordID string) bool {
 	return err == nil && member != nil
 }
 
-func LogDonationEvent(msg string, discordID string, minecraftID string, amount int64) error {
+func LogDonationEvent(editMsgID string, msg string, discordID string, minecraftID string, amount int64) (logID string, err error) {
 	m := discordgo.MessageSend{Content: msg}
 	if discordID != "" || minecraftID != "" || amount > 0 {
 		m.Embed = &discordgo.MessageEmbed{
@@ -181,6 +181,19 @@ func LogDonationEvent(msg string, discordID string, minecraftID string, amount i
 		}
 	}
 
-	_, err := discord.ChannelMessageSendComplex(donationMsgChannel, &m)
-	return err
+	if editMsgID != "" {
+		var edit *discordgo.Message
+		edit, err = discord.ChannelMessageEditComplex(discordgo.NewMessageEdit(donationMsgChannel, editMsgID).SetContent(m.Content).SetEmbed(m.Embed))
+		if edit != nil {
+			logID = edit.ID
+		}
+		return
+	}
+
+	var sent *discordgo.Message
+	sent, err = discord.ChannelMessageSendComplex(donationMsgChannel, &m)
+	if sent != nil {
+		logID = sent.ID
+	}
+	return
 }
