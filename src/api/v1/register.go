@@ -217,7 +217,12 @@ func registerWithToken(c echo.Context) error {
 		if msg.String() != "Someone just" {
 			msg.WriteString(" and")
 		}
-		msg.WriteString(" registered an Impact Account")
+		if authedUser == nil {
+			msg.WriteString(" registered an")
+		} else {
+			msg.WriteString(" upgraded their")
+		}
+		msg.WriteString(" Impact Account")
 		_, _ = discord.LogDonationEvent(logID.String, msg.String(), discordID, mcID, amount)
 	}()
 
