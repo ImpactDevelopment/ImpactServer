@@ -559,7 +559,7 @@
             }
 
             // <unchanged> is a hack to keep validateForm happy, but we don't want to actually submit it to the API
-            var formData = $(this).serialize().replace(/(discord|minecraft)=%3Cunchanged%3E(&|$)/, "$1=$2")
+            var formData = $(this).serialize().replace(/(discord|minecraft)=%3Cunchanged%3E(&|$)/g, "$1=$2")
 
             api.register(formData)
                 .then(function (response) {
