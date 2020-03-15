@@ -168,10 +168,12 @@ func registerWithToken(c echo.Context) error {
 	}
 
 	// TODO should we just DELETE the token?
-	_, err = tx.Exec("UPDATE pending_donations SET used = true, used_by = $1 WHERE token = $2", userID, body.Token)
-	if err != nil {
-		log.Print(err.Error())
-		return err
+	if body.Token != "" {
+		_, err = tx.Exec("UPDATE pending_donations SET used = true, used_by = $1 WHERE token = $2", userID, body.Token)
+		if err != nil {
+			log.Print(err.Error())
+			return err
+		}
 	}
 
 	err = tx.Commit()
