@@ -14,15 +14,19 @@ import (
 	"strings"
 )
 
-type resultDiscord struct {
-	Discord *discord.User
-	Error   error
-}
-
-type resultMC struct {
-	Profile *minecraft.Profile
-	Error   error
-}
+type (
+	resultDiscord struct {
+		Discord *discord.User
+		Error   error
+	}
+	resultMC struct {
+		Profile *minecraft.Profile
+		Error   error
+	}
+	resultEdition struct {
+		Edition *users.Edition
+	}
+)
 
 func getUser(c echo.Context) error {
 	if user := middleware.GetUser(c); user != nil {
@@ -30,6 +34,7 @@ func getUser(c echo.Context) error {
 			Email         string             `json:"email"`
 			Minecraft     *minecraft.Profile `json:"minecraft,omitempty"`
 			Discord       *discord.User      `json:"discord,omitempty"`
+			Edition       *users.Edition     `json:"edition,omitempty"`
 			LegacyEnabled bool               `json:"legacy_enabled"`
 			Incognito     bool               `json:"incognito"`
 			Roles         []users.Role       `json:"roles,omitempty"`
@@ -39,6 +44,7 @@ func getUser(c echo.Context) error {
 		// Lookup minecraft and discord in parallel
 		minecraftCh := make(chan resultMC)
 		discordCh := make(chan resultDiscord)
+		editionCh := make(chan resultEdition)
 		go func() {
 			if user.MinecraftID == nil {
 				minecraftCh <- resultMC{}
@@ -61,9 +67,15 @@ func getUser(c echo.Context) error {
 				Error:   err,
 			}
 		}()
+		go func() {
+			editionCh <- resultEdition{
+				Edition: user.Edition(),
+			}
+		}()
 		var (
 			minecraftResult = <-minecraftCh
 			discordResult   = <-discordCh
+			editionResult   = <-editionCh
 		)
 		if minecraftResult.Error != nil {
 			return minecraftResult.Error
@@ -76,6 +88,7 @@ func getUser(c echo.Context) error {
 			Email:         user.Email,
 			Minecraft:     minecraftResult.Profile,
 			Discord:       discordResult.Discord,
+			Edition:       editionResult.Edition,
 			LegacyEnabled: user.LegacyEnabled,
 			Incognito:     user.Incognito,
 			Roles:         user.Roles,
