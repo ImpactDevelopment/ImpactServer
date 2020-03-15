@@ -395,21 +395,14 @@
                 // TODO create some method for existing users to use a token to add roles to their account
                 $("#token_field").addClass("hidden")
 
-                unhideStuff()
+                $(".unhide").removeClass("unhide hidden")
             })
             .catch(function (error) {
                 // This isn't that critical, but we should probably show an error warning the user something went wrong
-                unhideStuff()
+                $(".unhide").removeClass("unhide hidden")
             })
         } else {
-            unhideStuff()
-        }
-
-        function unhideStuff() {
-            // un-hide stuff tagged with `unhide` to prevent FOUC
-            $(".unhide").each(function (index, elm) {
-                elm.removeClass("unhide hidden")
-            })
+            $(".unhide").removeClass("unhide hidden")
         }
 
         // Called by the oauth popup window
