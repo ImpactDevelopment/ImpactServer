@@ -4,15 +4,14 @@ import (
 	"database/sql"
 	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
 	"github.com/ImpactDevelopment/ImpactServer/src/middleware"
+	"github.com/ImpactDevelopment/ImpactServer/src/minecraft"
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"github.com/ImpactDevelopment/ImpactServer/src/discord"
-	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
@@ -99,14 +98,17 @@ func registerWithToken(c echo.Context) error {
 		discordID = authedUser.DiscordID
 	}
 
-	var minecraftID *uuid.UUID
-	if body.Minecraft != "" {
-		minecraftID, err = getMinecraftID(body.Minecraft)
+	var minecraftProfile *minecraft.Profile
+	if body.Minecraft != "" || authedUser != nil {
+		var mc = body.Minecraft
+		if mc == "" && authedUser != nil {
+			mc = authedUser.MinecraftID.String()
+		}
+
+		minecraftProfile, err = minecraft.GetProfile(mc)
 		if err != nil {
 			return err
 		}
-	} else if authedUser != nil {
-		minecraftID = authedUser.MinecraftID
 	}
 
 	// Make DB changes in a transaction
@@ -118,7 +120,7 @@ func registerWithToken(c echo.Context) error {
 
 	// Find or create the user
 	var userID *uuid.UUID
-	if user, err := findAccountFromIDs(email, discordID, minecraftID); err == nil && user == nil {
+	if user, err := findAccountFromIDs(email, discordID, minecraftProfile); err == nil && user == nil {
 		// no error, but user is nil, so create a new user
 		err = tx.QueryRow("INSERT INTO users(legacy) VALUES (false) RETURNING user_id").Scan(&userID)
 		if err != nil {
@@ -159,8 +161,8 @@ func registerWithToken(c echo.Context) error {
 			return err
 		}
 	}
-	if minecraftID != nil {
-		_, err := tx.Exec(`UPDATE users SET mc_uuid=$2 WHERE user_id = $1`, userID, minecraftID)
+	if minecraftProfile != nil {
+		_, err := tx.Exec(`UPDATE users SET mc_uuid=$2 WHERE user_id = $1`, userID, minecraftProfile.ID)
 		if err != nil {
 			log.Print(err.Error())
 			return err
@@ -184,11 +186,6 @@ func registerWithToken(c echo.Context) error {
 
 	go func() {
 		var isMember bool
-		var mcID string
-		if minecraftID != nil {
-			mcID = minecraftID.String()
-		}
-
 		if discordID != "" {
 			// TODO grant donator status based on token roles
 			if isMember = discord.CheckServerMembership(discordID); isMember {
@@ -197,7 +194,7 @@ func registerWithToken(c echo.Context) error {
 				err = discord.JoinOurServer(body.DiscordToken, discordID, true)
 			}
 			if err != nil {
-				discord.LogDonationEvent(logID.String, "Error adding donator to discord: "+err.Error(), discordID, mcID, amount)
+				discord.LogDonationEvent(logID.String, "Error adding donator to discord: "+err.Error(), discordID, minecraftProfile, amount)
 				return
 			}
 		}
@@ -223,7 +220,7 @@ func registerWithToken(c echo.Context) error {
 			msg.WriteString(" upgraded their")
 		}
 		msg.WriteString(" Impact Account")
-		_, _ = discord.LogDonationEvent(logID.String, msg.String(), discordID, mcID, amount)
+		_, _ = discord.LogDonationEvent(logID.String, msg.String(), discordID, minecraftProfile, amount)
 	}()
 
 	// Get the user so we can log them in
@@ -257,57 +254,7 @@ func getDiscordID(token string) (string, error) {
 	return discordID, err
 }
 
-func getMinecraftID(minecraft string) (*uuid.UUID, error) {
-	// Try parsing minecraft as a UUID, if that fails use it as a name to lookup the UUID
-	minecraftID, err := uuid.Parse(strings.TrimSpace(minecraft))
-	if err == nil && minecraftID.String() != "" {
-		// minecraft is an id, verify it
-		var bad = echo.NewHTTPError(http.StatusBadRequest, "bad minecraft uuid")
-
-		req, err := util.GetRequest("https://api.mojang.com/user/profiles/" + url.PathEscape(strings.Replace(minecraftID.String(), "-", "", -1)) + "/names")
-		if err != nil {
-			return nil, bad
-		}
-		resp, err := req.Do()
-		if err != nil {
-			return nil, bad
-		}
-		if !resp.Ok() {
-			return nil, bad
-		}
-	} else {
-		// minecraft must be a name, look up the id
-		var bad = echo.NewHTTPError(http.StatusBadRequest, "bad minecraft username")
-
-		req, err := util.GetRequest("https://api.mojang.com/users/profiles/minecraft/" + url.PathEscape(strings.TrimSpace(minecraft)))
-		if err != nil {
-			return nil, bad
-		}
-		resp, err := req.Do()
-		if err != nil {
-			return nil, bad
-		}
-		if !resp.Ok() {
-			return nil, bad
-		}
-
-		// Parse the response
-		// https://wiki.vg/Mojang_API#Username_-.3E_UUID_at_time
-		var respBody struct {
-			Id   uuid.UUID `json:"id"`
-			Name string    `json:"name"`
-		}
-		err = resp.JSON(&respBody)
-		if err != nil || respBody.Id.String() == "" {
-			return nil, bad
-		}
-		minecraftID = respBody.Id
-	}
-
-	return &minecraftID, nil
-}
-
-func findAccountFromIDs(email string, discordID string, minecraftID *uuid.UUID) (*users.User, error) {
+func findAccountFromIDs(email string, discordID string, minecraft *minecraft.Profile) (*users.User, error) {
 	var (
 		emailUser     *users.User
 		discordUser   *users.User
@@ -315,8 +262,8 @@ func findAccountFromIDs(email string, discordID string, minecraftID *uuid.UUID) 
 	)
 
 	// Lookup the users TODO do these lookups concurrently?
-	if minecraftID != nil {
-		minecraftUser = database.LookupUserByMinecraftID(*minecraftID)
+	if minecraft != nil {
+		minecraftUser = database.LookupUserByMinecraftID(minecraft.ID)
 	}
 	if discordID != "" {
 		discordUser = database.LookupUserByDiscordID(discordID)

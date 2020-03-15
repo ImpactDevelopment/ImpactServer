@@ -3,6 +3,7 @@ package discord
 import (
 	"errors"
 	"fmt"
+	"github.com/ImpactDevelopment/ImpactServer/src/minecraft"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"os"
@@ -140,9 +141,9 @@ func CheckServerMembership(discordID string) bool {
 	return err == nil && member != nil
 }
 
-func LogDonationEvent(editMsgID string, msg string, discordID string, minecraftID string, amount int64) (logID string, err error) {
+func LogDonationEvent(editMsgID string, msg string, discordID string, minecraft *minecraft.Profile, amount int64) (logID string, err error) {
 	m := discordgo.MessageSend{Content: msg}
-	if discordID != "" || minecraftID != "" || amount > 0 {
+	if discordID != "" || minecraft != nil || amount > 0 {
 		m.Embed = &discordgo.MessageEmbed{
 			Type: "",
 		}
@@ -170,14 +171,14 @@ func LogDonationEvent(editMsgID string, msg string, discordID string, minecraftI
 		}
 	}
 
-	if minecraftID != "" {
+	if minecraft != nil {
 		m.Embed.Fields = append(m.Embed.Fields, &discordgo.MessageEmbedField{
 			Name:   "Minecraft",
-			Value:  fmt.Sprintf(`[%s](https://namemc.com/profile/%s)`, minecraftID, minecraftID),
+			Value:  fmt.Sprintf(`[%s](https://namemc.com/profile/%s)`, minecraft.Name, minecraft.ID.String()),
 			Inline: true,
 		})
 		m.Embed.Thumbnail = &discordgo.MessageEmbedThumbnail{
-			URL: "https://crafatar.com/avatars/" + minecraftID,
+			URL: "https://crafatar.com/avatars/" + minecraft.ID.String(),
 		}
 	}
 
