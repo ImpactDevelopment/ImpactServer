@@ -6,10 +6,6 @@
         return scheme + "//api." + host + "/v" + version
     })(global.location.protocol, global.location.host, 1)
 
-    function setToken(token) {
-        $.withAuth.setToken(token)
-    }
-
     function messageFromjqXHR(jqXHR) {
         try {
             return JSON.parse(jqXHR.responseText).message
@@ -48,9 +44,18 @@
         isLoggedIn: function() {
             return !!window.localStorage.getItem("access_token")
         },
+        // True if the account has email set
+        isFullAccount: function(user) {
+            if (!user) user = api.user
+            if (!user) return false
+            return !!user.email
+        },
         // Add a way check if logged in
         logout: function() {
             window.localStorage.removeItem("access_token")
+        },
+        setToken: function(token) {
+            $.withAuth.setToken(token)
         },
         // login with either discord token or username + password
         login: function(email, password) {
@@ -68,7 +73,7 @@
                         reject(messageFromjqXHR(jqXHR))
                     },
                     success: function (data, status) {
-                        setToken(data)
+                        api.setToken(data)
                         resolve("logged in")
                     }
                 })
@@ -76,15 +81,17 @@
         },
         // register an account. fields should be usable as jQuery's ajax body data
         register: function(fields) {
+            var post = api.isLoggedIn() ? $.withAuth.post : $.post
+
             return new Promise(function (resolve, reject) {
-                $.post({
+                post({
                     url: baseUrl + "/register/token",
                     data: fields,
                     error: function (jqXHR, textStatus, errorThrown) {
                         reject(errorThrown + ": " + messageFromjqXHR(jqXHR))
                     },
                     success: function (data, status) {
-                        setToken(data)
+                        api.setToken(data)
                         resolve("registered")
                     }
                 })

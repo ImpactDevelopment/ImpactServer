@@ -5,11 +5,13 @@ import (
 	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"net/http"
+	"regexp"
 )
 
 const userCtxKey = "user"
+
+var authBearerRegx = regexp.MustCompile(`^Bearer\s+(\S+)`)
 
 // GetUser returns the User object attached to the context, presumably by the RequireAuth middleware.
 // Otherwise it returns nil.
@@ -19,25 +21,49 @@ func GetUser(c echo.Context) (user *users.User) {
 	return
 }
 
-// RequireAuth returns a middleware that sets the user userCtxKey in context and calls next handler.
+var Auth = func(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		if header := c.Request().Header.Get(echo.HeaderAuthorization); header != "" {
+			if m := authBearerRegx.FindStringSubmatch(header); len(m) == 2 && m[1] != "" {
+				token := m[1]
+
+				// Verify the JWT
+				user, err := jwt.Verify(token)
+				if err != nil {
+					return echo.NewHTTPError(http.StatusUnauthorized, "invalid token").SetInternal(err)
+				}
+				// Set the user context userCtxKey
+				c.Set(userCtxKey, user)
+			}
+		}
+		return next(c)
+	}
+}
+
+// RequireAuth requires that the Authorization header be set, correctly formatted, and the token to be valid
 // For invalid token, it sends “401 - Unauthorized” response.
 // For missing or invalid Authorization header, it sends “400 - Bad Request”.
-func RequireAuth() echo.MiddlewareFunc {
-	// Use a KeyAuth instead of a JWTAuth since we want to verify the JWT ourselves
-	return middleware.KeyAuth(func(token string, c echo.Context) (bool, error) {
-		// Verify the JWT
-		user, err := jwt.Verify(token)
-		if err != nil {
-			return false, err
+var RequireAuth = func(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		header := c.Request().Header.Get(echo.HeaderAuthorization)
+		if header == "" {
+			return echo.NewHTTPError(http.StatusBadRequest, "authentication is required")
 		}
-		// Set the user context userCtxKey
-		c.Set(userCtxKey, user)
-		return true, nil
-	})
+		if m := authBearerRegx.FindStringSubmatch(header); len(m) != 2 || m[1] == "" {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid "+echo.HeaderAuthorization+" header")
+		}
+		return Auth(func(c echo.Context) error {
+			// Require Auth to have succeeded
+			if user := GetUser(c); user == nil {
+				return echo.NewHTTPError(http.StatusUnauthorized, "no user found")
+			}
+			return next(c)
+		})(c)
+	}
 }
 
 // RequireRoles returns a middleware that requires the user to have at least one of the provided role IDs.
-// This middleware must come after RequireAuth
+// This middleware automatically calls RequireAuth
 func RequireRole(roles ...string) echo.MiddlewareFunc {
 	// Figure out how best to print the roles in http errors
 	var rolesString string
@@ -48,7 +74,7 @@ func RequireRole(roles ...string) echo.MiddlewareFunc {
 	}
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
+		return RequireAuth(func(c echo.Context) error {
 			user := GetUser(c)
 			if user == nil {
 				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Roles required but no user: %v", rolesString))
@@ -65,6 +91,6 @@ func RequireRole(roles ...string) echo.MiddlewareFunc {
 
 			// The user doesn't have any matching roles
 			return echo.NewHTTPError(http.StatusUnauthorized, fmt.Sprintf("Required at least one role from %v", rolesString))
-		}
+		})
 	}
 }

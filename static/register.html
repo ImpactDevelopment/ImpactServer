@@ -77,7 +77,7 @@
             // Lets compile a list of errors so we can tell the user about all of them
             // TODO use the same regexs as html5 validation, right now we only check stuff is present
             var errors = []
-            if (!form.token.value) {
+            if (!form.token.value && !api.isLoggedIn()) {
                 errors.push("No registration token")
             }
             if (!form.email.value) {
@@ -355,18 +355,58 @@
         if (token) {
             // Hide the label and set the input value if a token was passed in
             // We don't care if it is valid at this point
-            document.getElementById("token_field").classList.add("hidden")
+            $("#token_field").addClass("hidden")
             var tokenField = document.getElementById("token")
             tokenField.value = token
             tokenField.type = "hidden"
         }
 
-        // un-hide stuff tagged with `unhide` to prevent FOUC
-        var unhide = document.getElementsByClassName("unhide")
-        for (var i = 0; i < unhide.length; i++) {
-            var elm = unhide[i]
-            elm.classList.remove("unhide")
-            elm.classList.remove("hidden")
+        if (api.isLoggedIn()) {
+            api.me()
+            .then(function (user) {
+                if (api.isFullAccount(user)) {
+                    // TODO show a warning? Or redirect to some "I have an account but i want to link a donation with it" form?
+                    var error = ["Uh oh, sorry we can't register you if you are already logged in to a full account."]
+                    if (token) {
+                        error.push("Your registration token is <code>"+token+"</code>")
+                        error.push("Please contact an Impact developer on <a href=\"/discord.html\">discord</a>.")
+                    }
+                    $("body").html(error.join("<br>"))
+                    return
+                }
+
+                // Populate any existing fields
+                if (user.email) {
+                    $("#email").val(user.email)
+                    if (window.Materialize) {
+                        window.Materialize.updateTextFields()
+                    }
+                }
+                // Hack: We set minecraft and discord form inputs to "<unchanged>" to allow validateForm
+                // to not freak out but still have onsubmit able to filter them out
+                if (user.minecraft) {
+                    $("#minecraft").val("<unchanged>")
+                    setMinecraftInfo(user.minecraft)
+                    $("#minecraft_info").removeClass("invisible")
+                }
+                if (user.discord) {
+                    $("#discord").val("<unchanged>")
+                    setDiscordInfo(user.discord)
+                    $("#discord_info").removeClass("invisible")
+                }
+
+                // ensure token is hidden
+                // TODO create some method for existing users to use a token to add roles to their account
+                $("#token_field").addClass("hidden")
+
+                $(".unhide").removeClass("unhide hidden")
+            })
+            .catch(function (error) {
+                // This isn't that critical, but we should probably show an error warning the user something went wrong
+                $(".unhide").removeClass("unhide hidden")
+            })
+        } else {
+            $(".unhide").removeClass("unhide hidden")
         }
 
         // Called by the oauth popup window
@@ -518,7 +558,10 @@
                 return
             }
 
-            api.register($(this).serialize())
+            // <unchanged> is a hack to keep validateForm happy, but we don't want to actually submit it to the API
+            var formData = $(this).serialize().replace(/(discord|minecraft)=%3Cunchanged%3E(&|$)/g, "$1=$2")
+
+            api.register(formData)
                 .then(function (response) {
                     // api has logged them in so navigate to dashboard
                     window.location = "/account.html"

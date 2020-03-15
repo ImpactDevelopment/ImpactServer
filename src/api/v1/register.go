@@ -3,6 +3,7 @@ package v1
 import (
 	"database/sql"
 	"github.com/ImpactDevelopment/ImpactServer/src/jwt"
+	"github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/ImpactDevelopment/ImpactServer/src/minecraft"
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"log"
@@ -46,13 +47,14 @@ func checkToken(c echo.Context) error {
 }
 
 func registerWithToken(c echo.Context) error {
+	authedUser := middleware.GetUser(c)
 	body := &registration{}
 	err := c.Bind(body)
 	if err != nil {
 		return err
 	}
 	// Allow creating account without discord or minecraft
-	if body.Token == "" || body.Email == "" || body.Password == "" {
+	if (authedUser == nil && body.Token == "") || body.Email == "" || body.Password == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "empty field(s)")
 	}
 
@@ -65,12 +67,15 @@ func registerWithToken(c echo.Context) error {
 		used      bool
 		logID     sql.NullString
 	)
-	err = database.DB.QueryRow("SELECT created_at, amount, used, log_msg_id FROM pending_donations WHERE token = $1", body.Token).Scan(&createdAt, &amount, &used, &logID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid token")
-	}
-	if used {
-		return echo.NewHTTPError(http.StatusConflict, "token already used")
+	// token can be omitted if logged in
+	if body.Token != "" {
+		err = database.DB.QueryRow("SELECT created_at, amount, used, log_msg_id FROM pending_donations WHERE token = $1", body.Token).Scan(&createdAt, &amount, &used, &logID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid token")
+		}
+		if used {
+			return echo.NewHTTPError(http.StatusConflict, "token already used")
+		}
 	}
 
 	email, err := verifyEmail(body.Email)
@@ -89,11 +94,18 @@ func registerWithToken(c echo.Context) error {
 		if err != nil {
 			return err
 		}
+	} else if authedUser != nil {
+		discordID = authedUser.DiscordID
 	}
 
 	var minecraftProfile *minecraft.Profile
-	if body.Minecraft != "" {
-		minecraftProfile, err = minecraft.GetProfile(body.Minecraft)
+	if body.Minecraft != "" || authedUser != nil {
+		var mc = body.Minecraft
+		if mc == "" && authedUser != nil {
+			mc = authedUser.MinecraftID.String()
+		}
+
+		minecraftProfile, err = minecraft.GetProfile(mc)
 		if err != nil {
 			return err
 		}
@@ -116,6 +128,12 @@ func registerWithToken(c echo.Context) error {
 			return err
 		}
 	} else if err == nil && user != nil {
+		if authedUser == nil {
+			return echo.NewHTTPError(http.StatusUnauthorized, "email, minecraft or discord is in use by an existing user")
+		}
+		if authedUser.ID != user.ID {
+			return echo.NewHTTPError(http.StatusConflict, "something is being used by a different user (email, minecraft or discord)")
+		}
 		// no error and found a user, so use their id
 		userID = &user.ID
 	} else {
@@ -123,11 +141,13 @@ func registerWithToken(c echo.Context) error {
 	}
 
 	// TODO set roles based on token roles array
-	premium := true
-	_, err = tx.Exec(`UPDATE users SET premium=$2 WHERE user_id = $1`, userID, premium)
-	if err != nil {
-		log.Print(err.Error())
-		return err
+	if body.Token != "" {
+		premium := true
+		_, err = tx.Exec(`UPDATE users SET premium=$2 WHERE user_id = $1`, userID, premium)
+		if err != nil {
+			log.Print(err.Error())
+			return err
+		}
 	}
 	_, err = tx.Exec(`UPDATE users SET email=$2, password_hash=$3 WHERE user_id = $1`, userID, email, hashedPassword)
 	if err != nil {
@@ -150,10 +170,12 @@ func registerWithToken(c echo.Context) error {
 	}
 
 	// TODO should we just DELETE the token?
-	_, err = tx.Exec("UPDATE pending_donations SET used = true, used_by = $1 WHERE token = $2", userID, body.Token)
-	if err != nil {
-		log.Print(err.Error())
-		return err
+	if body.Token != "" {
+		_, err = tx.Exec("UPDATE pending_donations SET used = true, used_by = $1 WHERE token = $2", userID, body.Token)
+		if err != nil {
+			log.Print(err.Error())
+			return err
+		}
 	}
 
 	err = tx.Commit()
@@ -192,7 +214,12 @@ func registerWithToken(c echo.Context) error {
 		if msg.String() != "Someone just" {
 			msg.WriteString(" and")
 		}
-		msg.WriteString(" registered an Impact Account")
+		if authedUser == nil {
+			msg.WriteString(" registered an")
+		} else {
+			msg.WriteString(" upgraded their")
+		}
+		msg.WriteString(" Impact Account")
 		_, _ = discord.LogDonationEvent(logID.String, msg.String(), discordID, minecraftProfile, amount)
 	}()
 
