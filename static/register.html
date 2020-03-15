@@ -382,11 +382,15 @@
                         window.Materialize.updateTextFields()
                     }
                 }
+                // Hack: We set minecraft and discord form inputs to "<unchanged>" to allow validateForm
+                // to not freak out but still have onsubmit able to filter them out
                 if (user.minecraft) {
+                    $("#minecraft").val("<unchanged>")
                     setMinecraftInfo(user.minecraft)
                     $("#minecraft_info").removeClass("invisible")
                 }
                 if (user.discord) {
+                    $("#discord").val("<unchanged>")
                     setDiscordInfo(user.discord)
                     $("#discord_info").removeClass("invisible")
                 }
@@ -554,7 +558,10 @@
                 return
             }
 
-            api.register($(this).serialize())
+            // <unchanged> is a hack to keep validateForm happy, but we don't want to actually submit it to the API
+            var formData = $(this).serialize().replace(/(discord|minecraft)=%3Cunchanged%3E(&|$)/, "$1=$2")
+
+            api.register(formData)
                 .then(function (response) {
                     // api has logged them in so navigate to dashboard
                     window.location = "/account.html"
