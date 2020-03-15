@@ -9,6 +9,27 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script crossorigin="anonymous" src="https://benjamingr.github.io/RegExp.escape/polyfill.js"></script>
 <script type="text/javascript" src="/js/api.js"></script>
+<script>
+    function redirect(url) {
+        try {
+            window.location.replace(url);
+        } catch (e) {
+            window.location = url;
+        }
+    }
+
+    (function () {
+        var jwt = new URLSearchParams(window.location.search).get("auth")
+        if (jwt) {
+            // If a jwt has been passed in via a url param, replace the one in localstorage
+            // This allows the "open account dashboard" link in the client to work
+            api.setToken(jwt)
+
+            // Reload without the jwt in the URL (and replace browser history too, for security)
+            redirect("/account.html")
+        }
+    })()
+</script>
 
 <!-- CSS  -->
 <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
@@ -606,12 +627,6 @@
         })
 
         // TODO lets separate this from all the other crap
-        var jwt = new URLSearchParams(window.location.search).get("access_token")
-        if (jwt) {
-            // If a token has been passed in via a url param, use it instead of localstorage
-            // This allows the "open account dashboard" link in the client to work
-            api.setToken(jwt)
-        }
         if (api.isLoggedIn()) {
             $("#dashboard").removeClass("hidden")
             $("#login").addClass("hidden")

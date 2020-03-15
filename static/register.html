@@ -77,8 +77,7 @@
             // Lets compile a list of errors so we can tell the user about all of them
             // TODO use the same regexs as html5 validation, right now we only check stuff is present
             var errors = []
-            if (!form.token.value) {
-                // TODO allow no token if logged in
+            if (!form.token.value && !api.isLoggedIn()) {
                 errors.push("No registration token")
             }
             if (!form.email.value) {
@@ -367,10 +366,16 @@
             .then(function (user) {
                 if (api.isFullAccount(user)) {
                     // TODO show a warning? Or redirect to some "I have an account but i want to link a donation with it" form?
-
+                    var error = ["Uh oh, sorry we can't register you if you are already logged in to a full account."]
+                    if (token) {
+                        error.push("Your registration token is <code>"+token+"</code>")
+                        error.push("Please contact an Impact developer on <a href=\"/discord.html\">discord</a>.")
+                    }
+                    $("body").html(error.join("<br>"))
+                    return
                 }
 
-                // TODO Populate any existing fields
+                // Populate any existing fields
                 if (user.email) {
                     $("#email").val(user.email)
                     if (window.Materialize) {
@@ -385,9 +390,9 @@
                     setDiscordInfo(user.discord)
                     $("#discord_info").removeClass("invisible")
                 }
-                // TODO show some info about account? Hm, thinking about it what is there to show?
 
                 // ensure token is hidden
+                // TODO create some method for existing users to use a token to add roles to their account
                 $("#token_field").addClass("hidden")
 
                 unhideStuff()
