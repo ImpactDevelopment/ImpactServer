@@ -108,8 +108,9 @@ func (role Role) applyDefaults(info *UserInfo) {
 
 func getRolesSorted(roles []Role) (sorted []Role) {
 	// needed so that higher priority roles set cape and icon instead of lower priority ones
-	// copying slices via = is by reference, so this mutates no matter what
-	sorted = roles
+	// copying slices via = is by reference, so use append instead
+	// https://github.com/go101/go101/wiki/How-to-perfectly-clone-a-slice%3F
+	sorted = append(roles[:0:0], roles...)
 	sort.Slice(sorted, func(i, j int) bool {
 		return sorted[i].rank < sorted[j].rank
 	})
