@@ -13,25 +13,15 @@ type Edition struct {
 }
 
 func (user User) Edition() *Edition {
-	// Start by building a list of editions
+	// map from generic roleTemplate to edition template
 	var editions []Edition
-	if user.MinecraftID != nil {
-		if special, ok := specialCases[*user.MinecraftID]; ok {
-			if e := special.edition; e != nil {
-				editions = append(editions, *e)
-			}
-		}
-	}
-	for _, role := range getRolesSorted(user.Roles) {
-		if template, ok := defaultRoleTemplates[role.ID]; ok {
-			e := template.edition
-			if e != nil {
-				editions = append(editions, *e)
-			}
+	for _, template := range user.templates() {
+		if e := template.edition; e != nil {
+			editions = append(editions, *e)
 		}
 	}
 
-	// Now we've built the slice, we can reduce it
+	// reduce to a single edition struct
 	if len(editions) > 0 {
 		var ret Edition
 

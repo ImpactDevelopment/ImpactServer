@@ -29,10 +29,12 @@ func (user User) RoleIDs(legacyOnly bool) []string {
 	return arr
 }
 
-func (user User) HasRoleWithID(roleID string) bool {
+func (user User) HasRoleWithID(roleID ...string) bool {
 	for _, role := range user.Roles {
-		if role.ID == roleID {
-			return true
+		for _, id := range roleID {
+			if role.ID == id {
+				return true
+			}
 		}
 	}
 	return false
@@ -50,4 +52,23 @@ func (user User) CheckPassword(password string) bool {
 	}
 	hash := password // TODO actually hash passwords
 	return user.PasswordHash == hash
+}
+
+// templates returns all the user's role templates, including any special cases, in order
+// TODO consider if low-index-high-rank makes sense or not for templates;
+//     this only seems to matter in NewUserInfo(User) and User.Editions(), so
+//     if we are happy for editions to be reversed too, that'd simplify the for
+//     loop in NewUserInfo a little bit.
+func (user User) templates() (templates []roleTemplate) {
+	if user.MinecraftID != nil {
+		if special, ok := specialCases[*user.MinecraftID]; ok {
+			templates = append(templates, special)
+		}
+	}
+	for _, role := range getRolesSorted(user.Roles) {
+		if template, ok := defaultRoleTemplates[role.ID]; ok {
+			templates = append(templates, template)
+		}
+	}
+	return
 }

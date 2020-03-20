@@ -35,6 +35,7 @@ func getUser(c echo.Context) error {
 			Minecraft     *minecraft.Profile `json:"minecraft,omitempty"`
 			Discord       *discord.User      `json:"discord,omitempty"`
 			Edition       *users.Edition     `json:"edition,omitempty"`
+			Features      *users.Features    `json:"features,omitempty"`
 			LegacyEnabled bool               `json:"legacy_enabled"`
 			Incognito     bool               `json:"incognito"`
 			Roles         []users.Role       `json:"roles,omitempty"`
@@ -89,6 +90,7 @@ func getUser(c echo.Context) error {
 			Minecraft:     minecraftResult.Profile,
 			Discord:       discordResult.Discord,
 			Edition:       editionResult.Edition,
+			Features:      user.Features(),
 			LegacyEnabled: user.LegacyEnabled,
 			Incognito:     user.Incognito,
 			Roles:         user.Roles,

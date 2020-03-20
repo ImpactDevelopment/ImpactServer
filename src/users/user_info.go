@@ -1,6 +1,8 @@
 package users
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type UserInfo struct {
 	// Icon to display next to this user
@@ -18,17 +20,31 @@ type UserInfo struct {
 // NewUserInfo creates a UserInfo based on a User's roles and any special cases that apply to them
 func NewUserInfo(user User) *UserInfo {
 	var info UserInfo
+	templates := user.templates()
 
-	if user.MinecraftID != nil {
-		if special, ok := specialCases[*user.MinecraftID]; ok {
-			if special.info != nil {
-				info = *special.info
-			}
-		}
+	if len(templates) < 1 {
+		return nil
 	}
 
-	for _, role := range getRolesSorted(user.Roles) { // go in order from highest priority to least (aka numerically lowest to highest)
-		role.applyDefaults(&info)
+	// Reverse loop so that higher priority templates overwrite lower ones
+	for i := len(templates) - 1; i > 0; i-- {
+		if template := templates[i].info; template != nil {
+			if template.Icon != "" {
+				info.Icon = template.Icon
+			}
+			if template.Cape != "" {
+				info.Cape = template.Cape
+			}
+			if template.TextColor != "" {
+				info.TextColor = template.TextColor
+			}
+			if template.BackgroundColor != "" {
+				info.BackgroundColor = template.BackgroundColor
+			}
+			if template.BorderColor != "" {
+				info.BorderColor = template.BorderColor
+			}
+		}
 	}
 
 	return &info

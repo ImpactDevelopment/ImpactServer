@@ -77,35 +77,6 @@ var defaultRoleTemplates = map[string]roleTemplate{
 	},
 }
 
-func (role Role) applyDefaults(info *UserInfo) {
-	t, ok := defaultRoleTemplates[role.ID]
-	if !ok {
-		fmt.Println("ERROR idk how to apply", role.ID)
-		// No default template to apply
-		return
-	}
-	if t.info == nil {
-		return
-	}
-
-	template := t.info
-	if template.Icon != "" && info.Icon == "" {
-		info.Icon = template.Icon
-	}
-	if template.Cape != "" && info.Cape == "" {
-		info.Cape = template.Cape
-	}
-	if template.TextColor != "" && info.TextColor == "" {
-		info.TextColor = template.TextColor
-	}
-	if template.BackgroundColor != "" && info.BackgroundColor == "" {
-		info.BackgroundColor = template.BackgroundColor
-	}
-	if template.BorderColor != "" && info.BorderColor == "" {
-		info.BorderColor = template.BorderColor
-	}
-}
-
 func getRolesSorted(roles []Role) (sorted []Role) {
 	// needed so that higher priority roles set cape and icon instead of lower priority ones
 	// copying slices via = is by reference, so use append instead
