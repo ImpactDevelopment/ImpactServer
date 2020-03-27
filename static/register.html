@@ -150,7 +150,7 @@
             border-radius: 32px;
             background-color: hsla(0,0%,100%,.2);
             background-size: 74px;
-            vertical-align: middle;
+            vertical-align: baseline;
         }
         #discord_nitro {
             height: 24px;
@@ -159,20 +159,28 @@
         #discord_tag {
             opacity: .6;
         }
+        #minecraft_avatar {
+            width: 64px;
+            height: 64px;
+            -webkit-filter: drop-shadow(0px 0px 4px);
+            filter: drop-shadow(0px 0px 4px);
+            vertical-align: baseline;
+        }
         #minecraft_username{
             font-size: 32px;
             font-weight: 700;
         }
-        #minecraft_uuid {
+        #minecraft_uuid, #discord_id {
             margin: 0;
             font-size: 14px;
         }
-        #minecraft_avatar {
-            width: 64px;
-            height: 64px;
-            vertical-align: baseline;
-            -webkit-filter: drop-shadow(0px 0px 4px);
-            filter: drop-shadow(0px 0px 4px);
+        #minecraft_uuid {
+            color: #9e9e9e;
+        }
+        #discord_id {
+            color: white;
+            opacity: .6;
+            font-weight: normal;
         }
         #form_msg, #discord_msg, #minecraft_msg {
             color: #F44336;
@@ -263,7 +271,7 @@
                         <img id="minecraft_avatar" src="" alt="avatar">
                         <div style="display: inline-block; padding-left: 16px;">
                             <h6 id="minecraft_username"></h6>
-                            <p id="minecraft_uuid" class="grey-text"></p>
+                            <p id="minecraft_uuid"></p>
                         </div>
                     </div>
                 </div>
@@ -282,12 +290,14 @@
                     <p class="hide-if-linked">Link your discord to join our server and get a fancy gold name. You'll also be able to use Discord to login to your Impact Account.</p>
                     <!-- .invisible allows fade-in to avoid FOUC -->
                     <!-- TODO move away from an id for everything and take advantage of jquery's nested class selector memes -->
-                    <p id="discord_info" class="truncate hide-if-unlinked fade-in invisible">
+                    <div id="discord_info" class="truncate hide-if-unlinked fade-in invisible">
                         <img id="discord_avatar" src="" alt="avatar">
-                        <span id="discord_username"></span>
-                        <span id="discord_tag"></span>
-                        <img id="discord_nitro" class="hidden" src="https://discordapp.com/assets/386884eecd36164487505ddfbac35a9d.svg" alt="nitro">
-                    </p>
+                        <div style="display: inline-block; padding-left: 8px;">
+                            <span id="discord_username"></span><span id="discord_tag"></span>
+                            <img id="discord_nitro" class="hidden" src="https://discordapp.com/assets/386884eecd36164487505ddfbac35a9d.svg" alt="nitro">
+                            <p id="discord_id"></p>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-action">
                     <a id="discord_link_btn" class="btn discord waves-effect waves-light hide-if-linked">Link Discord</a>
@@ -448,6 +458,7 @@
 
             $("#discord_username").text(user.username || "")
             $("#discord_tag").text(user.discriminator ? "#" + user.discriminator : "")
+            $("#discord_id").text(user.id || "")
 
             var avatarImg = $("#discord_avatar")
             if (user.hasOwnProperty("avatar")) {
