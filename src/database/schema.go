@@ -28,6 +28,12 @@ func createTables() error {
 			paypal_payer_id TEXT,
 			paypal_payer_email TEXT,
 			amount INTEGER, -- can be null for the same reason
+			
+			-- ROLES to be granted
+			premium BOOL NOT NULL DEFAULT FALSE,
+			pepsi BOOL NOT NULL DEFAULT FALSE,
+			spawnmason BOOL NOT NULL DEFAULT FALSE,
+			staff BOOL NOT NULL DEFAULT FALSE,
 
 			used BOOL NOT NULL DEFAULT FALSE,
 			used_by UUID REFERENCES users(user_id),
@@ -64,8 +70,8 @@ func createTables() error {
 			legacy_enabled BOOL NOT NULL DEFAULT FALSE, -- list this mc uuid in the premium list for 4.7 and below. this determines if you get a cape shown to other users who are using 4.7-
 			cape_enabled BOOL NOT NULL DEFAULT TRUE, -- show a cape to others on 4.8+
 
-			legacy BOOL NOT NULL DEFAULT TRUE, -- this defaults to true e.g. for manual inserts. register.go overrides this to false however!
-			premium BOOL NOT NULL DEFAULT TRUE,
+			legacy BOOL NOT NULL DEFAULT TRUE,
+			premium BOOL NOT NULL DEFAULT FALSE,
 			pepsi BOOL NOT NULL DEFAULT FALSE,
 			spawnmason BOOL NOT NULL DEFAULT FALSE,
 			staff BOOL NOT NULL DEFAULT FALSE,
