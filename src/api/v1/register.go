@@ -144,8 +144,14 @@ func registerWithToken(c echo.Context) error {
 		return err
 	}
 
-	// Set roles based on token
-	_, err = tx.Exec(`UPDATE users SET premium=$2, pepsi=$3, spawnmason=$4, staff=$5 WHERE user_id = $1`, userID, premium, pepsi, spawnmason, staff)
+	// Grant roles based on token
+	_, err = tx.Exec(`UPDATE users
+							SET premium    = $2 OR premium,
+							    pepsi      = $3 OR pepsi,
+							    spawnmason = $4 OR spawnmason,
+							    staff      = $5 OR staff
+							WHERE user_id = $1`,
+		userID, premium, pepsi, spawnmason, staff)
 	if err != nil {
 		log.Print(err.Error())
 		return err
