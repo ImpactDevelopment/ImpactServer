@@ -77,7 +77,7 @@
             // Lets compile a list of errors so we can tell the user about all of them
             // TODO use the same regexs as html5 validation, right now we only check stuff is present
             var errors = []
-            if (!form.token.value) {
+            if (!form.token.value && !api.isLoggedIn()) {
                 errors.push("No registration token")
             }
             if (!form.email.value) {
@@ -150,7 +150,7 @@
             border-radius: 32px;
             background-color: hsla(0,0%,100%,.2);
             background-size: 74px;
-            vertical-align: middle;
+            vertical-align: baseline;
         }
         #discord_nitro {
             height: 24px;
@@ -159,20 +159,28 @@
         #discord_tag {
             opacity: .6;
         }
+        #minecraft_avatar {
+            width: 64px;
+            height: 64px;
+            -webkit-filter: drop-shadow(0px 0px 4px);
+            filter: drop-shadow(0px 0px 4px);
+            vertical-align: baseline;
+        }
         #minecraft_username{
             font-size: 32px;
             font-weight: 700;
         }
-        #minecraft_uuid {
+        #minecraft_uuid, #discord_id {
             margin: 0;
             font-size: 14px;
         }
-        #minecraft_avatar {
-            width: 64px;
-            height: 64px;
-            vertical-align: baseline;
-            -webkit-filter: drop-shadow(0px 0px 4px);
-            filter: drop-shadow(0px 0px 4px);
+        #minecraft_uuid {
+            color: #9e9e9e;
+        }
+        #discord_id {
+            color: white;
+            opacity: .6;
+            font-weight: normal;
         }
         #form_msg, #discord_msg, #minecraft_msg {
             color: #F44336;
@@ -263,7 +271,7 @@
                         <img id="minecraft_avatar" src="" alt="avatar">
                         <div style="display: inline-block; padding-left: 16px;">
                             <h6 id="minecraft_username"></h6>
-                            <p id="minecraft_uuid" class="grey-text"></p>
+                            <p id="minecraft_uuid"></p>
                         </div>
                     </div>
                 </div>
@@ -282,12 +290,14 @@
                     <p class="hide-if-linked">Link your discord to join our server and get a fancy gold name. You'll also be able to use Discord to login to your Impact Account.</p>
                     <!-- .invisible allows fade-in to avoid FOUC -->
                     <!-- TODO move away from an id for everything and take advantage of jquery's nested class selector memes -->
-                    <p id="discord_info" class="truncate hide-if-unlinked fade-in invisible">
+                    <div id="discord_info" class="truncate hide-if-unlinked fade-in invisible">
                         <img id="discord_avatar" src="" alt="avatar">
-                        <span id="discord_username"></span>
-                        <span id="discord_tag"></span>
-                        <img id="discord_nitro" class="hidden" src="https://discordapp.com/assets/386884eecd36164487505ddfbac35a9d.svg" alt="nitro">
-                    </p>
+                        <div style="display: inline-block; padding-left: 8px;">
+                            <span id="discord_username"></span><span id="discord_tag"></span>
+                            <img id="discord_nitro" class="hidden" src="https://discordapp.com/assets/386884eecd36164487505ddfbac35a9d.svg" alt="nitro">
+                            <p id="discord_id"></p>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-action">
                     <a id="discord_link_btn" class="btn discord waves-effect waves-light hide-if-linked">Link Discord</a>
@@ -355,18 +365,58 @@
         if (token) {
             // Hide the label and set the input value if a token was passed in
             // We don't care if it is valid at this point
-            document.getElementById("token_field").classList.add("hidden")
+            $("#token_field").addClass("hidden")
             var tokenField = document.getElementById("token")
             tokenField.value = token
             tokenField.type = "hidden"
         }
 
-        // un-hide stuff tagged with `unhide` to prevent FOUC
-        var unhide = document.getElementsByClassName("unhide")
-        for (var i = 0; i < unhide.length; i++) {
-            var elm = unhide[i]
-            elm.classList.remove("unhide")
-            elm.classList.remove("hidden")
+        if (api.isLoggedIn()) {
+            api.me()
+            .then(function (user) {
+                if (api.isFullAccount(user)) {
+                    // TODO show a warning? Or redirect to some "I have an account but i want to link a donation with it" form?
+                    var error = ["Uh oh, sorry we can't register you if you are already logged in to a full account."]
+                    if (token) {
+                        error.push("Your registration token is <code>"+token+"</code>")
+                        error.push("Please contact an Impact developer on <a href=\"/discord.html\">discord</a>.")
+                    }
+                    $("body").html(error.join("<br>"))
+                    return
+                }
+
+                // Populate any existing fields
+                if (user.email) {
+                    $("#email").val(user.email)
+                    if (window.Materialize) {
+                        window.Materialize.updateTextFields()
+                    }
+                }
+                // Hack: We set minecraft and discord form inputs to "<unchanged>" to allow validateForm
+                // to not freak out but still have onsubmit able to filter them out
+                if (user.minecraft) {
+                    $("#minecraft").val("<unchanged>")
+                    setMinecraftInfo(user.minecraft)
+                    $("#minecraft_info").removeClass("invisible")
+                }
+                if (user.discord) {
+                    $("#discord").val("<unchanged>")
+                    setDiscordInfo(user.discord)
+                    $("#discord_info").removeClass("invisible")
+                }
+
+                // ensure token is hidden
+                // TODO create some method for existing users to use a token to add roles to their account
+                $("#token_field").addClass("hidden")
+
+                $(".unhide").removeClass("unhide hidden")
+            })
+            .catch(function (error) {
+                // This isn't that critical, but we should probably show an error warning the user something went wrong
+                $(".unhide").removeClass("unhide hidden")
+            })
+        } else {
+            $(".unhide").removeClass("unhide hidden")
         }
 
         // Called by the oauth popup window
@@ -408,6 +458,7 @@
 
             $("#discord_username").text(user.username || "")
             $("#discord_tag").text(user.discriminator ? "#" + user.discriminator : "")
+            $("#discord_id").text(user.id || "")
 
             var avatarImg = $("#discord_avatar")
             if (user.hasOwnProperty("avatar")) {
@@ -518,7 +569,10 @@
                 return
             }
 
-            api.register($(this).serialize())
+            // <unchanged> is a hack to keep validateForm happy, but we don't want to actually submit it to the API
+            var formData = $(this).serialize().replace(/(discord|minecraft)=%3Cunchanged%3E(&|$)/g, "$1=$2")
+
+            api.register(formData)
                 .then(function (response) {
                     // api has logged them in so navigate to dashboard
                     window.location = "/account.html"

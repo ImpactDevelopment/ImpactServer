@@ -11,6 +11,8 @@ import (
 func Server() (e *echo.Echo) {
 	e = echo.New()
 
+	// Setup GetUser(c) for all API routes
+	e.Use(mid.Auth)
 	// Allow browser clients to use the API
 	e.Use(middleware.CORS())
 	e.Use(mid.Log)
