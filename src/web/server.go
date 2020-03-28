@@ -23,6 +23,12 @@ func Server() (e *echo.Echo) {
 	e.POST("/recaptchaverify", simpleRecaptchaCheck)
 
 	staticEcho := echo.New()
+	// Redirect any request ending in .html
+	staticEcho.Pre(mid.StripExt(http.StatusMovedPermanently, "html"))
+	// Append .html to any path with no dot in the filename
+	staticEcho.Pre(mid.RegexRewrite(map[string]string{
+		`.*/[^/.]+$`: "$0.html",
+	}))
 	staticEcho.Use(mid.CacheUntilRestart(3600)) // 1 hour
 	staticEcho.Static("/", "static")
 	e.Any("/*", func(c echo.Context) error {
