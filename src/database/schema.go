@@ -71,7 +71,7 @@ func createTables() error {
 			cape_enabled BOOL NOT NULL DEFAULT TRUE, -- show a cape to others on 4.8+
 
 			legacy BOOL NOT NULL DEFAULT TRUE, -- this defaults to true e.g. for manual inserts. register.go overrides this to false however!
-			premium BOOL NOT NULL DEFAULT TRUE,
+			premium BOOL NOT NULL DEFAULT FALSE,
 			pepsi BOOL NOT NULL DEFAULT FALSE,
 			spawnmason BOOL NOT NULL DEFAULT FALSE,
 			staff BOOL NOT NULL DEFAULT FALSE,
