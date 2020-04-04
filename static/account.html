@@ -711,7 +711,7 @@
                     $("#info").removeClass("invisible")
                 })
                 .catch(function (error) {
-                    if (error === "invalid key") {
+                    if (error === "invalid token") {
                         $("#dashboard").addClass("hidden")
                         $("#expired").removeClass("hidden")
                         $("#login").removeClass("hidden")
