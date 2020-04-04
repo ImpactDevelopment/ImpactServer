@@ -10,12 +10,12 @@ import (
 // Server returns an echo server that handles api requests for each version
 func Server() (e *echo.Echo) {
 	e = echo.New()
-
-	// Setup GetUser(c) for all API routes
-	e.Use(mid.Auth)
 	// Allow browser clients to use the API
 	e.Use(middleware.CORS())
 	e.Use(mid.Log)
+
+	// Setup GetUser(c) for all API routes
+	e.Use(mid.Auth)
 
 	v1.API(e.Group("/v1"))
 
