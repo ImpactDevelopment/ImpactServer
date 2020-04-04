@@ -639,6 +639,11 @@
 
         // TODO lets separate this from all the other crap
         if (api.isLoggedIn()) {
+            // Work around weird browser caching error
+            // Sometimes #info_form is undefined for some reason that makes no sense ¯\_(ツ)_/¯
+            var form = document.getElementById("info_form")
+            if (!form) window.location.reload()
+
             $("#dashboard").removeClass("hidden")
             $("#login").addClass("hidden")
             api.me()
@@ -651,7 +656,6 @@
                     }
 
                     // Populate the update form with the user's info
-                    var form = document.getElementById("info_form")
                     $.each(form.elements, function(i, elm) {
                         if (api.user.hasOwnProperty(elm.name)) {
                             var value = api.user[elm.name]
