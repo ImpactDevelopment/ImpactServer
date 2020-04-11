@@ -119,9 +119,18 @@ func githubReleases(rels map[string]Release) error {
 }
 
 func s3Releases(resp map[string]Release) error {
-	objs, err := s3.New(s3proxy.AWSSession).ListObjectsV2(&s3.ListObjectsV2Input{
+	objs := make([]*s3.Object, 0)
+	err := s3.New(s3proxy.AWSSession).ListObjectsV2Pages(&s3.ListObjectsV2Input{
 		Bucket: aws.String("impactclient-files"),
 		Prefix: aws.String("artifacts/Impact/"),
+	}, func(page *s3.ListObjectsV2Output, lastPage bool) (shouldContinue bool) {
+		for _, obj := range page.Contents {
+			if obj.Key == nil {
+				continue
+			}
+			objs = append(objs, obj)
+		}
+		return true
 	})
 	if err != nil {
 		fmt.Println("s3 error but let's not break the client for everyone since this only affects premium")
@@ -131,7 +140,7 @@ func s3Releases(resp map[string]Release) error {
 
 	keys := make(map[string]bool)
 
-	for _, item := range objs.Contents {
+	for _, item := range objs {
 		if *item.StorageClass != "STANDARD" {
 			continue
 		}
