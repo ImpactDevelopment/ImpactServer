@@ -31,12 +31,12 @@ var Roles = map[string]Role{
 var defaultRoleTemplates = map[string]roleTemplate{
 	"developer": {
 		info: &UserInfo{
-			Cape: "https://files.impactclient.net/img/texture/developer_cape.png",
+			Cape: "https://files.impactclient.net/img/texture/developer_cape_elytra.png",
 		},
 	},
 	"staff": {
 		info: &UserInfo{
-			Cape: "https://files.impactclient.net/img/texture/staff_cape.png",
+			Cape: "https://files.impactclient.net/img/texture/staff_cape_elytra.png",
 		},
 		edition: &Edition{
 			Text:      "Staff",
@@ -45,14 +45,14 @@ var defaultRoleTemplates = map[string]roleTemplate{
 	},
 	"pepsi": {
 		info: &UserInfo{
-			Icon:            "https://files.impactclient.net/img/texture/pepsi32.png",
-			Cape:            "https://files.impactclient.net/img/texture/pepsi_cape.png",
-			TextColor:       "BLUE", // #FF004B93 is the official pepsi blue
-			BackgroundColor: "#50FFFFFF",
-			BorderColor:     "#FFC9002B",
+			Icon:            "https://files.impactclient.net/img/texture/pepsi_v2_128.png",
+			Cape:            "https://files.impactclient.net/img/texture/pepsi_cape_elytra.png",
+			TextColor:       "BLUE",      // #004B93 is the official logo blue
+			BackgroundColor: "#50FFFFFF", // #005CB4 is the official "background" blue, #0063a7 is also used
+			BorderColor:     "#FFC9002B", // #C9002B is the official logo red
 		},
 		edition: &Edition{
-			Icon:      "https://files.impactclient.net/img/texture/pepsi32.png",
+			Icon:      "https://files.impactclient.net/img/texture/pepsi_v2_128.png",
 			Text:      "Pepsi",
 			TextColor: "#FFC9002B",
 		},
@@ -68,7 +68,7 @@ var defaultRoleTemplates = map[string]roleTemplate{
 	},
 	"premium": {
 		info: &UserInfo{
-			Cape: "https://files.impactclient.net/img/texture/premium_cape.png",
+			Cape: "https://files.impactclient.net/img/texture/premium_cape_elytra.png",
 		},
 		edition: &Edition{
 			Text:      "Premium",
