@@ -43,6 +43,7 @@ func genkey(c echo.Context) error {
 	// Extract bools from role list
 	var premium, pepsi, spawnmason, staff bool
 	if len(body.Roles) > 0 {
+		var invalid []string
 		for _, role := range body.Roles {
 			switch strings.ToLower(strings.TrimSpace(role)) {
 			case "premium":
@@ -53,7 +54,20 @@ func genkey(c echo.Context) error {
 				spawnmason = true
 			case "staff":
 				staff = true
+			default:
+				invalid = append(invalid, role)
 			}
+		}
+		if len(invalid) > 0 {
+			var msg strings.Builder
+			msg.WriteString("Invalid role")
+			if len(invalid) > 1 {
+				msg.WriteString("s")
+			}
+			msg.WriteString(" `")
+			msg.WriteString(strings.Join(invalid, ", "))
+			msg.WriteString("`")
+			return c.String(http.StatusBadRequest, msg.String())
 		}
 	}
 
