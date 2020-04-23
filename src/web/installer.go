@@ -36,7 +36,7 @@ type Entry struct { // can't use zip.Entry since that seeks within the input and
 var installerEntries []Entry
 var exeHeader []byte
 
-var ready bool
+var ready = make(chan struct{})
 
 func (version InstallerVersion) getEXT() string {
 	if version == JAR {
@@ -137,7 +137,11 @@ func startup() {
 	exeHeader = installerExe[:exeHeaderLen]
 
 	fmt.Println("Initialized")
-	ready = true // we are ready from now on
+	go func() {
+		for {
+			ready <- struct{}{} // we are ready from now on
+		}
+	}()
 }
 
 // download the installer, if an error occurs keep trying again after duration (blocking)
@@ -151,6 +155,20 @@ func downloadUntilSuccess(version InstallerVersion, duration time.Duration) []by
 		exe, err = version.fetchFile()
 	}
 	return exe
+}
+
+// blocks and only returns once startup is done or timeout is complete
+// true if startup is done
+func awaitStartup(timeout time.Duration) bool {
+	ticker := time.NewTicker(timeout)
+	for {
+		select {
+		case <-ready:
+			return true
+		case <-ticker.C:
+			return false
+		}
+	}
 }
 
 func extractOrGenerateCID(c echo.Context) string {
@@ -256,7 +274,7 @@ func installer(c echo.Context, version InstallerVersion) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "no hotlinking >:(")
 	}
 
-	if !ready {
+	if !awaitStartup(5 * time.Second) {
 		c.Response().Header().Set("Retry-After", "120")
 		return echo.NewHTTPError(http.StatusServiceUnavailable, "Installer download not ready yet, please try again later")
 	}
