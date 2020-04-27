@@ -161,13 +161,11 @@ func downloadUntilSuccess(version InstallerVersion, duration time.Duration) []by
 // true if startup is done
 func awaitStartup(timeout time.Duration) bool {
 	ticker := time.NewTicker(timeout)
-	for {
-		select {
-		case <-ready:
-			return true
-		case <-ticker.C:
-			return false
-		}
+	select {
+	case <-ready:
+		return true
+	case <-ticker.C:
+		return false
 	}
 }
 
