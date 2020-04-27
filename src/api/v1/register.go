@@ -78,7 +78,7 @@ func registerWithToken(c echo.Context) error {
 	}
 
 	authedUser := middleware.GetUser(c)
-	err := c.Bind(body)
+	err := c.Bind(&body)
 	if err != nil {
 		return err
 	}
