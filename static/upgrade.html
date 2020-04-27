@@ -176,12 +176,12 @@
         <form novalidate id="upgrade_form" class="row">
             <!-- Materialize doesn't support text input nested within label, so we need a for-id relationship -->
             <div class="input-field col s10" id="token_field">
-                <input type="text" name="token" id="token" class="validate" required pattern="[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}">
+                <input type="text" name="token" id="token" class="validate" required pattern="\s*[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\s*">
                 <label for="token" data-error="Invalid token">
                     Token
                 </label>
-                <span class="helper-text">
-                    Impact Accounts require a token generated when you donated
+                <span class="helper-text token-info">
+                    Please enter a token
                 </span>
             </div>
             <div class="input-field col s2">
@@ -396,22 +396,64 @@
             // validate token
             if (!form.token.value) {
                 err.push("Token is required")
+            } else if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(form.token.value.trim())) {
+                err.push("Token is in invalid format")
             }
 
             return err
         }
 
         function onEditUpgradeForm (event) {
-            // Don't use jquery here; the native DOM API let's us do form[name] and form.elements
-            var form = document.getElementById("upgrade_form");
+            var token = document.getElementById("upgrade_form").token.value.trim()
 
-            // TODO lookup roles token would grant? and/or check it is valid?
+            // lookup token info _if_ token is a valid uuid
+            if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(token)) {
+                api.getTokenInfo(token)
+                .then(function (info) {
+                    if (!api.user) {
+                        // This can be called early before api.user is setup
+                        return
+                    }
+
+                    var text = "";
+                    if (info.roles.length < 1) {
+                        text += "This token is valid but grants no roles!"
+                    } else {
+                        var duplicates = []
+                        var added = []
+                        info.roles.forEach(function (role) {
+                            if (api.user.roles.includes(role)) {
+                                duplicates.push(role)
+                            } else {
+                                added.push(role)
+                            }
+                        })
+                        if (added.length > 0) {
+                            text += "This token will add <b>" + oxfordJoin(added) + "</b> status to your Impact Account. "
+                        }
+                        if (duplicates.length > 0) {
+                            text += "<strong>WARNING:</strong> This token contains <b>" + oxfordJoin(duplicates) + "</b>, which you already have! "
+                        }
+                    }
+                    $(".token-info").html(text)
+                    $("#upgrade_form button[type=submit]").attr("disabled", false)
+                })
+                .catch(function (error) {
+                    if (error === "Bad Request: invalid token") {
+                        error = "Invalid token"
+                    }
+                    $("#info_msg").text(error)
+                    $("#upgrade_form button[type=submit]").attr("disabled", true)
+                })
+            } else {
+                $(".token-info").text("Please enter a token")
+            }
 
             var errors = validateUpgradeForm()
             $("#info_msg").html(errors.join("<br>"))
 
-            // Disable submit if invalid
-            $("#upgrade_form button[type=submit]").attr("disabled", errors.length > 0)
+            // Disable submit, token lookup will enable it if valid
+            $("#upgrade_form button[type=submit]").attr("disabled", true)
         }
         $("#upgrade_form")
             .submit(function (event) {
@@ -420,20 +462,8 @@
                 // Don't submit if the submit button is disabled (prevent submit-on-enter if no change)
                 if ($("#upgrade_form button[type=submit]").attr("disabled")) return;
 
-                // jquery's serialize() method won't include unchecked checkboxes, so we should handle this ourselves
-                var form = document.getElementById("upgrade_form")
-                var data = {
-                    token: form.token.value
-                }
-                $.each(document.getElementById("upgrade_form").elements, function (i, elm) {
-                    if (api.user.hasOwnProperty(elm.name)) {
-                        data[elm.name] = castToUserType(elm);
-                    } else if (["password"].includes(elm.name)) {
-                        data[elm.name] = elm.value
-                    }
-                })
-
-                api.register(data)
+                var token = document.getElementById("upgrade_form").token.value
+                api.register({token: token.trim()})
                     .then(function (response) {
                         window.location = "/account"
                     })
@@ -450,12 +480,11 @@
 
             $("#token_field")
                 .addClass("hidden")
-                .after('<p class="input-field col s12">Token: <code>'+token+'</code></p>')
+                .after('<div class="input-field col s12"><p>Token: <code>'+token+'</code></p><p class="token-info"></p></div>')
 
             var tokenField = document.getElementById("token")
             tokenField.value = token
             tokenField.type = "hidden"
-            onEditUpgradeForm()
         }
 
         function getRegisterURL() {
@@ -505,6 +534,9 @@
                     } else {
                         setMinecraftInfo()
                     }
+
+                    // Initialise form
+                    onEditUpgradeForm()
 
                     $("#upgrade").removeClass("invisible")
                 })

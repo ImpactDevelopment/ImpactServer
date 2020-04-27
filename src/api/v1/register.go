@@ -6,9 +6,11 @@ import (
 	"github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/ImpactDevelopment/ImpactServer/src/minecraft"
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
+	"github.com/lib/pq"
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"github.com/ImpactDevelopment/ImpactServer/src/discord"
@@ -17,38 +19,65 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type registrationCheck struct {
-	Token string `json:"token" form:"token" query:"token"`
-}
-
-type registration struct {
-	Token        string `json:"token" form:"token" query:"token"`
-	DiscordToken string `json:"discord" form:"discord" query:"discord"`
-	Minecraft    string `json:"minecraft" form:"minecraft" query:"minecraft"`
-	Email        string `json:"email" form:"email" query:"email"`
-	Password     string `json:"password" form:"password" query:"password"`
-}
-
 func checkToken(c echo.Context) error {
-	body := &registrationCheck{}
-	err := c.Bind(body)
+	var body struct {
+		Token string `json:"token" form:"token" query:"token"`
+	}
+
+	err := c.Bind(&body)
 	if err != nil {
 		return err
 	}
 	if body.Token == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "token missing")
 	}
-	var createdAt int64
-	err = database.DB.QueryRow("SELECT created_at FROM pending_donations WHERE token = $1 AND NOT used", body.Token).Scan(&createdAt)
+	token, err := getToken(body.Token)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid token")
+		return err
 	}
-	return c.String(200, "true")
+
+	var createdAt int64
+	var roles pq.StringArray
+	err = database.DB.QueryRow(`
+		SELECT
+			created_at,
+			STRING_TO_ARRAY(
+				CONCAT_WS(',',
+					CASE WHEN premium THEN 'premium' END,
+					CASE WHEN pepsi THEN 'pepsi' END,
+					CASE WHEN spawnmason THEN 'spawnmason' END,
+					CASE WHEN staff THEN 'staff' END
+				),
+				','
+			) AS roles
+		FROM pending_donations
+		WHERE token = $1 AND NOT used`, token).Scan(&createdAt, &roles)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid token").SetInternal(err)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
+	}
+
+	return c.JSON(http.StatusOK, struct {
+		CreatedAt string   `json:"created_at"`
+		Roles     []string `json:"roles"`
+	}{
+		CreatedAt: time.Unix(createdAt, 0).UTC().Format(time.RFC3339),
+		Roles:     roles,
+	})
 }
 
 func registerWithToken(c echo.Context) error {
+	var body struct {
+		Token        string `json:"token" form:"token" query:"token"`
+		DiscordToken string `json:"discord" form:"discord" query:"discord"`
+		Minecraft    string `json:"minecraft" form:"minecraft" query:"minecraft"`
+		Email        string `json:"email" form:"email" query:"email"`
+		Password     string `json:"password" form:"password" query:"password"`
+	}
+
 	authedUser := middleware.GetUser(c)
-	body := &registration{}
 	err := c.Bind(body)
 	if err != nil {
 		return err
@@ -59,9 +88,8 @@ func registerWithToken(c echo.Context) error {
 	}
 
 	// Verify the registration token
-	// TODO get roles from token
-	body.Token = strings.TrimSpace(body.Token)
 	var (
+		token      *uuid.UUID
 		createdAt  int64
 		amount     int64
 		used       bool
@@ -73,7 +101,11 @@ func registerWithToken(c echo.Context) error {
 	)
 	// token can be omitted if logged in
 	if body.Token != "" {
-		err = database.DB.QueryRow("SELECT created_at, amount, used, log_msg_id, premium, pepsi, spawnmason, staff FROM pending_donations WHERE token = $1", body.Token).Scan(&createdAt, &amount, &used, &logID, &premium, &pepsi, &spawnmason, &staff)
+		token, err = getToken(body.Token)
+		if err != nil {
+			return err
+		}
+		err = database.DB.QueryRow("SELECT created_at, amount, used, log_msg_id, premium, pepsi, spawnmason, staff FROM pending_donations WHERE token = $1", token).Scan(&createdAt, &amount, &used, &logID, &premium, &pepsi, &spawnmason, &staff)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid token")
 		}
@@ -177,8 +209,8 @@ func registerWithToken(c echo.Context) error {
 	}
 
 	// TODO should we just DELETE the token?
-	if body.Token != "" {
-		_, err = tx.Exec("UPDATE pending_donations SET used = true, used_by = $1 WHERE token = $2", userID, body.Token)
+	if token != nil {
+		_, err = tx.Exec("UPDATE pending_donations SET used = true, used_by = $1 WHERE token = $2", userID, token)
 		if err != nil {
 			log.Print(err.Error())
 			return err
@@ -235,9 +267,16 @@ func registerWithToken(c echo.Context) error {
 	if user == nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "successfully registered, but can't find user")
 	}
-	token := jwt.CreateUserJWT(user)
 
-	return c.String(http.StatusOK, token)
+	return c.String(http.StatusOK, jwt.CreateUserJWT(user))
+}
+
+func getToken(token string) (*uuid.UUID, error) {
+	tokenID, err := uuid.Parse(strings.TrimSpace(token))
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid token format").SetInternal(err)
+	}
+	return &tokenID, nil
 }
 
 func verifyEmail(email string) (string, error) {

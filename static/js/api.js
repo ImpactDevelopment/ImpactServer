@@ -97,6 +97,20 @@
                 })
             })
         },
+        getTokenInfo: function(token) {
+            return new Promise(function (resolve, reject) {
+                $.get({
+                    url: baseUrl + "/checktoken?token=" + encodeURIComponent(token),
+                    dataType: "json",
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        reject(errorThrown + ": " + messageFromjqXHR(jqXHR))
+                    },
+                    success: function (data, status) {
+                        resolve(data)
+                    }
+                })
+            })
+        },
         confirmPayment: function(orderID) {
             return new Promise(function (resolve, reject) {
                 $.post({

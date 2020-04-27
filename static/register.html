@@ -99,6 +99,24 @@
             return errors.length < 1 && !unlinked
         }
 
+        function oxfordJoin(arr){
+            let l = arr.length;
+            if (l < 1) return "";
+            if (l === 1) return arr[0];
+            if (l === 2) return arr.join(" & ");
+            arr = arr.slice(); // Don't mutate the original
+            arr[l-1] = "& "+arr[l-1];
+            return arr.join(", ");
+        }
+
+        function redirect(url) {
+            try {
+                window.location.replace(url);
+            } catch (e) {
+                window.location = url;
+            }
+        }
+
         function gtag() {
             if (!window.dataLayer) {
                 window.dataLayer = []
@@ -311,7 +329,7 @@
             <label for="token" data-error="Invalid token">
                 Registration token
             </label>
-            <span class="helper-text">
+            <span class="helper-text token-info">
                 Impact Accounts require a token generated when you donated
             </span>
         </div>
@@ -365,10 +383,15 @@
         if (token) {
             // Hide the label and set the input value if a token was passed in
             // We don't care if it is valid at this point
-            $("#token_field").addClass("hidden")
+            $("#token_field")
+                .addClass("hidden")
+                .after('<div class="input-field col s12"><p>Token: <code>'+token+'</code></p><p class="token-info"></p></div>')
+
             var tokenField = document.getElementById("token")
             tokenField.value = token
             tokenField.type = "hidden"
+
+            setTokenInfo(token)
         }
 
         if (api.isLoggedIn()) {
@@ -409,6 +432,10 @@
                 // TODO create some method for existing users to use a token to add roles to their account
                 $("#token_field").addClass("hidden")
 
+                if (token) {
+                    setTokenInfo(token)
+                }
+
                 $(".unhide").removeClass("unhide hidden")
             })
             .catch(function (error) {
@@ -417,6 +444,37 @@
             })
         } else {
             $(".unhide").removeClass("unhide hidden")
+        }
+
+        function setTokenInfo(token) {
+            token = token.trim()
+            // lookup token info _if_ token is a valid uuid
+            if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(token)) {
+                api.getTokenInfo(token)
+                    .then(function (info) {
+                        var text = "";
+                        switch (info.roles.length) {
+                            case 0: text += "This token is valid but grants no roles! "; break
+                            case 1: {
+                                var role = info.roles[0]
+                                text += "This token will create a <b>" + role + "</b> account. "
+                            } break
+                            default: text += "This token will create an account with <b>" + oxfordJoin(info.roles) + "</b> status. "
+                        }
+                        if (api.isLoggedIn() && api.user && api.user.roles.length > 0) {
+                            text += "You already have <b>" + oxfordJoin(api.user.roles) + "</b> status on your account. "
+                        }
+                        $(".token-info").html(text)
+                    })
+                    .catch(function (error) {
+                        if (error === "Bad Request: invalid token") {
+                            error = "Invalid token"
+                        }
+                        $(".token-info").text(error)
+                    })
+            } else {
+                $(".token-info").text("Invalid token format")
+            }
         }
 
         // Called by the oauth popup window
@@ -561,6 +619,11 @@
                 })
         }
         $("#minecraft_name").keyup(updateMinecraftInfo).blur(updateMinecraftInfo)
+
+        function updateToken(event) {
+            setTokenInfo(this.value)
+        }
+        $("#token").keyup(updateToken).blur(updateToken)
 
         $("form").on("submit", function(event) {
             event.preventDefault()
