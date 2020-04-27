@@ -375,13 +375,13 @@
             api.me()
             .then(function (user) {
                 if (api.isFullAccount(user)) {
-                    // TODO show a warning? Or redirect to some "I have an account but i want to link a donation with it" form?
-                    var error = ["Uh oh, sorry we can't register you if you are already logged in to a full account."]
+                    // If the user is already logged into a full account, redirect them to upgrade it
+                    // The login session is in localstorage, but we need to pass on the token if it is set
+                    var url = "/upgrade"
                     if (token) {
-                        error.push("Your registration token is <code>"+token+"</code>")
-                        error.push("Please contact an Impact developer on <a href=\"/discord.html\">discord</a>.")
+                        url += "?token=" + encodeURIComponent(token)
                     }
-                    $("body").html(error.join("<br>"))
+                    redirect(url)
                     return
                 }
 
