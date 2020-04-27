@@ -2,6 +2,7 @@ package web
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -52,13 +53,19 @@ func (version InstallerVersion) fetchFile() ([]byte, error) {
 	url := version.getURL()
 	fmt.Println("Downloading", url)
 
-	resp, err := http.Get(url)
+	request, err := util.GetRequest(url)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	response, err := request.Do()
+	if err != nil {
+		return nil, err
+	}
+	if !response.Ok() {
+		return nil, errors.New("Installer download status not OK")
+	}
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data := response.Body
 	fmt.Println("Finished downloading", url, "length is", len(data))
 	return data, err
 }
@@ -91,10 +98,13 @@ func init() {
 }
 
 func startup() {
-	installerJar, err := JAR.fetchFile()
-	if err != nil {
-		panic(err)
-	}
+	// Download the two files in parallel
+	jarCh := make(chan []byte)
+	exeCh := make(chan []byte)
+	go func() { jarCh <- downloadUntilSuccess(JAR, 5*time.Minute) }()
+	go func() { exeCh <- downloadUntilSuccess(EXE, 5*time.Minute) }()
+	var installerJar = <-jarCh
+	var installerExe = <-exeCh
 
 	zipReader, err := zip.NewReader(bytes.NewReader(installerJar), int64(len(installerJar)))
 	if err != nil {
@@ -118,11 +128,6 @@ func startup() {
 		})
 	}
 
-	installerExe, err := EXE.fetchFile()
-	if err != nil {
-		panic(err)
-	}
-
 	exeHeaderLen := len(installerExe) - len(installerJar)
 	for i := 0; i < len(installerJar); i++ {
 		if installerJar[i] != installerExe[exeHeaderLen+i] {
@@ -139,8 +144,29 @@ func startup() {
 	}()
 }
 
-func awaitStartup() { // blocks and only returns once startup is done
-	<-ready
+// download the installer, if an error occurs keep trying again after duration (blocking)
+func downloadUntilSuccess(version InstallerVersion, duration time.Duration) []byte {
+	var attempts int
+	exe, err := version.fetchFile()
+	for err != nil {
+		attempts++
+		fmt.Fprintf(os.Stderr, "Error downloading %s Installer after %d attempts: %s\n", version.getEXT(), attempts, err.Error())
+		time.Sleep(duration)
+		exe, err = version.fetchFile()
+	}
+	return exe
+}
+
+// blocks and only returns once startup is done or timeout is complete
+// true if startup is done
+func awaitStartup(timeout time.Duration) bool {
+	ticker := time.NewTicker(timeout)
+	select {
+	case <-ready:
+		return true
+	case <-ticker.C:
+		return false
+	}
 }
 
 func extractOrGenerateCID(c echo.Context) string {
@@ -239,12 +265,16 @@ func installer(c echo.Context, version InstallerVersion) error {
 	if installerVersion == "" {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Installer version not specified")
 	}
-	awaitStartup() // in case we get an early request, block until startup is done
 
 	referer := c.Request().Referer()
 	if referer != "" && !strings.HasPrefix(referer, util.GetServerURL().String()) && !strings.Contains(referer, "brady-money-grubbing-completed") {
 		fmt.Println("BLOCKING referer", referer)
 		return echo.NewHTTPError(http.StatusUnauthorized, "no hotlinking >:(")
+	}
+
+	if !awaitStartup(5 * time.Second) {
+		c.Response().Header().Set("Retry-After", "120")
+		return echo.NewHTTPError(http.StatusServiceUnavailable, "Installer download not ready yet, please try again later")
 	}
 
 	nightlies := c.QueryParam("nightlies") == "1" || c.QueryParam("nightlies") == "true"
