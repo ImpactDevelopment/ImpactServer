@@ -26,15 +26,22 @@ type (
 	resultEdition struct {
 		Edition *users.Edition
 	}
+	resultFeatures struct {
+		Features *users.Features
+	}
 )
 
 func getUser(c echo.Context) error {
 	if user := middleware.GetUser(c); user != nil {
+		// Full information about the user
+		// Be sure to update src/users/features.go:privateFeatures() if
+		// adding or removing role-exclusive features here (e.g. Editions)
 		type resp struct {
 			Email         string             `json:"email"`
 			Minecraft     *minecraft.Profile `json:"minecraft,omitempty"`
 			Discord       *discord.User      `json:"discord,omitempty"`
 			Edition       *users.Edition     `json:"edition,omitempty"`
+			Features      *users.Features    `json:"features,omitempty"`
 			LegacyEnabled bool               `json:"legacy_enabled"`
 			Incognito     bool               `json:"incognito"`
 			Roles         []users.Role       `json:"roles,omitempty"`
@@ -45,6 +52,7 @@ func getUser(c echo.Context) error {
 		minecraftCh := make(chan resultMC)
 		discordCh := make(chan resultDiscord)
 		editionCh := make(chan resultEdition)
+		featuresCh := make(chan resultFeatures)
 		go func() {
 			if user.MinecraftID == nil {
 				minecraftCh <- resultMC{}
@@ -72,10 +80,16 @@ func getUser(c echo.Context) error {
 				Edition: user.Edition(),
 			}
 		}()
+		go func() {
+			featuresCh <- resultFeatures{
+				Features: user.Features(),
+			}
+		}()
 		var (
 			minecraftResult = <-minecraftCh
 			discordResult   = <-discordCh
 			editionResult   = <-editionCh
+			featuresResult  = <-featuresCh
 		)
 		if minecraftResult.Error != nil {
 			return minecraftResult.Error
@@ -89,6 +103,7 @@ func getUser(c echo.Context) error {
 			Minecraft:     minecraftResult.Profile,
 			Discord:       discordResult.Discord,
 			Edition:       editionResult.Edition,
+			Features:      featuresResult.Features,
 			LegacyEnabled: user.LegacyEnabled,
 			Incognito:     user.Incognito,
 			Roles:         user.Roles,

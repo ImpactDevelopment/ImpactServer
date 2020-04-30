@@ -2,6 +2,8 @@ package users
 
 import "github.com/google/uuid"
 
+// Public information about the user, can be hidden using `incognito`
+// Be sure to update src/users/features.go:publicFeatures() if adding/removing features
 type UserInfo struct {
 	// Icon to display next to this user
 	Icon string `json:"icon,omitempty"`

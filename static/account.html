@@ -683,18 +683,23 @@
 
                     // Update what incognito mode would hide
                     if (api.user.info) {
-                        var i = api.user.info
-                        var features = []
                         var prefix = ""
-                        if (i.cape) {
-                            features.push("cape")
+                        var features = []
+
+                        // Features list is omitted if empty, so check it exists before using it
+                        var f = api.user.features
+                        if (typeof f === 'object' && f !== null && Array.isArray(f.public)) {
+                            features = api.user.features.public
                         }
-                        if (i.icon) {
-                            features.push("icon")
-                        }
-                        if (i.text_color || i.bg_color || i.border_color) {
-                            features.push("custom nametag")
-                        }
+
+                        // Map internal feature names to "pretty" display names
+                        features = features.map(function (feature) {
+                            switch (feature) {
+                                case "nametag": return "custom nametag"
+                                default: return feature
+                            }
+                        })
+
                         if (features.length > 0) {
                             prefix = "your "
                         }
