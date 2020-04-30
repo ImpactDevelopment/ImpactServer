@@ -14,39 +14,38 @@ import (
 	"strings"
 )
 
-type (
-	resultDiscord struct {
-		Discord *discord.User
-		Error   error
-	}
-	resultMC struct {
-		Profile *minecraft.Profile
-		Error   error
-	}
-	resultEdition struct {
-		Edition *users.Edition
-	}
-	resultFeatures struct {
-		Features *users.Features
-	}
-)
-
 func getUser(c echo.Context) error {
 	if user := middleware.GetUser(c); user != nil {
-		// Full information about the user
-		// Be sure to update src/users/features.go:privateFeatures() if
-		// adding or removing role-exclusive features here (e.g. Editions)
-		type resp struct {
-			Email         string             `json:"email"`
-			Minecraft     *minecraft.Profile `json:"minecraft,omitempty"`
-			Discord       *discord.User      `json:"discord,omitempty"`
-			Edition       *users.Edition     `json:"edition,omitempty"`
-			Features      *users.Features    `json:"features,omitempty"`
-			LegacyEnabled bool               `json:"legacy_enabled"`
-			Incognito     bool               `json:"incognito"`
-			Roles         []users.Role       `json:"roles,omitempty"`
-			Info          *users.UserInfo    `json:"info,omitempty"`
-		}
+		type (
+			resultDiscord struct {
+				Discord *discord.User
+				Error   error
+			}
+			resultMC struct {
+				Profile *minecraft.Profile
+				Error   error
+			}
+			resultEdition struct {
+				Edition *users.Edition
+			}
+			resultFeatures struct {
+				Features *users.Features
+			}
+			// Full information about the user
+			// Be sure to update src/users/features.go:privateFeatures() if
+			// adding or removing role-exclusive features here (e.g. Editions)
+			response struct {
+				Email         string             `json:"email"`
+				Minecraft     *minecraft.Profile `json:"minecraft,omitempty"`
+				Discord       *discord.User      `json:"discord,omitempty"`
+				Edition       *users.Edition     `json:"edition,omitempty"`
+				Features      *users.Features    `json:"features,omitempty"`
+				LegacyEnabled bool               `json:"legacy_enabled"`
+				Incognito     bool               `json:"incognito"`
+				Roles         []users.Role       `json:"roles,omitempty"`
+				Info          *users.UserInfo    `json:"info,omitempty"`
+			}
+		)
 
 		// Lookup minecraft and discord in parallel
 		minecraftCh := make(chan resultMC)
@@ -98,7 +97,7 @@ func getUser(c echo.Context) error {
 			return discordResult.Error
 		}
 
-		return c.JSON(http.StatusOK, resp{
+		return c.JSON(http.StatusOK, response{
 			Email:         user.Email,
 			Minecraft:     minecraftResult.Profile,
 			Discord:       discordResult.Discord,
