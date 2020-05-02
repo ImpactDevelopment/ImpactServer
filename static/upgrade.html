@@ -447,7 +447,7 @@
                         window.location = "/account"
                     })
                     .catch(function (error) {
-                        if (error.toLowerCase().endsWith("invalid token")) {
+                        if (error === "Unauthorized: invalid token") {
                             api.logout()
                             error = "You were logged into an Impact Account, but your session expired. You have now been logged out. "
                                 + "If you were upgrading an old donation to an Impact Account, please start again. "
