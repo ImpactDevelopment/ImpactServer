@@ -91,7 +91,7 @@
         opacity: .6;
         font-weight: normal;
     }
-    #form_msg, #discord_msg, #minecraft_msg {
+    .error-msg {
         color: #F44336;
         padding-left: 8px;
     }
@@ -162,7 +162,7 @@
         <p id="expired" class="col s12 large_text hidden">Your session expired and you have been logged out.</p>
         <div class="input-field col s12">
             <a id="discord_login_btn" class="btn discord waves-effect waves-light">Login with discord</a>
-            <p id="discord_login_msg"></p>
+            <p id="discord_login_msg" class="error-msg"></p>
         </div>
         <div class="input-field col s12 center grey-text">
             <p>or</p>
@@ -181,7 +181,7 @@
                 Login
             </button>
         </div>
-        <p id="form_msg" class="col s12 helper-text error"></p>
+        <p id="login_msg" class="col s12 helper-text error-msg"></p>
     </form>
     <div id="dashboard" class="row hidden">
         <h4 class="col s12">Impact Account dashboard</h4>
@@ -222,7 +222,7 @@
                     <div class="card-action">
                         <a id="minecraft_link_btn" class="btn minecraft waves-effect waves-light hide-if-linked">Link Minecraft</a>
                         <a id="minecraft_unlink_btn" class="btn minecraft waves-effect waves-light hide-if-unlinked">Unlink</a>
-                        <span id="minecraft_msg"></span>
+                        <span id="minecraft_msg" class="error-msg"></span>
                     </div>
                 </div>
             </div>
@@ -245,7 +245,7 @@
                     <div class="card-action">
                         <a id="discord_link_btn" class="btn discord waves-effect waves-light hide-if-linked">Link Discord</a>
                         <a id="discord_unlink_btn" class="btn discord waves-effect waves-light hide-if-unlinked">Unlink</a>
-                        <span id="discord_msg"></span>
+                        <span id="discord_msg" class="error-msg"></span>
                     </div>
                 </div>
             </div>
@@ -290,7 +290,7 @@
                         Update
                     </button>
                 </div>
-                <p id="info_msg" class="col s12 helper-text error"></p>
+                <p id="info_msg" class="col s12 helper-text error-msg"></p>
             </form>
         </div>
         <div class="col s12">
@@ -502,7 +502,7 @@
             var msg = ""
             if (!email) msg += ("<br>Email is required")
             if (!password) msg += ("<br>Password is required")
-            $("#form_msg").html(msg)
+            $("#login_msg").html(msg)
             if (msg) return
 
             api.login(email, password)
@@ -511,7 +511,7 @@
                     init()
                 })
                 .catch(function(error) {
-                    $("#form_msg").text(error)
+                    $("#login_msg").text(error)
                 })
         })
 
@@ -725,6 +725,7 @@
                         $("#expired").removeClass("hidden")
                         $("#login").removeClass("hidden")
                         api.logout()
+                        return
                     }
                     $("#info")
                         .text(error)

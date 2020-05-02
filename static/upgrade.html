@@ -69,7 +69,7 @@
             opacity: .6;
             font-weight: normal;
         }
-        #form_msg, #discord_msg, #minecraft_msg {
+        .error-msg {
             color: #F44336;
             padding-left: 8px;
         }
@@ -140,7 +140,7 @@
         <p id="expired" class="col s12 large_text hidden">Your session expired and you have been logged out.</p>
         <div class="input-field col s12">
             <a id="discord_login_btn" class="btn discord waves-effect waves-light">Login with discord</a>
-            <p id="discord_login_msg"></p>
+            <p id="discord_login_msg" class="error-msg"></p>
         </div>
         <div class="input-field col s12 center grey-text">
             <p>or</p>
@@ -159,7 +159,7 @@
                 Login
             </button>
         </div>
-        <p id="form_msg" class="col s12 helper-text error"></p>
+        <p id="login_msg" class="col s12 helper-text error-msg"></p>
     </form>
     <div id="upgrade" class="row hidden fade-in invisible">
         <h4 class="col s12">Impact Account upgrade</h4>
@@ -189,7 +189,7 @@
                     Upgrade
                 </button>
             </div>
-            <p id="info_msg" class="col s12 helper-text error"></p>
+            <p id="upgrade_msg" class="col s12 helper-text error-msg"></p>
         </form>
         <h4 class="col s12">Account Info</h4>
         <div class="col s12">
@@ -285,34 +285,13 @@
 
         // Called by the oauth popup window
         window.discordCallback = function(discordToken) {
-            // Either trying to login, or trying to link discord with existing account
-            if (api.isLoggedIn()) {
-                $("#discord_msg").text("")
-                $("#discord_info").addClass("invisible")
-                $(".card.discord").removeClass("unlinked").addClass("linked")
-
-                // AJAX to our api and discord's api in parallel
-
-                // Ours saves the info to the DB
-                api.me({discord: discordToken})
-                    .then(function(result) {
-                        // TODO signify that it has been saved - maybe show a loading animation until now?
-                        // api.user should now have discord info
-                        setDiscordInfo(api.user.discord)
-                        $("#discord_info").removeClass("invisible")
-                    })
-                    .catch(function(error) {
-                        $("#discord_msg").text("Error saving discord info: " + error)
-                    })
-            } else {
-                api.login(discordToken)
-                    .then(function(result) {
-                        init()
-                    })
-                    .catch(function(error) {
-                        $("#discord_login_msg").text(error)
-                    })
-            }
+            api.login(discordToken)
+                .then(function(result) {
+                    init()
+                })
+                .catch(function(error) {
+                    $("#discord_login_msg").text(error)
+                })
         }
 
         // Updates the discord info box's content to match the given discord user
@@ -376,7 +355,7 @@
             var msg = ""
             if (!email) msg += ("<br>Email is required")
             if (!password) msg += ("<br>Password is required")
-            $("#form_msg").html(msg)
+            $("#login_msg").html(msg)
             if (msg) return
 
             api.login(email, password)
@@ -385,7 +364,7 @@
                     init()
                 })
                 .catch(function(error) {
-                    $("#form_msg").text(error)
+                    $("#login_msg").text(error)
                 })
         })
 
@@ -442,7 +421,7 @@
                     if (error === "Bad Request: invalid token") {
                         error = "Invalid token"
                     }
-                    $("#info_msg").text(error)
+                    $("#upgrade_msg").text(error)
                     $("#upgrade_form button[type=submit]").attr("disabled", true)
                 })
             } else {
@@ -450,7 +429,7 @@
             }
 
             var errors = validateUpgradeForm()
-            $("#info_msg").html(errors.join("<br>"))
+            $("#upgrade_msg").html(errors.join("<br>"))
 
             // Disable submit, token lookup will enable it if valid
             $("#upgrade_form button[type=submit]").attr("disabled", true)
@@ -468,7 +447,13 @@
                         window.location = "/account"
                     })
                     .catch(function (error) {
-                        $("#form_msg").text(error)
+                        if (error.toLowerCase().endsWith("invalid token")) {
+                            api.logout()
+                            error = "You were logged into an Impact Account, but your session expired. You have now been logged out. "
+                                + "If you were upgrading an old donation to an Impact Account, please start again. "
+                                + "If you were trying to register a new impact account, please ignore this message and submit the form again."
+                        }
+                        $("#login_msg").text(error)
                     })
             })
             .keyup(onEditUpgradeForm).click(onEditUpgradeForm).change(onEditUpgradeForm)

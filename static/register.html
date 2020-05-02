@@ -200,7 +200,7 @@
             opacity: .6;
             font-weight: normal;
         }
-        #form_msg, #discord_msg, #minecraft_msg {
+        .error-msg {
             color: #F44336;
             padding-left: 8px;
         }
@@ -296,7 +296,7 @@
                 <div class="card-action">
                     <a id="minecraft_link_btn" class="btn minecraft waves-effect waves-light hide-if-linked">Link Minecraft</a>
                     <a id="minecraft_unlink_btn" class="btn minecraft waves-effect waves-light hide-if-unlinked">Unlink</a>
-                    <span id="minecraft_msg"></span>
+                    <span id="minecraft_msg" class="error-msg"></span>
                 </div>
             </div>
         </div>
@@ -320,7 +320,7 @@
                 <div class="card-action">
                     <a id="discord_link_btn" class="btn discord waves-effect waves-light hide-if-linked">Link Discord</a>
                     <a id="discord_unlink_btn" class="btn discord waves-effect waves-light hide-if-unlinked">Unlink</a>
-                    <span id="discord_msg"></span>
+                    <span id="discord_msg" class="error-msg"></span>
                 </div>
             </div>
         </div>
@@ -372,7 +372,7 @@
                 <span>Yes, I am sure I want to register without linking my <span id="linkec_acc_list"></span>.</span>
             </label>
         </div>
-        <p id="form_msg" class="col s12 helper-text error"></p>
+        <p id="form_msg" class="col s12 helper-text error-msg"></p>
     </form>
 </div>
 
@@ -439,7 +439,12 @@
                 $(".unhide").removeClass("unhide hidden")
             })
             .catch(function (error) {
-                // This isn't that critical, but we should probably show an error warning the user something went wrong
+                if (error === "invalid token") {
+                    api.logout()
+                    error = "You were logged into an Impact Account, but your session has expired. If you were trying to register a new account, please ignore this message."
+                }
+                // Show an error warning the user something went wrong
+                $("#form").prepend('<div class="col s12"><h4>Warning</h4><p class="helper-text error-msg">' + error + '</p></div>')
                 $(".unhide").removeClass("unhide hidden")
             })
         } else {
@@ -641,6 +646,12 @@
                     window.location = "/account.html"
                 })
                 .catch(function (error) {
+                    if (error.toLowerCase().endsWith("invalid token")) {
+                        api.logout()
+                        error = "You were logged into an Impact Account, but your session expired. You have now been logged out. "
+                              + "If you were upgrading an old donation to an Impact Account, please start again. "
+                              + "If you were trying to register a new impact account, please ignore this message and submit the form again."
+                    }
                     $("#form_msg").text(error)
                 })
         })
