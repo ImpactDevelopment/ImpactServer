@@ -53,6 +53,16 @@ var specialCases = map[uuid.UUID]roleTemplate{ // TODO this should basically jus
 			Icon: "https://files.impactclient.net/img/texture/speckles128.png",
 		},
 	},
+	// liejurv since leijurv is disabled
+	uuid.MustParse("7b9c005b-011e-42de-bfb4-c0003f5c3a77"): {
+		info: &UserInfo{
+			TextColor: "RED",
+			Icon:      "https://files.impactclient.net/img/texture/speckles128.png",
+		},
+		edition: &Edition{
+			Icon: "https://files.impactclient.net/img/texture/speckles128.png",
+		},
+	},
 	// triibu popstonia
 	uuid.MustParse("8e563236-c7f5-4c82-aa27-c95bf3f4c322"): {
 		info: &UserInfo{
