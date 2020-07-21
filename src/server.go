@@ -5,16 +5,18 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/bobesa/go-domain-util/domainutil"
+
 	"github.com/ImpactDevelopment/ImpactServer/src/api"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/cloudflare"
 	mid "github.com/ImpactDevelopment/ImpactServer/src/middleware"
 	"github.com/ImpactDevelopment/ImpactServer/src/newWeb"
 	"github.com/ImpactDevelopment/ImpactServer/src/s3proxy"
-	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/ImpactDevelopment/ImpactServer/src/web"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 var port = 3000
@@ -44,18 +46,15 @@ func main() {
 
 	e.Use(middleware.BodyLimit("1M"))
 
-	e.Any("/*", func(c echo.Context) error {
+	e.Any("/*", func(c echo.Context) (err error) {
 		req := c.Request()
 		res := c.Response()
-
-		server := hosts[util.GetSubdomains(req.Host)]
-
-		if server == nil {
+		s := hosts[domainutil.Subdomain(req.Host)]
+		if s == nil {
 			return echo.ErrNotFound
 		}
-
-		server.ServeHTTP(res, req)
-		return nil
+		s.ServeHTTP(res, req)
+		return
 	})
 
 	e.Use(middleware.Recover())

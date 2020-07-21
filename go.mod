@@ -6,6 +6,7 @@ go 1.13
 
 require (
 	github.com/aws/aws-sdk-go v1.25.9
+	github.com/bobesa/go-domain-util v0.0.0-20190911083921-4033b5f7dd89
 	github.com/bwmarrin/discordgo v0.20.2
 	github.com/gbrlsnchs/jwt/v3 v3.0.0-rc.0
 	github.com/google/uuid v1.1.1
