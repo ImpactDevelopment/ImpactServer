@@ -84,7 +84,7 @@ var specialCases = map[uuid.UUID]roleTemplate{ // TODO this should basically jus
 			
 		},
 		edition: &Edition{
-			Icon: "https://i.imgur.com/NrA4XMb.jpg",
+			Icon: "https://i.imgur.com/aKt1g4H.jpg",
 		},
 	},
 
