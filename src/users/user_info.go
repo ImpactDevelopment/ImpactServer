@@ -81,7 +81,6 @@ var specialCases = map[uuid.UUID]roleTemplate{ // TODO this should basically jus
 			TextColor: "RED",
 			Icon:      "https://i.imgur.com/aKt1g4H.jpg",
 			Cape:      "https://i.imgur.com/bvhC1Xk.png",
-			
 		},
 		edition: &Edition{
 		        Icon: "https://i.imgur.com/aKt1g4H.jpg",
