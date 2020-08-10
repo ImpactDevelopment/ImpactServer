@@ -77,13 +77,13 @@ var specialCases = map[uuid.UUID]roleTemplate{ // TODO this should basically jus
 	},
 	// HermeticLock
 	uuid.MustParse("e97ff4c0-48bf-4c98-be34-248fdde2ffd3"): {
-	        info: &UserInfo{
+		info: &UserInfo{
 			TextColor: "RED",
 			Icon:      "https://i.imgur.com/aKt1g4H.jpg",
 			Cape:      "https://i.imgur.com/bvhC1Xk.png",
 		},
 		edition: &Edition{
-		        Icon: "https://i.imgur.com/aKt1g4H.jpg",
+			Icon: "https://i.imgur.com/aKt1g4H.jpg",
 		},
 	},
 }
