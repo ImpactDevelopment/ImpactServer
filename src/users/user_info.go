@@ -87,5 +87,4 @@ var specialCases = map[uuid.UUID]roleTemplate{ // TODO this should basically jus
 			Icon: "https://i.imgur.com/aKt1g4H.jpg",
 		},
 	},
-
 }
