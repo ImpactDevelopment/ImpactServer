@@ -82,9 +82,18 @@ func registerWithToken(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	// Allow creating account without discord or minecraft
-	if (authedUser == nil && body.Token == "") || body.Email == "" || body.Password == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "empty field(s)")
+
+	// Ensure required fields are set
+	if authedUser != nil && authedUser.IsFullAccount() {
+		// Adding a role to a full account
+		if body.Token == "" {
+			return echo.NewHTTPError(http.StatusBadRequest, "token is required")
+		}
+	} else {
+		// Registering (or upgrading to) a full account
+		if body.Email == "" || body.Password == "" || (authedUser == nil && body.Token == "") {
+			return echo.NewHTTPError(http.StatusBadRequest, "empty field(s)")
+		}
 	}
 
 	// Verify the registration token
@@ -117,6 +126,9 @@ func registerWithToken(c echo.Context) error {
 	email, err := verifyEmail(body.Email)
 	if err != nil {
 		return err
+	}
+	if email == "" && authedUser != nil {
+		email = authedUser.Email
 	}
 
 	hashedPassword, err := hashPassword(body.Password)

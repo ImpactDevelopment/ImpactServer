@@ -235,7 +235,7 @@
     </div>
 </div>
 
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/js/materialize.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 <script>
     (function init() {
         $("#fouc").addClass("invisible")
@@ -382,58 +382,71 @@
             return err
         }
 
-        function onEditUpgradeForm (event) {
-            var token = document.getElementById("upgrade_form").token.value.trim()
+        var onEditUpgradeForm = (function() {
+            // Keep track of the last token we looked up, to prevent looking it up twice in a row
+            var oldToken = "";
 
-            // lookup token info _if_ token is a valid uuid
-            if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(token)) {
-                api.getTokenInfo(token)
-                .then(function (info) {
-                    if (!api.user) {
-                        // This can be called early before api.user is setup
-                        return
-                    }
+            return function onEditUpgradeForm (event) {
+                var button = $("#upgrade_form button[type=submit]")
 
-                    var text = "";
-                    if (info.roles.length < 1) {
-                        text += "This token is valid but grants no roles!"
-                    } else {
-                        var duplicates = []
-                        var added = []
-                        info.roles.forEach(function (role) {
-                            if (api.user.roles.includes(role)) {
-                                duplicates.push(role)
-                            } else {
-                                added.push(role)
-                            }
-                        })
-                        if (added.length > 0) {
-                            text += "This token will add <b>" + oxfordJoin(added) + "</b> status to your Impact Account. "
-                        }
-                        if (duplicates.length > 0) {
-                            text += "<strong>WARNING:</strong> This token contains <b>" + oxfordJoin(duplicates) + "</b>, which you already have! "
-                        }
+                // Check for validation errors first and foremost
+                var errors = validateUpgradeForm()
+                $("#upgrade_msg").html(errors.join("<br>"))
+
+                if (errors.length < 0) {
+                    // Disable submit if errors present
+                    button.attr("disabled", true)
+                } else {
+                    // only lookup token info if token not empty, is modified and is a valid uuid
+                    var token = document.getElementById("upgrade_form").token.value.trim()
+                    if (token && oldToken !== token && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(token)) {
+                        oldToken = token
+
+                        // Disable submit during lookup, callback will enable if valid
+                        button.attr("disabled", true)
+
+                        api.getTokenInfo(token)
+                            .then(function (info) {
+                                if (!api.user) {
+                                    // This can be called early before api.user is setup
+                                    return
+                                }
+
+                                var text = "";
+                                if (info.roles.length < 1) {
+                                    text += "This token is valid but grants no roles!"
+                                } else {
+                                    var duplicates = []
+                                    var added = []
+                                    info.roles.forEach(function (role) {
+                                        if (api.user.roles.includes(role)) {
+                                            duplicates.push(role)
+                                        } else {
+                                            added.push(role)
+                                        }
+                                    })
+                                    if (added.length > 0) {
+                                        text += "This token will add <b>" + oxfordJoin(added) + "</b> status to your Impact Account. "
+                                    }
+                                    if (duplicates.length > 0) {
+                                        text += "<strong>WARNING:</strong> This token contains <b>" + oxfordJoin(duplicates) + "</b>, which you already have! "
+                                    }
+                                }
+                                $(".token-info").html(text)
+                                button.attr("disabled", false)
+                            })
+                            .catch(function (error) {
+                                if (error === "Bad Request: invalid token") {
+                                    error = "Invalid token"
+                                }
+                                $("#upgrade_msg").text(error)
+                                $("#upgrade_form button[type=submit]").attr("disabled", true)
+                            })
                     }
-                    $(".token-info").html(text)
-                    $("#upgrade_form button[type=submit]").attr("disabled", false)
-                })
-                .catch(function (error) {
-                    if (error === "Bad Request: invalid token") {
-                        error = "Invalid token"
-                    }
-                    $("#upgrade_msg").text(error)
-                    $("#upgrade_form button[type=submit]").attr("disabled", true)
-                })
-            } else {
-                $(".token-info").text("Please enter a token")
+                }
             }
+        })()
 
-            var errors = validateUpgradeForm()
-            $("#upgrade_msg").html(errors.join("<br>"))
-
-            // Disable submit, token lookup will enable it if valid
-            $("#upgrade_form button[type=submit]").attr("disabled", true)
-        }
         $("#upgrade_form")
             .submit(function (event) {
                 event.preventDefault()
@@ -520,8 +533,10 @@
                         setMinecraftInfo()
                     }
 
-                    // Initialise form
-                    onEditUpgradeForm()
+                    // Initialise form if token not empty
+                    if (document.getElementById("token").value) {
+                        onEditUpgradeForm()
+                    }
 
                     $("#upgrade").removeClass("invisible")
                 })
