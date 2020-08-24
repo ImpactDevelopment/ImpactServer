@@ -196,6 +196,9 @@
             </p>
         </div>
         <div id="info" class="fade-in invisible">
+            <p class="col s12">
+                Your Impact Account has <strong id="roles"></strong> status.
+            </p>
             <div class="input-field col s12 m6">
                 <div class="card minecraft unlinked">
                     <div class="card-content">
@@ -666,6 +669,16 @@
                         }
                     })
 
+                    // Set the account description header
+                    if (!user.roles || user.roles.length < 1) {
+                        $("#roles").parent().text("Your Impact Account has no roles!")
+                    } else if (user.roles.length === 1 && user.roles[0] === "premium") {
+                        $("#roles").parent().addClass("hidden")
+                    } else {
+                        $("#roles").text(oxfordJoin(user.roles))
+                    }
+
+                    // Set the discord info
                     if (api.user.discord) {
                         setDiscordInfo(api.user.discord)
                         $("#discord_info").removeClass("invisible")
@@ -674,6 +687,7 @@
                         setDiscordInfo()
                     }
 
+                    // Set the minecraft info
                     if (api.user.minecraft) {
                         setMinecraftInfo(api.user.minecraft)
                         $("#minecraft_info").removeClass("invisible")
