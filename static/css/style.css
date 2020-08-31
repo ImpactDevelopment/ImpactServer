@@ -330,3 +330,7 @@ nav a.button-collapse {
 .btn:hover {
     background-color: #1e86da;
 }
+
+.rules {
+    text-align: left;
+}
