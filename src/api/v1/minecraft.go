@@ -18,6 +18,7 @@ import (
 )
 
 var userData map[string]users.UserInfo
+var userDataNonHashed map[string]users.UserInfo
 
 var legacyRoles map[string]string
 
@@ -62,10 +63,11 @@ func checkDatabaseForUpdatedUsers() {
 }
 
 func updatedData(usersList []users.User) bool {
-	newUserData := generateMap(usersList)
+	newUserData, newUnhashed := generateMap(usersList)
 	// reflect.DeepEqual is slow, especially since this map is big
 	if userData == nil || !reflect.DeepEqual(newUserData, userData) {
 		userData = newUserData
+		userDataNonHashed = newUnhashed
 		return true
 	}
 	return false
@@ -104,15 +106,17 @@ func generateLegacy(usersList []users.User) map[string]string {
 	return m
 }
 
-func generateMap(usersList []users.User) map[string]users.UserInfo {
+func generateMap(usersList []users.User) (map[string]users.UserInfo, map[string]users.UserInfo) {
 	data := make(map[string]users.UserInfo)
+	unhashed := make(map[string]users.UserInfo)
 	for _, user := range usersList {
 		if !user.Incognito && user.MinecraftID != nil && user.UserInfo != nil {
 			// if a user has cape disabled, they are trying to be incognito. we should send no entry at all. not good enough to send "HASH123":{}.
 			data[hashUUID(*user.MinecraftID)] = *user.UserInfo
+			unhashed[user.MinecraftID.String()] = *user.UserInfo
 		}
 	}
-	return data
+	return data, unhashed
 }
 
 func hashUUID(uuid uuid.UUID) string {
