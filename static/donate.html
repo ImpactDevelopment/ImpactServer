@@ -23,6 +23,9 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script type="text/javascript" src="/js/api.js"></script>
 
+    <!-- Stripe -->
+    <script src="https://js.stripe.com/v3/"></script>
+
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-143397381-1"></script>
     <script>
@@ -52,36 +55,165 @@
     </div>
 </header>
  <div class="container">
-    <div class="row">
-        <form class="col s12">
-            <div class="row">
-                <br><br>
-                <div class="input-field col s9 push-l3">
-                    Donations of any size are appreciated! The minimum donation to receive premium features is $5. It is currently impossible to donate to Impact due to the termination of the PayPal account. This is being looked into and will be resolved as soon as possible.
-                </div>
-                <div class="input-field col s3 pull-l9">
-                    <span class="prefix">$</span>
-                    <input id="amount" type="number" data-type="currency" min="0.5" step="0.01" value="5"
-                           pattern="^\$\d{1,3}(,\d{3})*(\.\d+)?$">
-                    <label for="amount" class="active">Amount</label>
-                </div>
-                <div class="range-field col s12">
-                    <input id="amountslider" type="range" min="1" max="100" value="5">
-                </div>
-            </div>
-            <div class="row">
-                <div class="col s12">
-                    <div id="paypal-button-container"></div>
-                </div>
-                <div class="col s12" id="msg">
-                </div>
-            </div>
-        </form>
-    </div>
+    <form class="row" id="amount-form">
+        <br><br>
+        <div class="input-field col s9 push-l3">
+            Donations of any size are appreciated! The minimum donation to receive premium features is $5. It is currently impossible to donate to Impact due to the termination of the PayPal account. This is being looked into and will be resolved as soon as possible.
+        </div>
+        <div class="input-field col s3 pull-l9">
+            <span class="prefix">$</span>
+            <input id="amount" type="number" data-type="currency" min="0.5" step="0.01" value="5"
+                   pattern="^\$\d{1,3}(,\d{3})*(\.\d+)?$">
+            <label for="amount" class="active">Amount</label>
+        </div>
+        <div class="range-field col s12">
+            <input id="amountslider" type="range" min="1" max="100" value="5">
+        </div>
+    </form>
+    <form class="row hidden" id="payment-form">
+        <div class="col s12">
+                <div id="payment-request-button"><!-- A Stripe Element will be inserted here. --></div>
+                <hr /><!--TODO replace with "OR"-->
+                <div id="card-element"><!-- Stripe Elements will create input elements here --></div>
+                <div id="card-errors" role="alert"><!-- We'll put the error messages in this element --></div>
+                <button id="submit">Donate</button>
+        </div>
+    </form>
 </div>
 
-<script src="https://www.paypal.com/sdk/js?client-id=AaIwV_K_wsv1FUcoee2uHxfYptMhWXLVG6wFbdYEFBY2Ub94kM3m-8yzBOdKHMplLIES6BLGVB3yWJ7J"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/js/materialize.min.js"></script>
+<script>
+    // TODO wrap some of this in a "next" callback to process after deciding amount
+
+    function resetStripeElements() {
+        $('#payment-request-button').innerHTML('')
+        $("#card-element").innerHTML('')
+
+    }
+
+    var stripe = Stripe('pk_test_TYooMQauvdEDq54NiTphI7jx');//FIXME use actual public key
+    resetStripeElements()
+    var elements = stripe.elements();
+    var style = {
+        base: {
+            color: "#32325d",
+        }
+    };
+
+    // TODO get this from a create payment request upon completing amount-form
+    var payment = {
+        amount: 500,
+        clientSecret: "blahblahblah",
+        currency: "usd"
+    }
+
+    // paymentRequest is used for Apple Pay, Google Pay, and Chrome "click to pay"
+    var paymentRequest = stripe.paymentRequest({
+        country: 'US',
+        currency: 'usd',
+        total: {
+            label: 'Donation',
+            amount: payment.amount, // This must match the amount on the PaymentIntent we have a ClientSecret for
+        },
+        requestPayerName: true,
+        requestPayerEmail: true,
+    });
+
+    var prButton = elements.create('paymentRequestButton', {
+        paymentRequest: paymentRequest,
+    });
+
+    // Check the availability of the Payment Request API first.
+    paymentRequest.canMakePayment().then(function(result) {
+        if (result) {
+            prButton.mount('#payment-request-button');
+        } else {
+            // TODO hide anything else related such as the "OR" separator
+            document.getElementById('payment-request-button').style.display = 'none';
+        }
+    });
+
+    paymentRequest.on('paymentmethod', function(event) {
+        // Confirm the PaymentIntent without handling potential next actions (yet).
+        stripe.confirmCardPayment(
+            payment.clientSecret,
+            {payment_method: event.paymentMethod.id},
+            {handleActions: false}
+        ).then(function(confirmResult) {
+            if (confirmResult.error) {
+                // Report to the browser that the payment failed, prompting it to
+                // re-show the payment interface, or show an error message and close
+                // the payment interface.
+                event.complete('fail');
+            } else {
+                // Report to the browser that the confirmation was successful, prompting
+                // it to close the browser payment method collection interface.
+                event.complete('success');
+                // Check if the PaymentIntent requires any actions and if so let Stripe.js
+                // handle the flow.
+                if (confirmResult.paymentIntent.status === "requires_action") {
+                    // Let Stripe.js handle the rest of the payment flow.
+                    // FIXME this bit should be similar/identical to the card api callback - delegate to a shared function?
+                    stripe.confirmCardPayment(payment.clientSecret).then(function(result) {
+                        if (result.error) {
+                            // TODO The payment failed -- ask your customer for a new payment method.
+                        } else {
+                            // TODO The payment has succeeded.
+                        }
+                    });
+                } else {
+                    // TODO The payment has succeeded.
+                }
+            }
+        });
+    });
+
+    // card is used for manual card entry/autofill
+    var card = elements.create("card", { style: style });
+    card.mount("#card-element");
+
+    card.on('change', function(event) {
+        var displayError = document.getElementById('card-errors');
+        if (event.error) {
+            displayError.textContent = event.error.message;
+        } else {
+            displayError.textContent = '';
+        }
+    });
+
+    document.getElementById('payment-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        // Submit clientSecret to Stripe
+        // TODO stripe.confirmCardPayment may take several seconds to complete. During that time,
+        //      disable your form from being resubmitted and show a waiting indicator like a spinner.
+        //      If you receive an error, show it to the customer, re-enable the form, and hide the
+        //      waiting indicator.
+        stripe.confirmCardPayment(payment.clientSecret, {
+            payment_method: {
+                card: card,
+                billing_details: { // TODO I think we're supposed to supply form data for stuff like billing address - stripe only handles the card form i guess?
+                    name: 'Jenny Rosen'//FIXME
+                }
+            }
+        }).then(function(result) {
+            if (result.error) {
+                // TODO Show error to the user (e.g., insufficient funds)
+                console.log(result.error.message);
+            } else {
+                // The payment has been processed!
+                if (result.paymentIntent.status === 'succeeded') {
+                    // TODO Show a success message to the user
+                    console.log("success");
+                    // There's a risk of the customer closing the window before callback
+                    // execution. Set up a webhook or plugin to listen for the
+                    // payment_intent.succeeded event that handles any business critical
+                    // post-payment actions.
+                }
+            }
+        });
+    });
+</script>
 <script>
     // TODO accept local currency?
     var currency = 'USD'; // https://www.currency-iso.org/dam/downloads/lists/list_one.xml
@@ -181,49 +313,6 @@
     function qualifiesForPerks() {
         return localStringToNumber(currencyInput.value) >= 5;
     }
-
-    function createOrder(data, actions) {
-        return actions.order.create({
-            intent: 'CAPTURE',
-            application_context: {
-                brand_name: 'Impact',
-                shipping_preference: 'NO_SHIPPING'
-                // return_url: '',
-                // cancel_url: '',
-            },
-            purchase_units: [
-                {
-                    amount: {
-                        currency_code: currency,
-                        value: localStringToNumber(currencyInput.value)
-                    }
-                }
-            ]
-        });
-    }
-
-    function onApprove(data, actions) {
-        return actions.order.capture().then(function (details) {
-            // Send our server the order ID to get a registration token
-            return api.confirmPayment(data.orderID)
-                .then(function(token) {
-                    if (token && token !== "thanks") {
-                        // TODO show "thank you" page with token and link instead
-                        document.location.href='/register.html?token=' + token;
-                    } else {
-                        document.getElementById("msg").innerText = "thanks for the donation.";
-                    }
-                })
-                .catch(function (error) {
-                    document.getElementById("msg").innerText = error;
-                })
-        })
-    }
-
-    paypal.Buttons({
-        createOrder: createOrder,
-        onApprove: onApprove
-    }).render('#paypal-button-container')
 </script>
 </body>
 </html>
