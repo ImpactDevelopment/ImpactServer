@@ -111,6 +111,23 @@
                 })
             })
         },
+        createPayment: function(amount) {
+            return new Promise(function(resolve, reject) {
+                $.post({
+                    url: baseUrl + "/stripe/createpayment",
+                    data: {
+                        amount: amount
+                    },
+                    dataType: "json",
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        reject(errorThrown)
+                    },
+                    success: function (data, status) {
+                        resolve(data)
+                    }
+                })
+            })
+        },
         confirmPayment: function(orderID) {
             return new Promise(function (resolve, reject) {
                 $.post({

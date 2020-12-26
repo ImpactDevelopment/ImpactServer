@@ -7,7 +7,7 @@ import (
 )
 
 type createRequest struct {
-	Amount int64
+	Amount int64 `json:"amount" form:"amount" query:"amount"`
 }
 
 type createResponse struct {
@@ -15,7 +15,6 @@ type createResponse struct {
 }
 
 func createStripePayment(c echo.Context) error {
-	// TODO
 	var body createRequest
 	err := c.Bind(&body)
 	if err != nil {
