@@ -2,18 +2,12 @@ package stripe
 
 import (
 	"github.com/stripe/stripe-go/v71"
-	"github.com/stripe/stripe-go/v71/client"
 	"github.com/stripe/stripe-go/v71/paymentintent"
 	"os"
 )
 
-var sc *client.API
-var clientID string
-
 func init() {
-	clientID = os.Getenv("STRIPE_CLIENT_ID")
-	stripe.Key = os.Getenv("STRIPE_CLIENT_SECRET")
-	//apiBase := os.Getenv("STRIPE_API_BASE")
+	stripe.Key = os.Getenv("STRIPE_PRIVATE_KEY")
 }
 
 type Payment struct {
