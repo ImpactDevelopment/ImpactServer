@@ -24,7 +24,7 @@ func createStripePayment(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "order amount is empty")
 	}
 
-	payment, err := stripe.CreatePayment(body.Amount, "usd")
+	payment, err := stripe.CreatePayment(body.Amount, "usd", "Donation")
 	if err != nil {
 		return err
 	}
