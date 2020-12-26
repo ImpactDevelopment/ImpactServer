@@ -11,16 +11,17 @@ func init() {
 }
 
 type Payment struct {
-	ClientSecret string
-	Amount       int64
-	Currency     string
+	ClientSecret string `json:"client_secret" form:"client_secret" query:"client_secret"`
+	Amount       int64  `json:"amount" form:"amount" query:"amount"`
+	Currency     string `json:"currency" form:"currency" query:"currency"`
 	//USDAmount int64 // TODO fetch the USD equivalent to allow granting premium on other currencies
 }
 
-func CreatePayment(amount int64, currency string) (*Payment, error) {
+func CreatePayment(amount int64, currency string, description string) (*Payment, error) {
 	params := &stripe.PaymentIntentParams{
-		Amount:   stripe.Int64(amount),
-		Currency: stripe.String(currency),
+		Amount:      stripe.Int64(amount),
+		Currency:    stripe.String(currency),
+		Description: stripe.String(description),
 	}
 	intent, err := paymentintent.New(params)
 	if err != nil {

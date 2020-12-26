@@ -5,9 +5,6 @@
     <title>Accept a card payment</title>
     <meta name="description" content="A demo of a card payment on Stripe" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="global.css" />
-
-
 
     <!-- Dependencies -->
     <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js"></script>
@@ -179,12 +176,21 @@
     </style>
 </head>
 <body>
+<!-- Donation configuration form - i.e. set the amount -->
+<form id="amount-form">
+    <input type="number" id="amount" placeholder="Amount" />
+    <button type="submit" form="amount-form" disabled>
+        <div class="spinner hidden"></div>
+        <span class="button-text">Next</span>
+    </button>
+</form>
 <!-- Display a payment form -->
-<form id="payment-form">
+<form id="payment-form" class="hidden">
+    <input type="text" id="email" placeholder="Email address" />
     <div id="card-element"><!--Stripe.js injects the Card Element--></div>
-    <button id="submit">
-        <div class="spinner hidden" id="spinner"></div>
-        <span id="button-text">Donate</span>
+    <button type="submit" form="payment-form" disabled>
+        <div class="spinner hidden"></div>
+        <span class="button-text">Donate</span>
     </button>
     <p id="card-error" role="alert"></p>
     <p class="result-message hidden">
@@ -194,57 +200,119 @@
 </form>
 <script>
     // A reference to Stripe.js initialized with your real test publishable API key.
+    // TODO transition to live keys
     var stripe = Stripe("pk_test_51HV1OpAARTsU1r4vavYYukCY25TqyL9et2w8dRzVvwUk6UydTp4zvxwExYVyHuPcXs53Ya26Of2UUbJ3zFjeE3JW00MtAMB1AE");
-    // Disable the button until we have Stripe set up on the page
-    document.querySelector("button").disabled = true;
 
-    // TODO run this after selecting payment amount
-    api.createPayment(500)
-        .catch(function (error) {
+    // TODO add to other event as change waits for blur
+    $('#amount').change(function (event) {
+        var val = $('#amount').val().trim()
+        var error = validateAmountValue(val)
+        if (error !== '') {
+            // TODO show the error to the user
             console.error(error)
-            alert(error)
-        })
-        .then(function (data) {
-            var elements = stripe.elements();
-            var style = {
-                base: {
-                    color: "#32325d",
-                    fontFamily: 'Arial, sans-serif',
-                    fontSmoothing: "antialiased",
-                    fontSize: "16px",
-                    "::placeholder": {
-                        color: "#32325d"
+        }
+        $('#amount-form button').attr('disabled', error !== "")
+    })
+
+    $('#amount-form').submit(function (event) {
+        event.preventDefault()
+
+        // Validate and process the amount value
+        // It must be a valid number and must then become an int by multiplying by 100
+        var val = $('#amount').val().trim()
+        var error = validateAmountValue(val)
+        if (error !== '') {
+            // TODO show the error to the user
+            console.error(error)
+            return
+        }
+        val = Math.floor(val * 100)
+
+        // TODO show a spinner while creating PaymentIntent
+        loading($('#amount-form'), true)
+
+        // TODO run this after selecting payment amount
+        api.createPayment(val)
+            .catch(function (error) {
+                // TODO show this error to the user and turn off the spinner
+                loading($('#amount-form'), false)
+                console.error(error)
+                alert(error)
+            })
+            .then(function (data) {
+                var elements = stripe.elements();
+                var style = {
+                    base: {
+                        color: "#32325d",
+                        fontFamily: 'Arial, sans-serif',
+                        fontSmoothing: "antialiased",
+                        fontSize: "16px",
+                        "::placeholder": {
+                            color: "#32325d"
+                        }
+                    },
+                    invalid: {
+                        fontFamily: 'Arial, sans-serif',
+                        color: "#fa755a",
+                        iconColor: "#fa755a"
                     }
-                },
-                invalid: {
-                    fontFamily: 'Arial, sans-serif',
-                    color: "#fa755a",
-                    iconColor: "#fa755a"
-                }
-            };
-            var card = elements.create("card", { style: style });
-            // Stripe injects an iframe into the DOM
-            card.mount("#card-element");
-            card.on("change", function (event) {
-                // Disable the Pay button if there are no card details in the Element
-                document.querySelector("button").disabled = event.empty;
-                document.querySelector("#card-error").textContent = event.error ? event.error.message : "";
-            });
-            var form = document.getElementById("payment-form");
-            form.addEventListener("submit", function(event) {
-                event.preventDefault();
-                // Complete payment when the submit button is clicked
-                payWithCard(stripe, card, data.clientSecret);
-            });
-        })
+                };
+
+                // Setup card form
+                var card = elements.create("card", { style: style });
+                card.mount("#card-element"); // Stripe injects an iframe into the DOM
+                card.on("change", function (event) {
+                    // Disable the Pay button if there are no card details in the Element
+                    $('#payment-form button[type=submit]').attr('disabled', event.empty)
+                    $("#card-error").text(event.error ? event.error.message : "")
+                });
+
+                // Setup submit handler
+                $("#payment-form")
+                    .off('submit') // Remove any other handlers - prevent duplicate handlers when re-initialising form
+                    .on('submit', function(event) {
+                        event.preventDefault();
+                        // Complete payment when the submit button is clicked
+                        payWithCard(stripe, card, data['client_secret']);
+                    });
+
+                // Hide the amount form and show the payment form
+                // TODO remove spinner from amount form
+                $('#amount-form').addClass('hidden')
+                $('#payment-form').removeClass('hidden')
+                loading($('#amount-form'), false)
+            })
+    })
+
+    // Check if amount value is valid
+    // If valid returns empty string
+    // If invalid returns an error
+    // TODO consider returning an object so we can have additional data such as whether or not to show the error?
+    var validateAmountValue = function(value) {
+        if (value === '') {
+            return 'Empty'
+        }
+        if (isNaN(value)) {
+            return '"' + value + '" is not a number'
+        }
+        if (value < 0) {
+            return '"' + value + '" is negative'
+        }
+        if (value === 0) {
+            return 'Cannot donate nothing'
+        }
+        return '' // No error
+    }
 
     // Calls stripe.confirmCardPayment
     // If the card requires authentication Stripe shows a pop-up modal to
     // prompt the user to enter authentication details without leaving your page.
     var payWithCard = function(stripe, card, clientSecret) {
-        loading(true);
+        loading($('#payment-form'), true);
         stripe
             .confirmCardPayment(clientSecret, {
+                //TODO send an email receipt: receipt_email: "email",
+                receipt_email: document.getElementById('email').value,
                 payment_method: {
                     card: card
                 }
@@ -265,7 +333,7 @@
 
     // Shows a success message when the payment is complete
     var orderComplete = function(paymentIntentId) {
-        loading(false);
+        loading($('#payment-form'), false);
         document
             .querySelector(".result-message a")
             .setAttribute(
@@ -278,7 +346,7 @@
 
     // Show the customer the error from Stripe if their card fails to charge
     var showError = function(errorMsgText) {
-        loading(false);
+        loading($('#payment-form'), false);
         var errorMsg = document.querySelector("#card-error");
         errorMsg.textContent = errorMsgText;
         setTimeout(function() {
@@ -286,17 +354,18 @@
         }, 4000);
     };
 
-    // Show a spinner on payment submission
-    var loading = function(isLoading) {
+    // Show a spinner on form submission
+    // Expects a jQuery object and a boolean
+    var loading = function(form, isLoading) {
         if (isLoading) {
             // Disable the button and show a spinner
-            document.querySelector("button").disabled = true;
-            document.querySelector("#spinner").classList.remove("hidden");
-            document.querySelector("#button-text").classList.add("hidden");
+            form.find("button[type=submit]").attr('disabled', true);
+            form.find(".spinner").removeClass("hidden");
+            form.find(".button-text").add("hiddenClass");
         } else {
-            document.querySelector("button").disabled = false;
-            document.querySelector("#spinner").classList.add("hidden");
-            document.querySelector("#button-text").classList.remove("hidden");
+            form.find("button[type=submit]").attr('disabled', false);
+            form.find(".spinner").addClass("hidden");
+            form.find(".button-text").removeClass("hidden");
         }
     };
 </script>
