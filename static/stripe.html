@@ -176,7 +176,6 @@
     </style>
 </head>
 <body>
-<!-- Donation configuration form - i.e. set the amount -->
 <form id="amount-form">
     <input type="number" id="amount" placeholder="Amount" />
     <button type="submit" form="amount-form" disabled>
@@ -184,7 +183,6 @@
         <span class="button-text">Next</span>
     </button>
 </form>
-<!-- Display a payment form -->
 <form id="payment-form" class="hidden">
     <input type="text" id="email" placeholder="Email address" />
     <div id="card-element"><!--Stripe.js injects the Card Element--></div>
@@ -194,6 +192,7 @@
     </button>
     <p id="card-error" role="alert"></p>
     <p class="result-message hidden">
+        <!-- TODO success message -->
         Payment succeeded, see the result in your
         <a href="" target="_blank">Stripe dashboard.</a> Refresh the page to pay again.
     </p>
@@ -320,7 +319,7 @@
             .then(function(result) {
                 if (result.error) {
                     // Show error to your customer
-                    showError(result.error.message);
+                    showCardError(result.error.message);
                 } else {
                     // The payment succeeded!
                     orderComplete(result.paymentIntent.id);
@@ -345,7 +344,7 @@
     };
 
     // Show the customer the error from Stripe if their card fails to charge
-    var showError = function(errorMsgText) {
+    var showCardError = function(errorMsgText) {
         loading($('#payment-form'), false);
         var errorMsg = document.querySelector("#card-error");
         errorMsg.textContent = errorMsgText;
