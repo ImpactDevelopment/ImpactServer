@@ -21,6 +21,11 @@
     <link rel="stylesheet" type="text/css" href="/min/style-min.css"/>
 
     <style>
+        .error {
+            color: #F44336;
+            padding-left: 8px;
+        }
+
         /* Fix input prefix alignment */
         .input-field .prefix ~ input, .input-field .prefix ~ label, .input-field .prefix ~ .helper-text {
             margin-left: 2rem;
@@ -40,11 +45,20 @@
         </nav>
     </div>
 </header>
-<form id="amount-form" class="container ">
+<div class="container">
     <div class="row">
-        <div class="input-field col s12">
-            Donations of any size are appreciated! The minimum donation to receive premium features is $5. It is currently impossible to donate to Impact due to the termination of the PayPal account. This is being looked into and will be resolved as soon as possible.
-        </div>
+        <p class="col s12">
+            Donations of any size are appreciated! <strong>The minimum donation to receive premium features is $5.</strong>
+            <br/>
+            This donation form is currently in early beta-testing, please report any issues you find to
+            <a  target="_blank" href="https://github.com/ImpactDevelopment/ImpactServer/issues">this bug tracker</a>.
+            Please avoid including any private information (including payment IDs, emails, etc) when reporting issues on the bug tracker.
+            If private information is needed, please message <code>LeafHacker#5373</code> privately on <a target="_blank" href="/discord">Discord</a>!
+        </p>
+    </div>
+</div>
+<form id="amount-form" class="container">
+    <div class="row">
         <div class="input-field col s12 m6 push-m4">
             <label for="email">Email</label>
             <input type="email" id="email" name="email" class="validate" />
@@ -114,7 +128,7 @@
     <div class="row">
         <h4 class="col s12">Thank you for your donation!</h4>
         <p class="col s12">
-            Your payment ID is: <span id="payment-id"></span>
+            Your payment ID is: <code id="payment-id"></code>
         </p>
         <div class="col s12">
             <div class="preloader-wrapper small active hidden">
@@ -131,8 +145,8 @@
                 </div>
             </div>
             <p class="success">
-                <span>Your Impact Account registration token is:</span>
-                <span id="token"></span>
+                Your Impact Account registration token is: <code id="token"></code>.
+                <br/>
                 <a href="#" id="register">Click here to register an Impact Account</a>
             </p>
             <p class="error" role="alert"></p>
@@ -444,7 +458,6 @@
     };
 
     /* ------- UI helpers ------- */
-    /* TODO: use materializecss where appropriate */
 
     // Shows a success message when the payment is complete
     var orderComplete = function(payment) {
