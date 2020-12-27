@@ -183,6 +183,7 @@
         <div class="spinner hidden"></div>
         <span class="button-text">Next</span>
     </button>
+    <p id="amount-error" class="error" role="alert"></p>
 </form>
 <form id="payment-form" class="hidden">
     <div class="info">
@@ -198,7 +199,7 @@
         <div class="spinner hidden"></div>
         <span class="button-text">Donate</span>
     </button>
-    <p id="card-error" role="alert"></p>
+    <p id="card-error" class="error" role="alert"></p>
 </form>
 <div class="result-message hidden">
     <h4>Thank you for your donation! Your payment ID is: <span id="payment-id"></span></h4>
@@ -208,7 +209,7 @@
         <span id="token"></span>
         <a href="#" id="register">Click here to register an Impact Account</a>
     </p>
-    <p class="error"></p>
+    <p class="error" role="alert"></p>
 </div>
 <script>
     // A reference to Stripe.js initialized with your real test publishable API key.
@@ -223,11 +224,12 @@
     // useful when the user goes back and forth between the amount form and the payment form
     var currentPaymentIntent = null
 
+    // TODO replace these change listeners with materializecss form validation?
     var amountEventHandler = function (event) {
         var val = $('#amount').val().trim()
         var error = validateAmountValue(val)
         if (error !== '') {
-            // TODO show the error to the user
+            showError($('#amount-form'), error)
             console.error(error)
         }
         $('#amount-form button').attr('disabled', error !== "")
@@ -235,15 +237,15 @@
     $('#amount').change(amountEventHandler).keyup(amountEventHandler)
 
     var emailEventHandler = function (event) {
-        var val = $('#amount').val().trim()
+        var val = $('#email').val().trim()
         var error = validateEmail(val)
         if (error !== '') {
-            // TODO show the error to the user
+            showError($('#amount-form'), error)
             console.error(error)
         }
         $('#amount-form button').attr('disabled', error !== "")
     }
-    $('#amount').change(emailEventHandler).keyup(emailEventHandler)
+    $('#email').change(emailEventHandler).keyup(emailEventHandler)
 
     $('#amount-form').submit(function (event) {
         event.preventDefault()
@@ -252,7 +254,7 @@
         var email = $('#email').val()
         var emailError = validateEmail(email)
         if (emailError !== '') {
-            // TODO show the error to the user
+            showError($('#amount-form'), error)
             console.error(amountError)
             return
         }
@@ -263,7 +265,7 @@
         var amount = $('#amount').val().trim()
         var amountError = validateAmountValue(amount)
         if (amountError !== '') {
-            // TODO show the error to the user
+            showError($('#amount-form'), error)
             console.error(amountError)
             return
         }
@@ -281,13 +283,12 @@
 
         api.createPayment(amount, email)
             .catch(function (error) {
-                // TODO show this error to the user and turn off the spinner
+                currentPaymentIntent = null
                 loading($('#amount-form'), false)
-                console.error(error)
-                alert(error)
+                showError($('#amount-form'), error)
             })
             .then(function (result) {
-                currentPaymentIntent = result
+                return currentPaymentIntent = result
             })
             .then(setupPaymentForm)
     })
@@ -395,13 +396,13 @@
 
     var validateEmail = function (email) {
         if (email === '') {
-            return 'Empty'
+            return 'Email is empty'
         }
-        if (email.length < 3 && email.length > 254) {
-            return 'Must be between 3 and 254 characters'
+        if (email.length < 3 || email.length > 254) {
+            return 'Email must be between 3 and 254 characters'
         }
         if (!emailRegex.test(email)) {
-            return 'Invalid format'
+            return 'Invalid email format'
         }
         return ''
     }
@@ -412,7 +413,7 @@
     // TODO consider returning an object so we can have additional data such as whether or not to show the error?
     var validateAmountValue = function(value) {
         if (value === '') {
-            return 'Empty'
+            return 'Amount is empty'
         }
         if (isNaN(value)) {
             return '"' + value + '" is not a number'
@@ -421,7 +422,7 @@
             return '"' + value + '" is negative'
         }
         if (value === 0) {
-            return 'Cannot donate nothing'
+            return 'Amount is zero'
         }
         return '' // No error
     }
@@ -462,7 +463,7 @@
                     stripe.confirmCardPayment(clientSecret).then(function(newConfirmResult) {
                         if (newConfirmResult.error) {
                             // The payment failed -- TODO ask user for a new payment method?
-                            showCardError(newConfirmResult.error.message);
+                            showError($('#payment-form'), newConfirmResult.error.message);
                         } else {
                             // The payment has succeeded.
                             orderComplete(newConfirmResult.paymentIntent)
@@ -484,8 +485,6 @@
         stripe.confirmCardPayment(
             clientSecret,
             {
-                //TODO send an email receipt: receipt_email: "email",
-                receipt_email: document.getElementById('email').value,
                 payment_method: {
                     card: card
                 }
@@ -493,7 +492,7 @@
         ).then(function(confirmResult) {
             if (confirmResult.error) {
                 // Show error to your customer
-                showCardError(confirmResult.error.message);
+                showError($('#payment-form'), confirmResult.error.message);
             } else {
                 // The payment succeeded!
                 orderComplete(confirmResult.paymentIntent);
@@ -505,7 +504,6 @@
     /* TODO: use materializecss where appropriate */
 
     // Shows a success message when the payment is complete
-    // TODO get a token from Impact API
     var orderComplete = function(payment) {
         loading($('#payment-form'), false);
         loading($('.result-message'), true)
@@ -521,7 +519,9 @@
                 // TODO handle some errors gracefully e.g. amount too small
                 loading($('.result-message'), false)
                 $('.result-message .success').addClass('hidden')
-                $('.result-message .error').removeClass('hidden').text(error)
+                $('.result-message .error')
+                    .removeClass('hidden')
+                    .text(error)
             })
             .then(function (token) {
                 $('#token').text(token)
@@ -533,13 +533,13 @@
     };
 
     // Show the customer the error from Stripe if their card fails to charge
-    var showCardError = function(errorMsgText) {
-        loading($('#payment-form'), false);
-        var errorMsg = $("#card-error");
-        errorMsg.text(errorMsgText)
+    var showError = function(parent, errorMsgText) {
+        loading(parent, false);
+        var err = parent.find('.error')
+        err.text(errorMsgText)
         // FIXME if multiple errors occur within 4s, the original timeout will still wipe the latest error message
         setTimeout(function() {
-            errorMsg.text("")
+            err.text("")
         }, 4000);
     };
 
