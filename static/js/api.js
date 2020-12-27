@@ -111,12 +111,13 @@
                 })
             })
         },
-        createPayment: function(amount) {
+        createPayment: function(amount, email) {
             return new Promise(function(resolve, reject) {
                 $.post({
                     url: baseUrl + "/stripe/createpayment",
                     data: {
-                        amount: amount
+                        amount: amount,
+                        email: email
                     },
                     dataType: "json",
                     error: function (jqXHR, textStatus, errorThrown) {
