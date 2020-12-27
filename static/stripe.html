@@ -223,8 +223,7 @@
     // useful when the user goes back and forth between the amount form and the payment form
     var currentPaymentIntent = null
 
-    // TODO add to other event as change waits for blur
-    $('#amount').change(function (event) {
+    var amountEventHandler = function (event) {
         var val = $('#amount').val().trim()
         var error = validateAmountValue(val)
         if (error !== '') {
@@ -232,7 +231,19 @@
             console.error(error)
         }
         $('#amount-form button').attr('disabled', error !== "")
-    })
+    }
+    $('#amount').change(amountEventHandler).keyup(amountEventHandler)
+
+    var emailEventHandler = function (event) {
+        var val = $('#amount').val().trim()
+        var error = validateEmail(val)
+        if (error !== '') {
+            // TODO show the error to the user
+            console.error(error)
+        }
+        $('#amount-form button').attr('disabled', error !== "")
+    }
+    $('#amount').change(emailEventHandler).keyup(emailEventHandler)
 
     $('#amount-form').submit(function (event) {
         event.preventDefault()
