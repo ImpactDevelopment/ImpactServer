@@ -282,15 +282,15 @@
         }
 
         api.createPayment(amount, email)
+            .then(function (result) {
+                return currentPaymentIntent = result
+            })
+            .then(setupPaymentForm)
             .catch(function (error) {
                 currentPaymentIntent = null
                 loading($('#amount-form'), false)
                 showError($('#amount-form'), error)
             })
-            .then(function (result) {
-                return currentPaymentIntent = result
-            })
-            .then(setupPaymentForm)
     })
 
     $('#back-button').click(function (event) {
@@ -515,6 +515,13 @@
         $('#payment-id').text(payment['id'])
         $('.result-message').removeClass('hidden')
         api.redeemPayment(payment['id'], payment['receipt_email'])
+            .then(function (token) {
+                $('#token').text(token)
+                $('#register').attr('href', '/register?token='+encodeURIComponent(token))
+                loading($('.result-message'), false)
+                $('.result-message .error').addClass('hidden')
+                $('.result-message .success').removeClass('hidden')
+            })
             .catch(function (error) {
                 // TODO handle some errors gracefully e.g. amount too small
                 loading($('.result-message'), false)
@@ -522,13 +529,6 @@
                 $('.result-message .error')
                     .removeClass('hidden')
                     .text(error)
-            })
-            .then(function (token) {
-                $('#token').text(token)
-                $('#register').attr('href', '/register?token='+encodeURIComponent(token))
-                loading($('.result-message'), false)
-                $('.result-message .error').addClass('hidden')
-                $('.result-message .success').removeClass('hidden')
             })
     };
 
