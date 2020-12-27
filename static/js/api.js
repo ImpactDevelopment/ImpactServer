@@ -120,7 +120,7 @@
                     },
                     dataType: "json",
                     error: function (jqXHR, textStatus, errorThrown) {
-                        reject(errorThrown)
+                        reject(messageFromjqXHR(jqXHR))
                     },
                     success: function (data, status) {
                         resolve(data)
@@ -128,16 +128,17 @@
                 })
             })
         },
-        confirmPayment: function(orderID) {
+        redeemPayment: function(paymentID, email) {
             return new Promise(function (resolve, reject) {
                 $.post({
-                    url: baseUrl + "/paypal/afterpayment",
+                    url: baseUrl + "/stripe/redeem",
                     data: {
-                        orderID: orderID
+                        'payment_id': paymentID,
+                        email: email
                     },
                     dataType: "json",
                     error: function (jqXHR, textStatus, errorThrown) {
-                        reject(errorThrown)
+                        reject(messageFromjqXHR(jqXHR))
                     },
                     success: function (data, status) {
                         resolve(data.token)
