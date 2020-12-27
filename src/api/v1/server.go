@@ -29,7 +29,7 @@ func API(api *echo.Group) {
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/discord", jwt.DiscordLoginHandler, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/paypal/afterpayment", afterDonation, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/stripe/createpayment", createStripePayment, middleware.NoCache())
-	api.Match([]string{http.MethodGet, http.MethodPost}, "/stripe/afterpayment", afterStripePayment, middleware.NoCache())
+	api.Match([]string{http.MethodGet, http.MethodPost}, "/stripe/redeem", redeemStripePayment, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/checktoken", checkToken, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/register/token", registerWithToken, middleware.NoCache())
 	api.GET("/emailtest", emailTest, middleware.NoCache())

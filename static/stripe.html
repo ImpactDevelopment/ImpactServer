@@ -177,30 +177,40 @@
 </head>
 <body>
 <form id="amount-form">
-    <input type="number" id="amount" placeholder="Amount" />
+    <input type="email" id="email" name="email" placeholder="Email" />
+    <input type="number" id="amount" name="amount" placeholder="Amount" />
     <button type="submit" form="amount-form" disabled>
         <div class="spinner hidden"></div>
         <span class="button-text">Next</span>
     </button>
 </form>
 <form id="payment-form" class="hidden">
-    <input type="text" id="email" placeholder="Email address" />
-    <div id="card-element"><!--Stripe.js injects the Card Element--></div>
+    <div id="payment-request-button"><!-- Stripe.js injects the PaymentRequest Element here --></div>
+    <div id="card-element"><!-- Stripe.js injects the Card Element here --></div>
     <button type="submit" form="payment-form" disabled>
         <div class="spinner hidden"></div>
         <span class="button-text">Donate</span>
     </button>
     <p id="card-error" role="alert"></p>
-    <p class="result-message hidden">
-        <!-- TODO success message -->
-        Payment succeeded, see the result in your
-        <a href="" target="_blank">Stripe dashboard.</a> Refresh the page to pay again.
-    </p>
 </form>
+<div class="result-message hidden">
+    <h4>Thank you for your donation! Your payment ID is: <span id="payment-id"></span></h4>
+    <div class="spinner hidden"></div>
+    <p class="success">
+        <span>Your Impact Account registration token is:</span>
+        <span id="token"></span>
+        <a href="#" id="register">Click here to register an Impact Account</a>
+    </p>
+    <p class="error"></p>
+</div>
 <script>
     // A reference to Stripe.js initialized with your real test publishable API key.
     // TODO transition to live keys
-    var stripe = Stripe("pk_test_51HV1OpAARTsU1r4vavYYukCY25TqyL9et2w8dRzVvwUk6UydTp4zvxwExYVyHuPcXs53Ya26Of2UUbJ3zFjeE3JW00MtAMB1AE");
+    var stripe = Stripe('pk_test_51HV1OpAARTsU1r4vavYYukCY25TqyL9et2w8dRzVvwUk6UydTp4zvxwExYVyHuPcXs53Ya26Of2UUbJ3zFjeE3JW00MtAMB1AE', {
+        apiVersion: '2020-08-27',
+    });
+
+    var emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
 
     // TODO add to other event as change waits for blur
     $('#amount').change(function (event) {
@@ -216,22 +226,32 @@
     $('#amount-form').submit(function (event) {
         event.preventDefault()
 
-        // Validate and process the amount value
-        // It must be a valid number and must then become an int by multiplying by 100
-        var val = $('#amount').val().trim()
-        var error = validateAmountValue(val)
-        if (error !== '') {
+        // Validate email
+        var email = $('#email').val()
+        var emailError = validateEmail(email)
+        if (emailError !== '') {
             // TODO show the error to the user
-            console.error(error)
+            console.error(amountError)
             return
         }
-        val = Math.floor(val * 100)
+
+
+        // Validate and process the amount value
+        // It must be a valid number and must then become an int by multiplying by 100
+        var amount = $('#amount').val().trim()
+        var amountError = validateAmountValue(amount)
+        if (amountError !== '') {
+            // TODO show the error to the user
+            console.error(amountError)
+            return
+        }
+        amount = Math.floor(amount * 100)
 
         // TODO show a spinner while creating PaymentIntent
         loading($('#amount-form'), true)
 
         // TODO run this after selecting payment amount
-        api.createPayment(val)
+        api.createPayment(amount, email)
             .catch(function (error) {
                 // TODO show this error to the user and turn off the spinner
                 loading($('#amount-form'), false)
@@ -256,6 +276,37 @@
                         iconColor: "#fa755a"
                     }
                 };
+
+                // Setup PaymentRequest button
+                var paymentRequest = stripe.paymentRequest({
+                    country: 'US',
+                    currency: 'usd',
+                    total: {
+                        label: 'Donation',
+                        amount: data['amount'],
+                    },
+                    requestPayerName: false,
+                    requestPayerEmail: true, // Requesting name, email, or phone will automatically request billing address on Apple Pay which is useful for anti-fraud
+                    requestShipping: false
+                });
+                var prButton = elements.create('paymentRequestButton', {
+                    paymentRequest: paymentRequest,
+                });
+
+                // Check the availability of the Payment Request API first.
+                paymentRequest.canMakePayment().then(function(result) {
+                    if (result) {
+                        // Mount the button
+                        prButton.mount('#payment-request-button');
+
+                        // Setup submit handler for PaymentRequest
+                        paymentRequest.on('paymentmethod', function(event) {
+                            payWithPaymentRequest(stripe, event, data['client_secret'])
+                        });
+                    } else {
+                        document.getElementById('payment-request-button').style.display = 'none';
+                    }
+                });
 
                 // Setup card form
                 var card = elements.create("card", { style: style });
@@ -283,6 +334,19 @@
             })
     })
 
+    var validateEmail = function (email) {
+        if (email === '') {
+            return 'Empty'
+        }
+        if (email.length < 3 && email.length > 254) {
+            return 'Must be between 3 and 254 characters'
+        }
+        if (!emailRegex.test(email)) {
+            return 'Invalid format'
+        }
+        return ''
+    }
+
     // Check if amount value is valid
     // If valid returns empty string
     // If invalid returns an error
@@ -306,50 +370,112 @@
     // Calls stripe.confirmCardPayment
     // If the card requires authentication Stripe shows a pop-up modal to
     // prompt the user to enter authentication details without leaving your page.
+    var payWithPaymentRequest = function(stripe, event, clientSecret) {
+        // Confirm the PaymentIntent without handling potential next actions (yet).
+        stripe.confirmCardPayment(
+            clientSecret,
+            {
+                payment_method: event.paymentMethod.id
+            },
+            {
+                handleActions: false
+            }
+        ).then(function(confirmResult) {
+            if (confirmResult.error) {
+                // Report to the browser that the payment failed, prompting it to
+                // re-show the payment interface, or show an error message and close
+                // the payment interface.
+                event.complete('fail');
+            } else {
+                // Report to the browser that the confirmation was successful, prompting
+                // it to close the browser payment method collection interface.
+                event.complete('success');
+                // Check if the PaymentIntent requires any actions and if so let Stripe.js
+                // handle the flow. If using an API version older than "2019-02-11" instead
+                // instead check for: `paymentIntent.status === "requires_source_action"`.
+                if (confirmResult.paymentIntent.status === "requires_action") {
+                    // Let Stripe.js handle the rest of the payment flow.
+                    stripe.confirmCardPayment(clientSecret).then(function(newConfirmResult) {
+                        if (newConfirmResult.error) {
+                            // The payment failed -- TODO ask user for a new payment method?
+                            showCardError(newConfirmResult.error.message);
+                        } else {
+                            // The payment has succeeded.
+                            orderComplete(newConfirmResult.paymentIntent)
+                        }
+                    });
+                } else {
+                    // The payment has succeeded.
+                    orderComplete(confirmResult.paymentIntent)
+                }
+            }
+        });
+    };
+
+    // Calls stripe.confirmCardPayment
+    // If the card requires authentication Stripe shows a pop-up modal to
+    // prompt the user to enter authentication details without leaving your page.
     var payWithCard = function(stripe, card, clientSecret) {
         loading($('#payment-form'), true);
-        stripe
-            .confirmCardPayment(clientSecret, {
+        stripe.confirmCardPayment(
+            clientSecret,
+            {
                 //TODO send an email receipt: receipt_email: "email",
                 receipt_email: document.getElementById('email').value,
                 payment_method: {
                     card: card
                 }
-            })
-            .then(function(result) {
-                if (result.error) {
-                    // Show error to your customer
-                    showCardError(result.error.message);
-                } else {
-                    // The payment succeeded!
-                    orderComplete(result.paymentIntent.id);
-                }
-            });
+            }
+        ).then(function(confirmResult) {
+            if (confirmResult.error) {
+                // Show error to your customer
+                showCardError(confirmResult.error.message);
+            } else {
+                // The payment succeeded!
+                orderComplete(confirmResult.paymentIntent);
+            }
+        });
     };
 
     /* ------- UI helpers ------- */
     /* TODO: use materializecss where appropriate */
 
     // Shows a success message when the payment is complete
-    var orderComplete = function(paymentIntentId) {
+    // TODO get a token from Impact API
+    var orderComplete = function(payment) {
         loading($('#payment-form'), false);
-        document
-            .querySelector(".result-message a")
-            .setAttribute(
-                "href",
-                "https://dashboard.stripe.com/test/payments/" + paymentIntentId
-            );
-        document.querySelector(".result-message").classList.remove("hidden");
-        document.querySelector("button").disabled = true;
+        loading($('.result-message'), true)
+        $("button[type=submit]").attr('disabled', true)
+        $('#payment-form').addClass('hidden')
+        $('.result-message .success').addClass('hidden')
+        $('.result-message .error').addClass('hidden')
+
+        $('#payment-id').text(payment['id'])
+        $('.result-message').removeClass('hidden')
+        api.redeemPayment(payment['id'], payment['receipt_email'])
+            .catch(function (error) {
+                // TODO handle some errors gracefully e.g. amount too small
+                loading($('.result-message'), false)
+                $('.result-message .success').addClass('hidden')
+                $('.result-message .error').removeClass('hidden').text(error)
+            })
+            .then(function (token) {
+                $('#token').text(token)
+                $('#register').attr('href', '/register?token='+encodeURIComponent(token))
+                loading($('.result-message'), false)
+                $('.result-message .error').addClass('hidden')
+                $('.result-message .success').removeClass('hidden')
+            })
     };
 
     // Show the customer the error from Stripe if their card fails to charge
     var showCardError = function(errorMsgText) {
         loading($('#payment-form'), false);
-        var errorMsg = document.querySelector("#card-error");
-        errorMsg.textContent = errorMsgText;
+        var errorMsg = $("#card-error");
+        errorMsg.text(errorMsgText)
+        // FIXME if multiple errors occur within 4s, the original timeout will still wipe the latest error message
         setTimeout(function() {
-            errorMsg.textContent = "";
+            errorMsg.text("")
         }, 4000);
     };
 
