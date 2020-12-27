@@ -93,13 +93,13 @@ func redeemStripePayment(c echo.Context) error {
 	var token uuid.UUID
 	err = database.DB.QueryRow(`
 		WITH new_pending_donation AS (
-    		INSERT INTO pending_donations(stripe_purchase_id, stripe_payer_email, amount, premium)
+    		INSERT INTO pending_donations(stripe_payment_id, stripe_payer_email, amount, premium)
     		VALUES ($1, $2, $3, TRUE)
-    		ON CONFLICT(stripe_purchase_id) DO NOTHING
+    		ON CONFLICT(stripe_payment_id) DO NOTHING
     		RETURNING token
 		) SELECT COALESCE (
 		    (SELECT token FROM new_pending_donation),
-		    (SELECT token FROM pending_donations WHERE NOT used AND stripe_purchase_id = $1)
+		    (SELECT token FROM pending_donations WHERE NOT used AND stripe_payment_id = $1)
 		)`,
 		body.ID, payment.Email, payment.Amount).Scan(&token)
 	if err != nil {
