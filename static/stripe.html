@@ -21,8 +21,12 @@
     <link rel="stylesheet" type="text/css" href="/min/style-min.css"/>
 
     <style>
-        #amount:before {
-            content: '$';
+        /* Fix input prefix alignment */
+        .input-field .prefix ~ input, .input-field .prefix ~ label, .input-field .prefix ~ .helper-text {
+            margin-left: 2rem;
+        }
+        .input-field .prefix {
+            width: 2rem;
         }
     </style>
 </head>
@@ -32,18 +36,21 @@
         <div class="input-field col s12">
             Donations of any size are appreciated! The minimum donation to receive premium features is $5. It is currently impossible to donate to Impact due to the termination of the PayPal account. This is being looked into and will be resolved as soon as possible.
         </div>
-        <div class="input-field col s12 l8 push-l4">
-            <input type="email" id="email" name="email" placeholder="Email" />
+        <div class="input-field col s12 m6 push-m4">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" class="validate" />
+            <span class="helper-text" data-error="Invalid Email" data-success="Thanks!">Please enter your email so that we can send you a receipt</span>
         </div>
-        <div class="input-field col s12 l4 pull-l8">
+        <div class="input-field col s12 m4 pull-m6">
+            <label for="amount" class="active">Amount</label>
             <span class="prefix">$</span>
             <input id="amount" type="number" data-type="currency" min="0.5" step="0.01" value="5"
                    pattern="^\$\d{1,3}(,\d{3})*(\.\d+)?$">
-            <label for="amount" class="active">Amount</label>
+            <span class="helper-text" data-error="Invalid amount" data-success="Thanks!">Please enter the amount to donate</span>
         </div>
-        <div class="input-field col s12">
+        <div class="input-field col s12 m2 center">
             <button type="submit" form="amount-form" disabled class="btn waves-effect waves-light">
-                <span class="button-text">Next</span>
+                Next
             </button>
             <div class="preloader-wrapper small active hidden">
                 <div class="spinner-layer spinner-blue-only">
@@ -64,58 +71,67 @@
 </form>
 <form id="payment-form" class="container hidden">
     <div class="row">
-        <div class="info">
+        <div class="input-field col s12 info">
             <h4>Thanks, your donation of <span class="amount"></span> will be greatly appreciated!</h4>
             <p class="hidden show-if-premium">As your donation is $5 or more, you will be able to create an Impact Account to receive perks!</p>
             <p class="hidden show-if-not-premium">If you wish to register an Impact Account to receive perks, please donate $5 or more.</p>
             <p>An email will be sent to <span class="email"></span> with confirmation of your payment.</p>
             <p><a href="#" id="back-button">Click here to amend any of these details.</a></p>
         </div>
-        <div id="payment-request-button"><!-- Stripe.js injects the PaymentRequest Element here --></div>
-        <div id="card-element"><!-- Stripe.js injects the Card Element here --></div>
-        <button type="submit" form="payment-form" disabled>
-            <span class="button-text">Donate</span>
-        </button>
-        <div class="preloader-wrapper small active hidden">
-            <div class="spinner-layer spinner-blue-only">
-                <div class="circle-clipper left">
-                    <div class="circle"></div>
-                </div>
-                <div class="gap-patch">
-                    <div class="circle"></div>
-                </div>
-                <div class="circle-clipper right">
-                    <div class="circle"></div>
+        <div id="payment-request-button" class="input-field col s12"><!-- Stripe.js injects the PaymentRequest Element here --></div>
+        <div id="card-element" class="input-field col s12 m10"><!-- Stripe.js injects the Card Element here --></div>
+        <div class="input-field col s12 m2 center">
+            <button type="submit" form="payment-form" disabled class="btn waves-effect waves-light">
+                Donate
+            </button>
+            <div class="preloader-wrapper small active hidden">
+                <div class="spinner-layer spinner-blue-only">
+                    <div class="circle-clipper left">
+                        <div class="circle"></div>
+                    </div>
+                    <div class="gap-patch">
+                        <div class="circle"></div>
+                    </div>
+                    <div class="circle-clipper right">
+                        <div class="circle"></div>
+                    </div>
                 </div>
             </div>
         </div>
-        <p id="card-error" class="error" role="alert"></p>
+        <p id="card-error" class="input-field col s12 error" role="alert"></p>
     </div>
 </form>
 <div class="container result-message hidden">
     <div class="row">
-        <h4>Thank you for your donation! Your payment ID is: <span id="payment-id"></span></h4>
-        <div class="preloader-wrapper small active hidden">
-            <div class="spinner-layer spinner-blue-only">
-                <div class="circle-clipper left">
-                    <div class="circle"></div>
-                </div>
-                <div class="gap-patch">
-                    <div class="circle"></div>
-                </div>
-                <div class="circle-clipper right">
-                    <div class="circle"></div>
+        <h4 class="col s12">Thank you for your donation!</h4>
+        <p class="col s12">
+            Your payment ID is: <span id="payment-id"></span>
+        </p>
+        <div class="col s12">
+            <div class="preloader-wrapper small active hidden">
+                <div class="spinner-layer spinner-blue-only">
+                    <div class="circle-clipper left">
+                        <div class="circle"></div>
+                    </div>
+                    <div class="gap-patch">
+                        <div class="circle"></div>
+                    </div>
+                    <div class="circle-clipper right">
+                        <div class="circle"></div>
+                    </div>
                 </div>
             </div>
+            <p class="success">
+                <span>Your Impact Account registration token is:</span>
+                <span id="token"></span>
+                <a href="#" id="register">Click here to register an Impact Account</a>
+            </p>
+            <p class="error" role="alert"></p>
         </div>
-        <p class="success">
-            <span>Your Impact Account registration token is:</span>
-            <span id="token"></span>
-            <a href="#" id="register">Click here to register an Impact Account</a>
-        </p>
-        <p class="error" role="alert"></p>
     </div>
 </div>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 <script type="text/javascript">
     // A reference to Stripe.js initialized with your real test publishable API key.
     // TODO transition to live keys
@@ -128,6 +144,11 @@
     // Keep track of the current PaymentIntent so we know whether or not to create a new one;
     // useful when the user goes back and forth between the amount form and the payment form
     var currentPaymentIntent = null
+
+    // Initialise materialize forms
+    if (window.Materialize) {
+        window.Materialize.updateTextFields()
+    }
 
     // TODO replace these change listeners with materializecss form validation?
     var amountEventHandler = function (event) {
@@ -227,22 +248,6 @@
 
         // Stripe stuff
         var elements = stripe.elements();
-        var style = {
-            base: {
-                color: "#32325d",
-                fontFamily: 'Arial, sans-serif',
-                fontSmoothing: "antialiased",
-                fontSize: "16px",
-                "::placeholder": {
-                    color: "#32325d"
-                }
-            },
-            invalid: {
-                fontFamily: 'Arial, sans-serif',
-                color: "#fa755a",
-                iconColor: "#fa755a"
-            }
-        };
 
         // Setup PaymentRequest button
         var paymentRequest = stripe.paymentRequest({
@@ -275,8 +280,32 @@
             }
         });
 
-        // Setup card form
-        var card = elements.create("card", { style: style });
+        // Setup card input, with vaguely material styles
+        var card = elements.create("card", {
+            iconStyle: 'solid',
+            style: {
+                base: {
+                    iconColor: '#8898AA',
+                    //color: 'white',
+                    lineHeight: '36px',
+                    fontWeight: 300,
+                    fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                    fontSize: '19px',
+
+                    '::placeholder': {
+                        color: '#8898AA',
+                    },
+                },
+                invalid: {
+                    iconColor: '#e85746',
+                    color: '#e85746',
+                }
+            },
+            classes: {
+                focus: 'is-focused',
+                empty: 'is-empty',
+            },
+        });
         card.mount("#card-element"); // Stripe injects an iframe into the DOM
         card.on("change", function (event) {
             // Disable the Pay button if there are no card details in the Element
@@ -455,11 +484,9 @@
             // Disable the button and show a spinner
             form.find("button[type=submit]").attr('disabled', true).addClass('hidden');
             form.find(".preloader-wrapper").removeClass("hidden");
-            form.find(".button-text").add("hiddenClass");
         } else {
             form.find("button[type=submit]").attr('disabled', false).removeClass('hidden');
             form.find(".preloader-wrapper").addClass("hidden");
-            form.find(".button-text").removeClass("hidden");
         }
     };
 </script>
