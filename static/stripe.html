@@ -185,6 +185,12 @@
     </button>
 </form>
 <form id="payment-form" class="hidden">
+    <div class="info">
+        <h4>Thanks, your donation of <span class="amount"></span> will be greatly appreciated!</h4>
+        <p class="hidden show-if-premium">As your donation is $5 or more, you will be able to create an Impact Account to receive perks!</p>
+        <p class="hidden show-if-not-premium">If you wish to register an Impact Account to receive perks, please donate $5 or more.</p>
+        <p>An email will be sent to <span class="email"></span> with confirmation of your payment.</p>
+    </div>
     <div id="payment-request-button"><!-- Stripe.js injects the PaymentRequest Element here --></div>
     <div id="card-element"><!-- Stripe.js injects the Card Element here --></div>
     <button type="submit" form="payment-form" disabled>
@@ -259,6 +265,18 @@
                 alert(error)
             })
             .then(function (data) {
+                // Display some info
+                $('#payment-form .amount').text('$' + (Math.floor(data.amount) / 100).toFixed(2))
+                $('#payment-form .email').text(data.email)
+                if (data.amount < 500) {
+                    $('#payment-form .show-if-not-premium').removeClass('hidden')
+                    $('#payment-form .show-if-premium').addClass('hidden')
+                } else {
+                    $('#payment-form .show-if-premium').removeClass('hidden')
+                    $('#payment-form .show-if-not-premium').addClass('hidden')
+                }
+
+                // Stripe stuff
                 var elements = stripe.elements();
                 var style = {
                     base: {
