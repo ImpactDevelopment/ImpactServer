@@ -219,6 +219,10 @@
 
     var emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
 
+    // Keep track of the current PaymentIntent so we know whether or not to create a new one;
+    // useful when the user goes back and forth between the amount form and the payment form
+    var currentPaymentIntent = null
+
     // TODO add to other event as change waits for blur
     $('#amount').change(function (event) {
         var val = $('#amount').val().trim()
@@ -254,10 +258,16 @@
         }
         amount = Math.floor(amount * 100)
 
-        // TODO show a spinner while creating PaymentIntent
+        // Show a spinner while creating PaymentIntent
         loading($('#amount-form'), true)
 
-        // TODO run this after selecting payment amount
+        // If the current (old) PaymentIntent is identical to the new updated amount/email values,
+        // don't bother calling api.createPayment since we don't need a new PaymentIntent
+        if (currentPaymentIntent && !hasPaymentChanged(currentPaymentIntent, amount, email)) {
+            setupPaymentForm(currentPaymentIntent)
+            return
+        }
+
         api.createPayment(amount, email)
             .catch(function (error) {
                 // TODO show this error to the user and turn off the spinner
@@ -265,92 +275,10 @@
                 console.error(error)
                 alert(error)
             })
-            .then(function (data) {
-                // Display some info
-                $('#payment-form .amount').text('$' + (Math.floor(data.amount) / 100).toFixed(2))
-                $('#payment-form .email').text(data.email)
-                if (data.amount < 500) {
-                    $('#payment-form .show-if-not-premium').removeClass('hidden')
-                    $('#payment-form .show-if-premium').addClass('hidden')
-                } else {
-                    $('#payment-form .show-if-premium').removeClass('hidden')
-                    $('#payment-form .show-if-not-premium').addClass('hidden')
-                }
-
-                // Stripe stuff
-                var elements = stripe.elements();
-                var style = {
-                    base: {
-                        color: "#32325d",
-                        fontFamily: 'Arial, sans-serif',
-                        fontSmoothing: "antialiased",
-                        fontSize: "16px",
-                        "::placeholder": {
-                            color: "#32325d"
-                        }
-                    },
-                    invalid: {
-                        fontFamily: 'Arial, sans-serif',
-                        color: "#fa755a",
-                        iconColor: "#fa755a"
-                    }
-                };
-
-                // Setup PaymentRequest button
-                var paymentRequest = stripe.paymentRequest({
-                    country: 'US',
-                    currency: 'usd',
-                    total: {
-                        label: 'Donation',
-                        amount: data['amount'],
-                    },
-                    requestPayerName: false,
-                    requestPayerEmail: true, // Requesting name, email, or phone will automatically request billing address on Apple Pay which is useful for anti-fraud
-                    requestShipping: false
-                });
-                var prButton = elements.create('paymentRequestButton', {
-                    paymentRequest: paymentRequest,
-                });
-
-                // Check the availability of the Payment Request API first.
-                paymentRequest.canMakePayment().then(function(result) {
-                    if (result) {
-                        // Mount the button
-                        prButton.mount('#payment-request-button');
-
-                        // Setup submit handler for PaymentRequest
-                        paymentRequest.on('paymentmethod', function(event) {
-                            payWithPaymentRequest(stripe, event, data['client_secret'])
-                        });
-                    } else {
-                        document.getElementById('payment-request-button').style.display = 'none';
-                    }
-                });
-
-                // Setup card form
-                var card = elements.create("card", { style: style });
-                card.mount("#card-element"); // Stripe injects an iframe into the DOM
-                card.on("change", function (event) {
-                    // Disable the Pay button if there are no card details in the Element
-                    $('#payment-form button[type=submit]').attr('disabled', event.empty)
-                    $("#card-error").text(event.error ? event.error.message : "")
-                });
-
-                // Setup submit handler
-                $("#payment-form")
-                    .off('submit') // Remove any other handlers - prevent duplicate handlers when re-initialising form
-                    .on('submit', function(event) {
-                        event.preventDefault();
-                        // Complete payment when the submit button is clicked
-                        payWithCard(stripe, card, data['client_secret']);
-                    });
-
-                // Hide the amount form and show the payment form
-                // TODO remove spinner from amount form
-                $('#amount-form').addClass('hidden')
-                $('#payment-form').removeClass('hidden')
-                loading($('#amount-form'), false)
+            .then(function (result) {
+                currentPaymentIntent = result
             })
+            .then(setupPaymentForm)
     })
 
     $('#back-button').click(function (event) {
@@ -367,6 +295,92 @@
         amountf.removeClass('hidden')
         amountf.find('#amount').focus()
     })
+
+    var setupPaymentForm = function (data) {
+        // Display some info
+        $('#payment-form .amount').text('$' + (Math.floor(data.amount) / 100).toFixed(2))
+        $('#payment-form .email').text(data.email)
+        if (data.amount < 500) {
+            $('#payment-form .show-if-not-premium').removeClass('hidden')
+            $('#payment-form .show-if-premium').addClass('hidden')
+        } else {
+            $('#payment-form .show-if-premium').removeClass('hidden')
+            $('#payment-form .show-if-not-premium').addClass('hidden')
+        }
+
+        // Stripe stuff
+        var elements = stripe.elements();
+        var style = {
+            base: {
+                color: "#32325d",
+                fontFamily: 'Arial, sans-serif',
+                fontSmoothing: "antialiased",
+                fontSize: "16px",
+                "::placeholder": {
+                    color: "#32325d"
+                }
+            },
+            invalid: {
+                fontFamily: 'Arial, sans-serif',
+                color: "#fa755a",
+                iconColor: "#fa755a"
+            }
+        };
+
+        // Setup PaymentRequest button
+        var paymentRequest = stripe.paymentRequest({
+            country: 'US',
+            currency: 'usd',
+            total: {
+                label: 'Donation',
+                amount: data['amount'],
+            },
+            requestPayerName: false,
+            requestPayerEmail: true, // Requesting name, email, or phone will automatically request billing address on Apple Pay which is useful for anti-fraud
+            requestShipping: false
+        });
+        var prButton = elements.create('paymentRequestButton', {
+            paymentRequest: paymentRequest,
+        });
+
+        // Check the availability of the Payment Request API first.
+        paymentRequest.canMakePayment().then(function(result) {
+            if (result) {
+                // Mount the button
+                prButton.mount('#payment-request-button');
+
+                // Setup submit handler for PaymentRequest
+                paymentRequest.on('paymentmethod', function(event) {
+                    payWithPaymentRequest(stripe, event, data['client_secret'])
+                });
+            } else {
+                document.getElementById('payment-request-button').style.display = 'none';
+            }
+        });
+
+        // Setup card form
+        var card = elements.create("card", { style: style });
+        card.mount("#card-element"); // Stripe injects an iframe into the DOM
+        card.on("change", function (event) {
+            // Disable the Pay button if there are no card details in the Element
+            $('#payment-form button[type=submit]').attr('disabled', event.empty)
+            $("#card-error").text(event.error ? event.error.message : "")
+        });
+
+        // Setup submit handler
+        $("#payment-form")
+            .off('submit') // Remove any other handlers - prevent duplicate handlers when re-initialising form
+            .on('submit', function(event) {
+                event.preventDefault();
+                // Complete payment when the submit button is clicked
+                payWithCard(stripe, card, data['client_secret']);
+            });
+
+        // Hide the amount form and show the payment form
+        $('#amount-form').addClass('hidden')
+        $('#payment-form').removeClass('hidden')
+        loading($('#amount-form'), false)
+    }
 
     var validateEmail = function (email) {
         if (email === '') {
@@ -399,6 +413,11 @@
             return 'Cannot donate nothing'
         }
         return '' // No error
+    }
+
+    var hasPaymentChanged = function (payment, amount, email) {
+        return !(payment.amount === amount && payment.email === email);
+
     }
 
     // Calls stripe.confirmCardPayment
