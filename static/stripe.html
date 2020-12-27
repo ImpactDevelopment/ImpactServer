@@ -190,6 +190,7 @@
         <p class="hidden show-if-premium">As your donation is $5 or more, you will be able to create an Impact Account to receive perks!</p>
         <p class="hidden show-if-not-premium">If you wish to register an Impact Account to receive perks, please donate $5 or more.</p>
         <p>An email will be sent to <span class="email"></span> with confirmation of your payment.</p>
+        <p><a href="#" id="back-button">Click here to amend any of these details.</a></p>
     </div>
     <div id="payment-request-button"><!-- Stripe.js injects the PaymentRequest Element here --></div>
     <div id="card-element"><!-- Stripe.js injects the Card Element here --></div>
@@ -350,6 +351,21 @@
                 $('#payment-form').removeClass('hidden')
                 loading($('#amount-form'), false)
             })
+    })
+
+    $('#back-button').click(function (event) {
+        event.preventDefault()
+
+        // Just show the amount form without resetting any state
+        // We will rely on the "next" button to handle any changes to state
+
+        var paymentf = $('#payment-form')
+        var amountf = $('#amount-form')
+        loading(paymentf, false)
+        loading(amountf, false)
+        paymentf.addClass('hidden')
+        amountf.removeClass('hidden')
+        amountf.find('#amount').focus()
     })
 
     var validateEmail = function (email) {
