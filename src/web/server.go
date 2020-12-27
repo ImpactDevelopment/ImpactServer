@@ -21,6 +21,7 @@ func Server() (e *echo.Echo) {
 
 	e.POST("/discordverify", discordVerify)
 	e.POST("/recaptchaverify", simpleRecaptchaCheck)
+	e.Any("/.well-known/apple-developer-merchantid-domain-association", applePayVerify)
 
 	staticEcho := echo.New()
 	// Redirect any request ending in .html
