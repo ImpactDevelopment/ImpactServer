@@ -1,13 +1,19 @@
 package stripe
 
 import (
+	"github.com/labstack/echo/v4"
 	"github.com/stripe/stripe-go/v71"
 	"github.com/stripe/stripe-go/v71/paymentintent"
+	"github.com/stripe/stripe-go/v71/webhook"
+	"net/http"
 	"os"
 )
 
+var webhookSecret string
+
 func init() {
 	stripe.Key = os.Getenv("STRIPE_PRIVATE_KEY")
+	webhookSecret = os.Getenv("STRIPE_WEBHOOK_SECRET")
 }
 
 type Payment struct {
@@ -17,6 +23,18 @@ type Payment struct {
 	Currency      string                `json:"currency" form:"currency" query:"currency"`
 	Email         string                `json:"email" form:"email" query:"email"`
 	//USDAmount int64 // TODO fetch the USD equivalent to allow granting premium on other currencies
+}
+
+type WebhookEvent struct {
+	stripe.Event
+}
+
+func GetWebhookEvent(payload []byte, signature string) (*WebhookEvent, error) {
+	event, err := webhook.ConstructEvent(payload, signature, webhookSecret)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "incorrect signature").SetInternal(err)
+	}
+	return &WebhookEvent{event}, nil
 }
 
 func CreatePayment(amount int64, currency string, description string, email string) (*Payment, error) {

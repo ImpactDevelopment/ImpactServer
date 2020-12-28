@@ -6,6 +6,8 @@ import (
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -29,6 +31,34 @@ type createRequest struct {
 
 type createResponse struct {
 	*stripe.Payment
+}
+
+func handleStripeWebhook(c echo.Context) error {
+	// Read body payload
+	const maxBodyBytes = int64(65536)
+	var payload []byte
+	var err error
+	if c.Request().Body != nil {
+		payload, err = ioutil.ReadAll(io.LimitReader(c.Request().Body, maxBodyBytes))
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "unable to read request body").SetInternal(err)
+		}
+	}
+
+	// Get & validate webhook event
+	event, err := stripe.GetWebhookEvent(payload, c.Request().Header.Get("Stripe-Signature"))
+	if err != nil {
+		return err
+	}
+
+	// Choose a handler for the webhook event
+	switch event.Type {
+	// TODO do something with refund events:
+	//charge.refund.updated
+	//charge.refunded
+	default:
+		return echo.NewHTTPError(http.StatusNotImplemented, "unknown webhook type "+event.Type)
+	}
 }
 
 func createStripePayment(c echo.Context) error {
