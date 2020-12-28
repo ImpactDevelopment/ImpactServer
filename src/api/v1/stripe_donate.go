@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
+	"github.com/ImpactDevelopment/ImpactServer/src/discord"
 	"github.com/ImpactDevelopment/ImpactServer/src/stripe"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/google/uuid"
@@ -136,6 +137,14 @@ func redeemStripePayment(c echo.Context) error {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error saving pending donation").SetInternal(err)
 	}
+
+	// Log the donation to discord TODO consider doing this as a payment succeeded webhook
+	go func() {
+		logID, err := discord.LogDonationEvent("", "Someone just donated", "", nil, payment.Amount)
+		if err == nil {
+			database.DB.Exec(`UPDATE pending_donations SET log_msg_id = $2 WHERE token = $1`, token, logID)
+		}
+	}()
 
 	return c.JSON(http.StatusOK, &redeemResponse{
 		Token: token.String(),
