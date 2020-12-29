@@ -51,6 +51,15 @@
         .input-field .prefix {
             width: 2rem;
         }
+
+        /* Hide the browser's up/down buttons on <input type=number> */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
     </style>
 </head>
 <body>
