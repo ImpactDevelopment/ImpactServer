@@ -10,6 +10,7 @@
     <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js"></script>
     <script type="text/javascript" src="/min/modernizr-min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.2/jquery.validate.min.js"></script>
     <script type="text/javascript" src="/js/api.js"></script>
     <script type="text/javascript" src="https://js.stripe.com/v3/"></script>
 
@@ -88,15 +89,14 @@
     <div class="row">
         <div class="input-field col s12 m6 push-m4">
             <label for="email">Email</label>
-            <input type="email" id="email" name="email" class="validate" />
-            <span class="helper-text" data-error="Invalid Email" data-success="Thanks!">Please enter your email so that we can send you a receipt</span>
+            <input type="email" id="email" name="email" required />
+            <span class="helper-text" data-error="Invalid Email" data-success="">Please enter your email so that we can send you a receipt</span>
         </div>
         <div class="input-field col s12 m4 pull-m6">
-            <label for="amount" class="active">Amount</label>
             <span class="prefix">$</span>
-            <input id="amount" type="number" data-type="currency" min="0.5" step="0.01" value="5"
-                   pattern="^\$\d{1,3}(,\d{3})*(\.\d+)?$">
-            <span class="helper-text" data-error="Invalid amount" data-success="Thanks!">Please enter the amount to donate</span>
+            <label for="amount" class="active">Amount</label>
+            <input id="amount" name="amount" required type="number" data-type="currency" min="0.5" step="0.01" value="5" />
+            <span class="helper-text" data-error="Invalid amount" data-success="">Please enter the amount to donate</span>
         </div>
         <div class="input-field col s12 m2 center">
             <button type="submit" form="amount-form" disabled class="btn waves-effect waves-light">
@@ -189,8 +189,6 @@
         apiVersion: '2020-08-27',
     });
 
-    var emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
-
     // Keep track of the current PaymentIntent so we know whether or not to create a new one;
     // useful when the user goes back and forth between the amount form and the payment form
     var currentPaymentIntent = null
@@ -200,74 +198,114 @@
         window.Materialize.updateTextFields()
     }
 
-    // TODO replace these change listeners with materializecss form validation?
-    var amountEventHandler = function (event) {
-        var val = $('#amount').val().trim()
-        var error = validateAmountValue(val)
-        if (error !== '') {
-            showError($('#amount-form'), error)
-            console.error(error)
+    // Setup jQuery validation for compatibility with materializecss
+    $.validator.setDefaults({
+        errorClass: 'invalid',
+        validClass: "valid",
+        errorPlacement: function(error, element) {
+            $(element)
+                .parent()
+                .find('.helper-text')
+                .attr('data-error', error.text());
+        },
+        // By default, onkeyup uses lazy validation (validates only once some other validation is triggered)
+        // let's change it to eager validation (validates as soon as typing begins)
+        onkeyup: function (element, event) {
+            // Ignore events while the elementValue is empty and also
+            // events triggered by TAB (event.which=9), or specifically excluded keycodes such as SHIFT, HOME and NUMLOCK
+            var excludedKeys = [ 16, 17, 18, 20, 35, 36, 37, 38, 39, 40, 45, 144, 225 ]
+            if ( event.which === 9 && this.elementValue( element ) === "" || $.inArray( event.keyCode, excludedKeys ) !== -1 ) {
+                return
+            }
+
+            this.element(element);
+        },
+        // showErrors is called after validating the form, let's use it to inject our own done event; 'finishedHandler'
+        showErrors: function(errorMap, errorList) {
+            this.defaultShowErrors();
+            // Call our 'finished' event
+            if (typeof this.settings.finishedHnadler === 'function') {
+                this.settings.finishedHnadler.call(this, this.currentForm, errorMap, errorList)
+            }
         }
-        $('#amount-form button').attr('disabled', error !== "")
-    }
-    $('#amount').change(amountEventHandler).keyup(amountEventHandler)
+    });
 
-    var emailEventHandler = function (event) {
-        var val = $('#email').val().trim()
-        var error = validateEmail(val)
-        if (error !== '') {
-            showError($('#amount-form'), error)
-            console.error(error)
+    // Setup validation rules for the amount form
+    $("#amount-form").validate({
+        messages: {
+            amount: {
+                required: "Please specify the amount to donate",
+            },
+            email: {
+                required: "We need your email address to provide you a receipt",
+            }
+        },
+        normalizer: function(value) {
+            return $.trim(value)
+        },
+        finishedHnadler: function(form, errorMap, errorList){
+            // After validating the form (or part of it), check to see if the submit button should be disabled or not
+            // Valid if no errors in list
+            var valid = errorList.length === 0
+
+            // If currentElements doesn't match the full elements list, we should manually check all elements
+            if (valid && this.elements().length !== this.currentElements.length) {
+                var that = this
+                valid = Array.prototype.every.call(this.elements(), function (element) {
+                    return that.check(element)
+                })
+            }
+
+            // Disable submit button when the form is not valid
+            $(form).find('button[type=submit]').attr('disabled', !valid)
+
+            // We also want to check if amount qualifies for perks and update the data-success helper-text
+            if (Array.prototype.includes.call(this.currentElements, form['amount'])) {
+                var amount = this.elementValue(form['amount'])
+                $(form['amount'])
+                    .parent().find('.helper-text')
+                    .attr('data-success', amount < 5 ? 'Donate $5 or more for perks' : 'This amount qualifies for perks!')
+
+                // Normalize if needed, conditional to avoid going infinitely recursive!
+                // use regex to allow trailing decimals while user enters a value
+                if (!/^[0-9]+(\.[0-9]{0,2})?$/.test(form['amount'].value)) {
+                    form['amount'].value = Math.floor(amount * 100) / 100
+                }
+            }
+        },
+        submitHandler: function (form, event) {
+            // submitHandler is called on submit, if the form is valid
+
+            // preventDefault to stop the HTML form from actually submitting
+            event.preventDefault()
+
+            // Process the amount value
+            // It must be a valid number and be multiplied by 100
+            var amount = Math.floor(form['amount'].value.trim() * 100)
+            var email = form['email'].value.trim()
+
+            // Show a spinner while creating PaymentIntent
+            loading($(form), true)
+
+            // If the current (old) PaymentIntent is identical to the new updated amount/email values,
+            // don't bother calling api.createPayment since we don't need a new PaymentIntent
+            if (currentPaymentIntent && !hasPaymentChanged(currentPaymentIntent, amount, email)) {
+                setupPaymentForm(currentPaymentIntent)
+                return
+            }
+
+            api.createPayment(amount, email)
+                .then(function (result) {
+                    return currentPaymentIntent = result
+                })
+                .then(setupPaymentForm)
+                .catch(function (error) {
+                    currentPaymentIntent = null
+                    loading($(form), false)
+                    showError($(form), error)
+                })
         }
-        $('#amount-form button').attr('disabled', error !== "")
-    }
-    $('#email').change(emailEventHandler).keyup(emailEventHandler)
-
-    $('#amount-form').submit(function (event) {
-        event.preventDefault()
-
-        // Validate email
-        var email = $('#email').val()
-        var emailError = validateEmail(email)
-        if (emailError !== '') {
-            showError($('#amount-form'), error)
-            console.error(amountError)
-            return
-        }
-
-
-        // Validate and process the amount value
-        // It must be a valid number and must then become an int by multiplying by 100
-        var amount = $('#amount').val().trim()
-        var amountError = validateAmountValue(amount)
-        if (amountError !== '') {
-            showError($('#amount-form'), error)
-            console.error(amountError)
-            return
-        }
-        amount = Math.floor(amount * 100)
-
-        // Show a spinner while creating PaymentIntent
-        loading($('#amount-form'), true)
-
-        // If the current (old) PaymentIntent is identical to the new updated amount/email values,
-        // don't bother calling api.createPayment since we don't need a new PaymentIntent
-        if (currentPaymentIntent && !hasPaymentChanged(currentPaymentIntent, amount, email)) {
-            setupPaymentForm(currentPaymentIntent)
-            return
-        }
-
-        api.createPayment(amount, email)
-            .then(function (result) {
-                return currentPaymentIntent = result
-            })
-            .then(setupPaymentForm)
-            .catch(function (error) {
-                currentPaymentIntent = null
-                loading($('#amount-form'), false)
-                showError($('#amount-form'), error)
-            })
-    })
+    });
 
     $('#back-button').click(function (event) {
         event.preventDefault()
@@ -376,39 +414,6 @@
         $('#amount-form').addClass('hidden')
         $('#payment-form').removeClass('hidden')
         loading($('#amount-form'), false)
-    }
-
-    var validateEmail = function (email) {
-        if (email === '') {
-            return 'Email is empty'
-        }
-        if (email.length < 3 || email.length > 254) {
-            return 'Email must be between 3 and 254 characters'
-        }
-        if (!emailRegex.test(email)) {
-            return 'Invalid email format'
-        }
-        return ''
-    }
-
-    // Check if amount value is valid
-    // If valid returns empty string
-    // If invalid returns an error
-    // TODO consider returning an object so we can have additional data such as whether or not to show the error?
-    var validateAmountValue = function(value) {
-        if (value === '') {
-            return 'Amount is empty'
-        }
-        if (isNaN(value)) {
-            return '"' + value + '" is not a number'
-        }
-        if (value < 0) {
-            return '"' + value + '" is negative'
-        }
-        if (value === 0) {
-            return 'Amount is zero'
-        }
-        return '' // No error
     }
 
     var hasPaymentChanged = function (payment, amount, email) {
@@ -520,10 +525,6 @@
         loading(parent, false);
         var err = parent.find('.error')
         err.text(errorMsgText)
-        // FIXME if multiple errors occur within 4s, the original timeout will still wipe the latest error message
-        setTimeout(function() {
-            err.text("")
-        }, 4000);
     };
 
     // Show a spinner on form submission
