@@ -153,7 +153,7 @@
 </form>
 <div class="container result-message hidden">
     <div class="row">
-        <h4 class="col s12">Thank you for your donation!</h4>
+        <h4 class="col s12">Thank you for donating <span class="amount"> to Impact</span></h4>
         <p class="col s12">
             Your payment ID is: <code id="payment-id"></code>
         </p>
@@ -171,10 +171,13 @@
                     </div>
                 </div>
             </div>
-            <p class="success">
+            <p class="premium-success">
                 Your Impact Account registration token is: <code id="token"></code>.
                 <br/>
                 <a href="#" id="register">Click here to register an Impact Account</a>
+            </p>
+            <p class="small-success" role="alert">
+                Although your donation does not qualify for a premium Impact Account, we greatly appreciate any and all donations. Thanks for your support!
             </p>
             <p class="error" role="alert"></p>
         </div>
@@ -191,7 +194,7 @@
 
     // Keep track of the current PaymentIntent so we know whether or not to create a new one;
     // useful when the user goes back and forth between the amount form and the payment form
-    var currentPaymentIntent = null
+    var currentPayment = null
 
     // Initialise materialize forms
     if (window.Materialize) {
@@ -289,18 +292,18 @@
 
             // If the current (old) PaymentIntent is identical to the new updated amount/email values,
             // don't bother calling api.createPayment since we don't need a new PaymentIntent
-            if (currentPaymentIntent && !hasPaymentChanged(currentPaymentIntent, amount, email)) {
-                setupPaymentForm(currentPaymentIntent)
+            if (currentPayment && !hasPaymentChanged(currentPayment, amount, email)) {
+                setupPaymentForm(currentPayment)
                 return
             }
 
             api.createPayment(amount, email)
                 .then(function (result) {
-                    return currentPaymentIntent = result
+                    return currentPayment = result
                 })
                 .then(setupPaymentForm)
                 .catch(function (error) {
-                    currentPaymentIntent = null
+                    currentPayment = null
                     loading($(form), false)
                     showError($(form), error)
                 })
@@ -326,12 +329,12 @@
         // Display some info
         $('#payment-form .amount').text('$' + (Math.floor(data.amount) / 100).toFixed(2))
         $('#payment-form .email').text(data.email)
-        if (data.amount < 500) {
-            $('#payment-form .show-if-not-premium').removeClass('hidden')
-            $('#payment-form .show-if-premium').addClass('hidden')
-        } else {
+        if (data['premium'] === true) {
             $('#payment-form .show-if-premium').removeClass('hidden')
             $('#payment-form .show-if-not-premium').addClass('hidden')
+        } else {
+            $('#payment-form .show-if-not-premium').removeClass('hidden')
+            $('#payment-form .show-if-premium').addClass('hidden')
         }
 
         // Stripe stuff
@@ -493,31 +496,45 @@
 
     // Shows a success message when the payment is complete
     var orderComplete = function(payment) {
-        loading($('#payment-form'), false);
-        loading($('.result-message'), true)
+        loading($('#payment-form'), false)
+        loading($('.result-message'), false)
         $("button[type=submit]").attr('disabled', true)
         $('#payment-form').addClass('hidden')
-        $('.result-message .success').addClass('hidden')
+        $('.result-message .small-success').addClass('hidden')
+        $('.result-message .premium-success').addClass('hidden')0
         $('.result-message .error').addClass('hidden')
 
         $('#payment-id').text(payment['id'])
+        $('.result-message .amount').text(payment['amount'])
         $('.result-message').removeClass('hidden')
-        api.redeemPayment(payment['id'], payment['receipt_email'])
-            .then(function (token) {
-                $('#token').text(token)
-                $('#register').attr('href', '/register?token='+encodeURIComponent(token))
-                loading($('.result-message'), false)
-                $('.result-message .error').addClass('hidden')
-                $('.result-message .success').removeClass('hidden')
-            })
-            .catch(function (error) {
-                // TODO handle some errors gracefully e.g. amount too small
-                loading($('.result-message'), false)
-                $('.result-message .success').addClass('hidden')
-                $('.result-message .error')
-                    .removeClass('hidden')
-                    .text(error)
-            })
+
+        // If the payment was premium, ask for a token
+        if (currentPayment && currentPayment['premium'] === true) {
+            loading($('.result-message'), true)
+            api.redeemPayment(payment['id'], payment['receipt_email'])
+                .then(function (token) {
+                    $('#token').text(token)
+                    $('#register').attr('href', '/register?token='+encodeURIComponent(token))
+                    loading($('.result-message'), false)
+                    $('.result-message .small-success').addClass('hidden')
+                    $('.result-message .premium-success').removeClass('hidden')
+                    $('.result-message .error').addClass('hidden')
+                })
+                .catch(function (error) {
+                    // TODO handle some errors gracefully?
+                    loading($('.result-message'), false)
+                    $('.result-message .small-success').addClass('hidden')
+                    $('.result-message .premium-success').addClass('hidden')
+                    $('.result-message .error')
+                        .removeClass('hidden')
+                        .text(error)
+                })
+        } else {
+            // If the payment wasn't premium, just say thanks
+            $('.result-message .small-success').removeClass('hidden')
+            $('.result-message .premium-success').addClass('hidden')
+            $('.result-message .error').addClass('hidden')
+        }
     };
 
     // Show the customer the error from Stripe if their card fails to charge
