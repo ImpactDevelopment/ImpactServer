@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"database/sql"
 	"encoding/json"
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"github.com/ImpactDevelopment/ImpactServer/src/discord"
@@ -124,14 +125,14 @@ func redeemStripePayment(c echo.Context) error {
 	donationLock.Lock()
 
 	// Store the donation in the DB - or fetch it if it already exists
-	token, logID, err := getOrCreateDonation(body.ID, payment.Email, payment.Amount)
+	token, err := getOrCreateDonation(body.ID, payment.Email, payment.Amount)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error saving pending donation").SetInternal(err)
 	}
 
 	// Log the donation to discord
 	go func() {
-		_ = editOrCreateDonationLog("Someone just donated and generated a token", payment.Amount, token, logID)
+		_ = editOrCreateDonationLog("Someone just donated and generated a token", payment.Amount, token)
 		donationLock.Unlock() // Done messing with donation logging
 	}()
 
@@ -187,12 +188,12 @@ func handlePaymentSucceeded(c echo.Context, event *stripe.WebhookEvent, payment 
 	defer donationLock.Unlock()
 
 	// Check the DB to see if a pending_donation already exists, create one if not
-	token, logID, err := getOrCreateDonation(payment.ID, payment.ReceiptEmail, payment.Amount)
+	token, err := getOrCreateDonation(payment.ID, payment.ReceiptEmail, payment.Amount)
 	if err != nil {
 		return err
 	}
 
-	_ = editOrCreateDonationLog("Someone just donated", payment.Amount, token, logID)
+	_ = editOrCreateDonationLog("Someone just donated", payment.Amount, token)
 
 	return c.NoContent(http.StatusOK)
 }
@@ -222,19 +223,19 @@ func handleRefund(c echo.Context, event *stripe.WebhookEvent, refund upstreamstr
 }
 
 // Helper func to add a donation to pending_donations - or fetch the token if it already exists
-func getOrCreateDonation(paymentID string, email string, amount int64) (token uuid.UUID, logID string, err error) {
+func getOrCreateDonation(paymentID string, email string, amount int64) (token uuid.UUID, err error) {
 	// INSERT if no conflict or simply SELECT if already exists
 	err = database.DB.QueryRow(`
 		WITH new_pending_donation AS (
     		INSERT INTO pending_donations(stripe_payment_id, stripe_payer_email, amount, premium)
     		VALUES ($1, $2, $3, TRUE)
     		ON CONFLICT(stripe_payment_id) DO NOTHING
-    		RETURNING token, log_msg_id
+    		RETURNING token
 		) SELECT COALESCE (
-		    (SELECT token, log_msg_id FROM new_pending_donation),
-		    (SELECT token, log_msg_id FROM pending_donations WHERE NOT used AND stripe_payment_id = $1)
+		    (SELECT token FROM new_pending_donation),
+		    (SELECT token FROM pending_donations WHERE NOT used AND stripe_payment_id = $1)
 		)`,
-		paymentID, email, amount).Scan(&token, &logID)
+		paymentID, email, amount).Scan(&token)
 	if err != nil {
 		log.Println(err)
 	}
@@ -242,11 +243,14 @@ func getOrCreateDonation(paymentID string, email string, amount int64) (token uu
 }
 
 // Helper func to edit the donation discord log - or create on if it doesn't exist
-func editOrCreateDonationLog(message string, amount int64, token uuid.UUID, logID string) error {
-	newLogMsg := logID == ""
-	logID, err := discord.LogDonationEvent(logID, message, "", nil, amount)
-	if newLogMsg && err == nil {
-		database.DB.Exec(`UPDATE pending_donations SET log_msg_id = $2 WHERE token = $1`, token, logID)
+func editOrCreateDonationLog(message string, amount int64, token uuid.UUID) error {
+	// Get logID if it exitst
+	var logID sql.NullString
+	database.DB.QueryRow(`SELECT log_msg_id FROM pending_donations WHERE token = $1`, token).Scan(&logID)
+
+	newLogID, err := discord.LogDonationEvent(logID.String, message, "", nil, amount)
+	if !logID.Valid && err == nil {
+		database.DB.Exec(`UPDATE pending_donations SET log_msg_id = $2 WHERE token = $1`, token, newLogID)
 	}
 	return err
 }
