@@ -9,9 +9,11 @@ import (
 	"os"
 )
 
+var PublicKey string
 var webhookSecret string
 
 func init() {
+	PublicKey = os.Getenv("STRIPE_PUBLIC_KEY")
 	stripe.Key = os.Getenv("STRIPE_PRIVATE_KEY")
 	webhookSecret = os.Getenv("STRIPE_WEBHOOK_SECRET")
 }

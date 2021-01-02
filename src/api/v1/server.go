@@ -28,6 +28,7 @@ func API(api *echo.Group) {
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/minecraft", jwt.MinecraftLoginHandler, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/login/discord", jwt.DiscordLoginHandler, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/paypal/afterpayment", afterDonation, middleware.NoCache())
+	api.Any("/stripe/info", getStripeInfo, middleware.CacheUntilPurge())
 	api.Any("/stripe/webhook", handleStripeWebhook, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/stripe/createpayment", createStripePayment, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/stripe/redeem", redeemStripePayment, middleware.NoCache())

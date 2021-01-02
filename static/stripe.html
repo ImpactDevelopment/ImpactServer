@@ -45,6 +45,16 @@
             padding-left: 8px;
         }
 
+        /* Initial page load animation */
+        .fade-in {
+            opacity: 1;
+            -webkit-transition: opacity .33s ease;
+            transition: opacity .33s ease;
+        }
+        .invisible {
+            opacity: 0!important;
+        }
+
         /* Fix input prefix alignment */
         .input-field .prefix ~ input, .input-field .prefix ~ label, .input-field .prefix ~ .helper-text {
             margin-left: 2rem;
@@ -73,133 +83,121 @@
         </nav>
     </div>
 </header>
-<div class="container">
-    <div class="row">
-        <p class="col s12">
-            Donations of any size are appreciated! <strong>The minimum donation to receive premium features is $5.</strong>
-            <br/>
-            This donation form is currently in early beta-testing, please report any issues you find to
-            <a  target="_blank" href="https://github.com/ImpactDevelopment/ImpactServer/issues">this bug tracker</a>.
-            Please avoid including any private information (including payment IDs, emails, etc) when reporting issues on the bug tracker.
-            If private information is needed, please message <code>LeafHacker#5373</code> privately on <a target="_blank" href="/discord">Discord</a>!
-        </p>
-    </div>
-</div>
-<form id="amount-form" class="container">
-    <div class="row">
-        <div class="input-field col s12 m6 push-m4">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" required />
-            <span class="helper-text" data-error="Invalid Email" data-success="">Please enter your email so that we can send you a receipt</span>
-        </div>
-        <div class="input-field col s12 m4 pull-m6">
-            <span class="prefix">$</span>
-            <label for="amount" class="active">Amount</label>
-            <input id="amount" name="amount" required type="number" data-type="currency" min="0.5" step="0.01" value="5" />
-            <span class="helper-text" data-error="Invalid amount" data-success="">Please enter the amount to donate</span>
-        </div>
-        <div class="input-field col s12 m2 center">
-            <button type="submit" form="amount-form" disabled class="btn waves-effect waves-light">
-                Next
-            </button>
-            <div class="preloader-wrapper small active hidden">
-                <div class="spinner-layer spinner-blue-only">
-                    <div class="circle-clipper left">
-                        <div class="circle"></div>
-                    </div>
-                    <div class="gap-patch">
-                        <div class="circle"></div>
-                    </div>
-                    <div class="circle-clipper right">
-                        <div class="circle"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <p id="amount-error" class="input-field col s12 error" role="alert"></p>
-    </div>
-</form>
-<form id="payment-form" class="container hidden">
-    <div class="row">
-        <div class="input-field col s12 info">
-            <h4>Your donation of <span class="amount"></span> will be greatly appreciated!</h4>
-            <p class="hidden show-if-premium">As your donation is $5 or more, you will be able to create an Impact Account to receive perks!</p>
-            <p class="hidden show-if-not-premium">If you wish to register an Impact Account to receive perks, please donate $5 or more.</p>
-            <p>An email will be sent to <span class="email"></span> with confirmation of your payment.</p>
-            <p><a href="#" id="back-button">Click here to amend any of these details.</a></p>
-        </div>
-        <div id="payment-request-button" class="input-field col s12"><!-- Stripe.js injects the PaymentRequest Element here --></div>
-        <div id="card-element" class="input-field col s12 m10"><!-- Stripe.js injects the Card Element here --></div>
-        <div class="input-field col s12 m2 center">
-            <button type="submit" form="payment-form" disabled class="btn waves-effect waves-light">
-                Donate
-            </button>
-            <div class="preloader-wrapper small active hidden">
-                <div class="spinner-layer spinner-blue-only">
-                    <div class="circle-clipper left">
-                        <div class="circle"></div>
-                    </div>
-                    <div class="gap-patch">
-                        <div class="circle"></div>
-                    </div>
-                    <div class="circle-clipper right">
-                        <div class="circle"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <p id="card-error" class="input-field col s12 error" role="alert"></p>
-    </div>
-</form>
-<div class="container result-message hidden">
-    <div class="row">
-        <h4 class="col s12">Thank you for donating <span class="amount"> to Impact</span></h4>
-        <p class="col s12">
-            Your payment ID is: <code id="payment-id"></code>
-        </p>
-        <div class="col s12">
-            <div class="preloader-wrapper small active hidden">
-                <div class="spinner-layer spinner-blue-only">
-                    <div class="circle-clipper left">
-                        <div class="circle"></div>
-                    </div>
-                    <div class="gap-patch">
-                        <div class="circle"></div>
-                    </div>
-                    <div class="circle-clipper right">
-                        <div class="circle"></div>
-                    </div>
-                </div>
-            </div>
-            <p class="premium-success">
-                Your Impact Account registration token is: <code id="token"></code>.
+<div id="initial-load" class="invisible fade-in">
+    <div class="container">
+        <div class="row">
+            <p class="col s12">
+                Donations of any size are appreciated! <strong>The minimum donation to receive premium features is $<span class="required-amount"></span> .</strong>
                 <br/>
-                <a href="#" id="register">Click here to register an Impact Account</a>
+                This donation form is currently in early beta-testing, please report any issues you find to
+                <a  target="_blank" href="https://github.com/ImpactDevelopment/ImpactServer/issues">this bug tracker</a>.
+                Please avoid including any private information (including payment IDs, emails, etc) when reporting issues on the bug tracker.
+                If private information is needed, please message <code>LeafHacker#5373</code> privately on <a target="_blank" href="/discord">Discord</a>!
             </p>
-            <p class="small-success" role="alert">
-                Although your donation does not qualify for a premium Impact Account, we greatly appreciate any and all donations. Thanks for your support!
+        </div>
+    </div>
+    <form id="amount-form" class="container">
+        <div class="row">
+            <div class="input-field col s12 m6 push-m4">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required />
+                <span class="helper-text" data-error="Invalid Email" data-success="">Please enter your email so that we can send you a receipt</span>
+            </div>
+            <div class="input-field col s12 m4 pull-m6">
+                <span class="prefix">$</span>
+                <label for="amount" class="active">Amount</label>
+                <input id="amount" name="amount" required type="number" data-type="currency" min="0.5" step="0.01" />
+                <span class="helper-text" data-error="Invalid amount" data-success="">Please enter the amount to donate</span>
+            </div>
+            <div class="input-field col s12 m2 center">
+                <button type="submit" form="amount-form" disabled class="btn waves-effect waves-light">
+                    Next
+                </button>
+                <div class="preloader-wrapper small active hidden">
+                    <div class="spinner-layer spinner-blue-only">
+                        <div class="circle-clipper left">
+                            <div class="circle"></div>
+                        </div>
+                        <div class="gap-patch">
+                            <div class="circle"></div>
+                        </div>
+                        <div class="circle-clipper right">
+                            <div class="circle"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p id="amount-error" class="input-field col s12 error" role="alert"></p>
+        </div>
+    </form>
+    <form id="payment-form" class="container hidden">
+        <div class="row">
+            <div class="input-field col s12 info">
+                <h4>Your donation of <span class="amount"></span> will be greatly appreciated!</h4>
+                <p class="hidden show-if-premium">As your donation is $<span class="required-amount"></span> or more, you will be able to create an Impact Account to receive perks!</p>
+                <p class="hidden show-if-not-premium">If you wish to register an Impact Account to receive perks, please donate $<span class="required-amount"></span> or more.</p>
+                <p>An email will be sent to <span class="email"></span> with confirmation of your payment.</p>
+                <p><a href="#" id="back-button">Click here to amend any of these details.</a></p>
+            </div>
+            <div id="payment-request-button" class="input-field col s12"><!-- Stripe.js injects the PaymentRequest Element here --></div>
+            <div id="card-element" class="input-field col s12 m10"><!-- Stripe.js injects the Card Element here --></div>
+            <div class="input-field col s12 m2 center">
+                <button type="submit" form="payment-form" disabled class="btn waves-effect waves-light">
+                    Donate
+                </button>
+                <div class="preloader-wrapper small active hidden">
+                    <div class="spinner-layer spinner-blue-only">
+                        <div class="circle-clipper left">
+                            <div class="circle"></div>
+                        </div>
+                        <div class="gap-patch">
+                            <div class="circle"></div>
+                        </div>
+                        <div class="circle-clipper right">
+                            <div class="circle"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p id="card-error" class="input-field col s12 error" role="alert"></p>
+        </div>
+    </form>
+    <div class="container result-message hidden">
+        <div class="row">
+            <h4 class="col s12">Thank you for donating <span class="amount"> to Impact</span></h4>
+            <p class="col s12">
+                Your payment ID is: <code id="payment-id"></code>
             </p>
-            <p class="error" role="alert"></p>
+            <div class="col s12">
+                <div class="preloader-wrapper small active hidden">
+                    <div class="spinner-layer spinner-blue-only">
+                        <div class="circle-clipper left">
+                            <div class="circle"></div>
+                        </div>
+                        <div class="gap-patch">
+                            <div class="circle"></div>
+                        </div>
+                        <div class="circle-clipper right">
+                            <div class="circle"></div>
+                        </div>
+                    </div>
+                </div>
+                <p class="premium-success">
+                    Your Impact Account registration token is: <code id="token"></code>.
+                    <br/>
+                    <a href="#" id="register">Click here to register an Impact Account</a>
+                </p>
+                <p class="small-success" role="alert">
+                    Although your donation does not qualify for a premium Impact Account, we greatly appreciate any and all donations. Thanks for your support!
+                </p>
+                <p class="error" role="alert"></p>
+            </div>
         </div>
     </div>
 </div>
 
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 <script type="text/javascript">
-    // A reference to Stripe.js initialized with your real test publishable API key.
-    // TODO transition to live keys
-    var stripe = Stripe('pk_test_51HV1OpAARTsU1r4vavYYukCY25TqyL9et2w8dRzVvwUk6UydTp4zvxwExYVyHuPcXs53Ya26Of2UUbJ3zFjeE3JW00MtAMB1AE', {
-        apiVersion: '2020-08-27',
-    });
-
-    // Keep track of the current PaymentIntent so we know whether or not to create a new one;
-    // useful when the user goes back and forth between the amount form and the payment form
-    var currentPayment = null
-
-    // Initialise materialize forms
-    if (window.Materialize) {
-        window.Materialize.updateTextFields()
-    }
 
     // Setup jQuery validation for compatibility with materializecss
     $.validator.setDefaults({
@@ -233,82 +231,271 @@
         }
     });
 
-    // Setup validation rules for the amount form
-    $("#amount-form").validate({
-        messages: {
-            amount: {
-                required: "Please specify the amount to donate",
-            },
-            email: {
-                required: "We need your email address to provide you a receipt",
-            }
-        },
-        normalizer: function(value) {
-            return $.trim(value)
-        },
-        finishedHnadler: function(form, errorMap, errorList){
-            // After validating the form (or part of it), check to see if the submit button should be disabled or not
-            // Valid if no errors in list
-            var valid = errorList.length === 0
+    // Keep track of the current PaymentIntent so we know whether or not to create a new one;
+    // useful when the user goes back and forth between the amount form and the payment form
+    var currentPayment = null
 
-            // If currentElements doesn't match the full elements list, we should manually check all elements
-            if (valid && this.elements().length !== this.currentElements.length) {
-                var that = this
-                valid = Array.prototype.every.call(this.elements(), function (element) {
-                    return that.check(element)
-                })
-            }
+    // Initialise materialize forms
+    if (window.Materialize) {
+        window.Materialize.updateTextFields()
+    }
 
-            // Disable submit button when the form is not valid
-            $(form).find('button[type=submit]').attr('disabled', !valid)
+    api.stripeInfo()
+        .then(function (info) {
+            // Populate required amount
+            $('.required-amount').text(info['premium_amount']['usd'] / 100)
+            $('#amount').val(info['premium_amount']['usd'] / 100)
 
-            // We also want to check if amount qualifies for perks and update the data-success helper-text
-            if (Array.prototype.includes.call(this.currentElements, form['amount'])) {
-                var amount = this.elementValue(form['amount'])
-                $(form['amount'])
-                    .parent().find('.helper-text')
-                    .attr('data-success', amount < 5 ? 'Donate $5 or more for perks' : 'This amount qualifies for perks!')
+            // Initialise stripe
+            var stripe = Stripe(info['stripe_public_key'], {
+                apiVersion: info['stripe_api_version'],
+            });
 
-                // Normalize if needed, conditional to avoid going infinitely recursive!
-                // use regex to allow trailing decimals while user enters a value
-                if (!/^[0-9]+(\.[0-9]{0,2})?$/.test(form['amount'].value)) {
-                    form['amount'].value = Math.floor(amount * 100) / 100
+            // Setup validation rules for the amount form
+            $("#amount-form").validate({
+                messages: {
+                    amount: {
+                        required: "Please specify the amount to donate",
+                    },
+                    email: {
+                        required: "We need your email address to provide you a receipt",
+                    }
+                },
+                normalizer: function(value) {
+                    return $.trim(value)
+                },
+                finishedHnadler: function(form, errorMap, errorList){
+                    // After validating the form (or part of it), check to see if the submit button should be disabled or not
+                    // Valid if no errors in list
+                    var valid = errorList.length === 0
+
+                    // If currentElements doesn't match the full elements list, we should manually check all elements
+                    if (valid && this.elements().length !== this.currentElements.length) {
+                        var that = this
+                        valid = Array.prototype.every.call(this.elements(), function (element) {
+                            return that.check(element)
+                        })
+                    }
+
+                    // Disable submit button when the form is not valid
+                    $(form).find('button[type=submit]').attr('disabled', !valid)
+
+                    // We also want to check if amount qualifies for perks and update the data-success helper-text
+                    if (Array.prototype.includes.call(this.currentElements, form['amount'])) {
+                        var amount = this.elementValue(form['amount'])
+                        var centAmount = Math.floor(amount * 100)
+                        $(form['amount'])
+                            .parent().find('.helper-text')
+                            .attr('data-success', centAmount < info['premium_amount']['usd'] ? 'Donate $' + info['premium_amount']['usd'] / 100 + ' or more for perks' : 'This amount qualifies for perks!')
+
+                        // Normalize if needed, conditional to avoid going infinitely recursive!
+                        // use regex to allow trailing decimals while user enters a value
+                        if (!/^[0-9]+(\.[0-9]{0,2})?$/.test(form['amount'].value)) {
+                            form['amount'].value = Math.floor(amount * 100) / 100
+                        }
+                    }
+                },
+                submitHandler: function (form, event) {
+                    // submitHandler is called on submit, if the form is valid
+
+                    // preventDefault to stop the HTML form from actually submitting
+                    event.preventDefault()
+
+                    // Process the amount value
+                    // It must be a valid number and be multiplied by 100
+                    var amount = Math.floor(form['amount'].value.trim() * 100)
+                    var email = form['email'].value.trim()
+
+                    // Show a spinner while creating PaymentIntent
+                    loading($(form), true)
+
+                    // If the current (old) PaymentIntent is identical to the new updated amount/email values,
+                    // don't bother calling api.createPayment since we don't need a new PaymentIntent
+                    if (currentPayment && !hasPaymentChanged(currentPayment, amount, email)) {
+                        setupPaymentForm(currentPayment)
+                        return
+                    }
+
+                    api.createPayment(amount, email)
+                        .then(function (result) {
+                            return currentPayment = result
+                        })
+                        .then(setupPaymentForm)
+                        .catch(function (error) {
+                            currentPayment = null
+                            loading($(form), false)
+                            showError($(form), error)
+                        })
                 }
+            });
+
+            var setupPaymentForm = function (data) {
+                // Display some info
+                $('#payment-form .amount').text('$' + (Math.floor(data.amount) / 100).toFixed(2))
+                $('#payment-form .email').text(data.email)
+                if (data['premium'] === true) {
+                    $('#payment-form .show-if-premium').removeClass('hidden')
+                    $('#payment-form .show-if-not-premium').addClass('hidden')
+                } else {
+                    $('#payment-form .show-if-not-premium').removeClass('hidden')
+                    $('#payment-form .show-if-premium').addClass('hidden')
+                }
+
+                // Stripe stuff
+                var elements = stripe.elements();
+
+                // Setup PaymentRequest button
+                var paymentRequest = stripe.paymentRequest({
+                    country: 'US',
+                    currency: 'usd',
+                    total: {
+                        label: 'Donation',
+                        amount: data['amount'],
+                    },
+                    requestPayerName: false,
+                    requestPayerEmail: true, // Requesting name, email, or phone will automatically request billing address on Apple Pay which is useful for anti-fraud
+                    requestShipping: false
+                });
+                var prButton = elements.create('paymentRequestButton', {
+                    paymentRequest: paymentRequest,
+                });
+
+                // Check the availability of the Payment Request API first.
+                paymentRequest.canMakePayment().then(function(result) {
+                    if (result) {
+                        // Mount the button
+                        prButton.mount('#payment-request-button');
+
+                        // Setup submit handler for PaymentRequest
+                        paymentRequest.on('paymentmethod', function(event) {
+                            payWithPaymentRequest(stripe, event, data['client_secret'])
+                        });
+                    } else {
+                        document.getElementById('payment-request-button').style.display = 'none';
+                    }
+                });
+
+                // Setup card input, with vaguely material styles
+                var card = elements.create("card", {
+                    iconStyle: 'solid',
+                    style: {
+                        base: {
+                            iconColor: '#8898AA',
+                            //color: 'white',
+                            lineHeight: '36px',
+                            fontWeight: 300,
+                            fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                            fontSize: '19px',
+
+                            '::placeholder': {
+                                color: '#8898AA',
+                            },
+                        },
+                        invalid: {
+                            iconColor: '#e85746',
+                            color: '#e85746',
+                        }
+                    },
+                    classes: {
+                        focus: 'is-focused',
+                        empty: 'is-empty',
+                    },
+                });
+                card.mount("#card-element"); // Stripe injects an iframe into the DOM
+                card.on("change", function (event) {
+                    // Disable the Pay button if there are no card details in the Element
+                    $('#payment-form button[type=submit]').attr('disabled', event.empty)
+                    $("#card-error").text(event.error ? event.error.message : "")
+                });
+
+                // Setup submit handler
+                $("#payment-form")
+                    .off('submit') // Remove any other handlers - prevent duplicate handlers when re-initialising form
+                    .on('submit', function(event) {
+                        event.preventDefault();
+                        // Complete payment when the submit button is clicked
+                        payWithCard(stripe, card, data['client_secret']);
+                    });
+
+                // Hide the amount form and show the payment form
+                $('#amount-form').addClass('hidden')
+                $('#payment-form').removeClass('hidden')
+                loading($('#amount-form'), false)
             }
-        },
-        submitHandler: function (form, event) {
-            // submitHandler is called on submit, if the form is valid
 
-            // preventDefault to stop the HTML form from actually submitting
-            event.preventDefault()
+            // Calls stripe.confirmCardPayment
+            // If the card requires authentication Stripe shows a pop-up modal to
+            // prompt the user to enter authentication details without leaving your page.
+            var payWithPaymentRequest = function(stripe, event, clientSecret) {
+                // Confirm the PaymentIntent without handling potential next actions (yet).
+                stripe.confirmCardPayment(
+                    clientSecret,
+                    {
+                        payment_method: event.paymentMethod.id
+                    },
+                    {
+                        handleActions: false
+                    }
+                ).then(function(confirmResult) {
+                    if (confirmResult.error) {
+                        // Report to the browser that the payment failed, prompting it to
+                        // re-show the payment interface, or show an error message and close
+                        // the payment interface.
+                        event.complete('fail');
+                    } else {
+                        // Report to the browser that the confirmation was successful, prompting
+                        // it to close the browser payment method collection interface.
+                        event.complete('success');
+                        // Check if the PaymentIntent requires any actions and if so let Stripe.js
+                        // handle the flow. If using an API version older than "2019-02-11" instead
+                        // instead check for: `paymentIntent.status === "requires_source_action"`.
+                        if (confirmResult.paymentIntent.status === "requires_action") {
+                            // Let Stripe.js handle the rest of the payment flow.
+                            stripe.confirmCardPayment(clientSecret).then(function(newConfirmResult) {
+                                if (newConfirmResult.error) {
+                                    // The payment failed -- TODO ask user for a new payment method?
+                                    showError($('#payment-form'), newConfirmResult.error.message);
+                                } else {
+                                    // The payment has succeeded.
+                                    orderComplete(newConfirmResult.paymentIntent)
+                                }
+                            });
+                        } else {
+                            // The payment has succeeded.
+                            orderComplete(confirmResult.paymentIntent)
+                        }
+                    }
+                });
+            };
 
-            // Process the amount value
-            // It must be a valid number and be multiplied by 100
-            var amount = Math.floor(form['amount'].value.trim() * 100)
-            var email = form['email'].value.trim()
+            // Calls stripe.confirmCardPayment
+            // If the card requires authentication Stripe shows a pop-up modal to
+            // prompt the user to enter authentication details without leaving your page.
+            var payWithCard = function(stripe, card, clientSecret) {
+                loading($('#payment-form'), true);
+                stripe.confirmCardPayment(
+                    clientSecret,
+                    {
+                        payment_method: {
+                            card: card
+                        }
+                    }
+                ).then(function(confirmResult) {
+                    if (confirmResult.error) {
+                        // Show error to your customer
+                        showError($('#payment-form'), confirmResult.error.message);
+                    } else {
+                        // The payment succeeded!
+                        orderComplete(confirmResult.paymentIntent);
+                    }
+                });
+            };
 
-            // Show a spinner while creating PaymentIntent
-            loading($(form), true)
-
-            // If the current (old) PaymentIntent is identical to the new updated amount/email values,
-            // don't bother calling api.createPayment since we don't need a new PaymentIntent
-            if (currentPayment && !hasPaymentChanged(currentPayment, amount, email)) {
-                setupPaymentForm(currentPayment)
-                return
-            }
-
-            api.createPayment(amount, email)
-                .then(function (result) {
-                    return currentPayment = result
-                })
-                .then(setupPaymentForm)
-                .catch(function (error) {
-                    currentPayment = null
-                    loading($(form), false)
-                    showError($(form), error)
-                })
-        }
-    });
+            $('#initial-load').removeClass('invisible')
+        })
+        .catch(function (error) {
+            $('#initial-load').text(error).addClass('error').removeClass('invisible')
+        })
 
     $('#back-button').click(function (event) {
         event.preventDefault()
@@ -325,174 +512,12 @@
         amountf.find('#amount').focus()
     })
 
-    var setupPaymentForm = function (data) {
-        // Display some info
-        $('#payment-form .amount').text('$' + (Math.floor(data.amount) / 100).toFixed(2))
-        $('#payment-form .email').text(data.email)
-        if (data['premium'] === true) {
-            $('#payment-form .show-if-premium').removeClass('hidden')
-            $('#payment-form .show-if-not-premium').addClass('hidden')
-        } else {
-            $('#payment-form .show-if-not-premium').removeClass('hidden')
-            $('#payment-form .show-if-premium').addClass('hidden')
-        }
-
-        // Stripe stuff
-        var elements = stripe.elements();
-
-        // Setup PaymentRequest button
-        var paymentRequest = stripe.paymentRequest({
-            country: 'US',
-            currency: 'usd',
-            total: {
-                label: 'Donation',
-                amount: data['amount'],
-            },
-            requestPayerName: false,
-            requestPayerEmail: true, // Requesting name, email, or phone will automatically request billing address on Apple Pay which is useful for anti-fraud
-            requestShipping: false
-        });
-        var prButton = elements.create('paymentRequestButton', {
-            paymentRequest: paymentRequest,
-        });
-
-        // Check the availability of the Payment Request API first.
-        paymentRequest.canMakePayment().then(function(result) {
-            if (result) {
-                // Mount the button
-                prButton.mount('#payment-request-button');
-
-                // Setup submit handler for PaymentRequest
-                paymentRequest.on('paymentmethod', function(event) {
-                    payWithPaymentRequest(stripe, event, data['client_secret'])
-                });
-            } else {
-                document.getElementById('payment-request-button').style.display = 'none';
-            }
-        });
-
-        // Setup card input, with vaguely material styles
-        var card = elements.create("card", {
-            iconStyle: 'solid',
-            style: {
-                base: {
-                    iconColor: '#8898AA',
-                    //color: 'white',
-                    lineHeight: '36px',
-                    fontWeight: 300,
-                    fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
-                    fontSize: '19px',
-
-                    '::placeholder': {
-                        color: '#8898AA',
-                    },
-                },
-                invalid: {
-                    iconColor: '#e85746',
-                    color: '#e85746',
-                }
-            },
-            classes: {
-                focus: 'is-focused',
-                empty: 'is-empty',
-            },
-        });
-        card.mount("#card-element"); // Stripe injects an iframe into the DOM
-        card.on("change", function (event) {
-            // Disable the Pay button if there are no card details in the Element
-            $('#payment-form button[type=submit]').attr('disabled', event.empty)
-            $("#card-error").text(event.error ? event.error.message : "")
-        });
-
-        // Setup submit handler
-        $("#payment-form")
-            .off('submit') // Remove any other handlers - prevent duplicate handlers when re-initialising form
-            .on('submit', function(event) {
-                event.preventDefault();
-                // Complete payment when the submit button is clicked
-                payWithCard(stripe, card, data['client_secret']);
-            });
-
-        // Hide the amount form and show the payment form
-        $('#amount-form').addClass('hidden')
-        $('#payment-form').removeClass('hidden')
-        loading($('#amount-form'), false)
-    }
-
+    // Check if the given payment matches the given amount and email
+    // TODO if we ever add more currencies, we should check that too
     var hasPaymentChanged = function (payment, amount, email) {
         return !(payment.amount === amount && payment.email === email);
 
     }
-
-    // Calls stripe.confirmCardPayment
-    // If the card requires authentication Stripe shows a pop-up modal to
-    // prompt the user to enter authentication details without leaving your page.
-    var payWithPaymentRequest = function(stripe, event, clientSecret) {
-        // Confirm the PaymentIntent without handling potential next actions (yet).
-        stripe.confirmCardPayment(
-            clientSecret,
-            {
-                payment_method: event.paymentMethod.id
-            },
-            {
-                handleActions: false
-            }
-        ).then(function(confirmResult) {
-            if (confirmResult.error) {
-                // Report to the browser that the payment failed, prompting it to
-                // re-show the payment interface, or show an error message and close
-                // the payment interface.
-                event.complete('fail');
-            } else {
-                // Report to the browser that the confirmation was successful, prompting
-                // it to close the browser payment method collection interface.
-                event.complete('success');
-                // Check if the PaymentIntent requires any actions and if so let Stripe.js
-                // handle the flow. If using an API version older than "2019-02-11" instead
-                // instead check for: `paymentIntent.status === "requires_source_action"`.
-                if (confirmResult.paymentIntent.status === "requires_action") {
-                    // Let Stripe.js handle the rest of the payment flow.
-                    stripe.confirmCardPayment(clientSecret).then(function(newConfirmResult) {
-                        if (newConfirmResult.error) {
-                            // The payment failed -- TODO ask user for a new payment method?
-                            showError($('#payment-form'), newConfirmResult.error.message);
-                        } else {
-                            // The payment has succeeded.
-                            orderComplete(newConfirmResult.paymentIntent)
-                        }
-                    });
-                } else {
-                    // The payment has succeeded.
-                    orderComplete(confirmResult.paymentIntent)
-                }
-            }
-        });
-    };
-
-    // Calls stripe.confirmCardPayment
-    // If the card requires authentication Stripe shows a pop-up modal to
-    // prompt the user to enter authentication details without leaving your page.
-    var payWithCard = function(stripe, card, clientSecret) {
-        loading($('#payment-form'), true);
-        stripe.confirmCardPayment(
-            clientSecret,
-            {
-                payment_method: {
-                    card: card
-                }
-            }
-        ).then(function(confirmResult) {
-            if (confirmResult.error) {
-                // Show error to your customer
-                showError($('#payment-form'), confirmResult.error.message);
-            } else {
-                // The payment succeeded!
-                orderComplete(confirmResult.paymentIntent);
-            }
-        });
-    };
-
-    /* ------- UI helpers ------- */
 
     // Shows a success message when the payment is complete
     var orderComplete = function(payment) {
@@ -501,7 +526,7 @@
         $("button[type=submit]").attr('disabled', true)
         $('#payment-form').addClass('hidden')
         $('.result-message .small-success').addClass('hidden')
-        $('.result-message .premium-success').addClass('hidden')0
+        $('.result-message .premium-success').addClass('hidden')
         $('.result-message .error').addClass('hidden')
 
         $('#payment-id').text(payment['id'])
