@@ -18,6 +18,16 @@ import (
 	upstreamstripe "github.com/stripe/stripe-go/v71"
 )
 
+type infoAmount struct {
+	USD int64 `json:"usd" form:"usd" query:"usd"`
+}
+
+type stripeInfoReqponse struct {
+	Version string     `json:"stripe_api_version" form:"stripe_api_version" query:"stripe_api_version"`
+	PubKey  string     `json:"stripe_public_key" form:"stripe_public_key" query:"stripe_public_key"`
+	Amount  infoAmount `json:"premium_amount" form:"premium_amount" query:"premium_amount"`
+}
+
 type redeemRequest struct {
 	ID    string `json:"payment_id" form:"payment_id" query:"payment_id"`
 	Email string `json:"email" form:"email" query:"email"`
@@ -39,6 +49,15 @@ type createResponse struct {
 
 // donationLock should be used while editing the DB or discord messages related to a donation
 var donationLock sync.Mutex
+
+func getStripeInfo(c echo.Context) error {
+	return c.JSON(http.StatusOK, &stripeInfoReqponse{
+		Version: upstreamstripe.APIVersion,
+		PubKey:  stripe.PublicKey,
+		// In the future we might support multiple currencies, but we should always define the required amount serverside
+		Amount: infoAmount{500},
+	})
+}
 
 func createStripePayment(c echo.Context) error {
 	var body createRequest
