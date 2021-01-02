@@ -231,7 +231,7 @@
         }
     });
 
-    // Keep track of the current PaymentIntent so we know whether or not to create a new one;
+    // Keep track of the current payment so we know whether or not to create a new one;
     // useful when the user goes back and forth between the amount form and the payment form
     var currentPayment = null
 
@@ -306,10 +306,10 @@
                     var amount = Math.floor(form['amount'].value.trim() * 100)
                     var email = form['email'].value.trim()
 
-                    // Show a spinner while creating PaymentIntent
+                    // Show a spinner while creating payment
                     loading($(form), true)
 
-                    // If the current (old) PaymentIntent is identical to the new updated amount/email values,
+                    // If the currentPayment object is identical to the new updated amount/email values,
                     // don't bother calling api.createPayment since we don't need a new PaymentIntent
                     if (currentPayment && !hasPaymentChanged(currentPayment, amount, email)) {
                         setupPaymentForm(currentPayment)
@@ -317,8 +317,8 @@
                     }
 
                     api.createPayment(amount, email)
-                        .then(function (result) {
-                            return currentPayment = result
+                        .then(function (payment) {
+                            return currentPayment = payment
                         })
                         .then(setupPaymentForm)
                         .catch(function (error) {
@@ -329,11 +329,11 @@
                 }
             });
 
-            var setupPaymentForm = function (data) {
+            var setupPaymentForm = function (payment) {
                 // Display some info
-                $('#payment-form .amount').text('$' + (Math.floor(data.amount) / 100).toFixed(2))
-                $('#payment-form .email').text(data.email)
-                if (data['premium'] === true) {
+                $('#payment-form .amount').text('$' + (Math.floor(payment['amount']) / 100).toFixed(2))
+                $('#payment-form .email').text(payment['email'])
+                if (payment['premium'] === true) {
                     $('#payment-form .show-if-premium').removeClass('hidden')
                     $('#payment-form .show-if-not-premium').addClass('hidden')
                 } else {
@@ -350,7 +350,7 @@
                     currency: 'usd',
                     total: {
                         label: 'Donation',
-                        amount: data['amount'],
+                        amount: payment['amount'],
                     },
                     requestPayerName: false,
                     requestPayerEmail: true, // Requesting name, email, or phone will automatically request billing address on Apple Pay which is useful for anti-fraud
@@ -361,14 +361,14 @@
                 });
 
                 // Check the availability of the Payment Request API first.
-                paymentRequest.canMakePayment().then(function(result) {
-                    if (result) {
+                paymentRequest.canMakePayment().then(function(supported) {
+                    if (supported) {
                         // Mount the button
                         prButton.mount('#payment-request-button');
 
                         // Setup submit handler for PaymentRequest
                         paymentRequest.on('paymentmethod', function(event) {
-                            payWithPaymentRequest(stripe, event, data['client_secret'])
+                            payWithPaymentRequest(stripe, event, payment['client_secret'])
                         });
                     } else {
                         document.getElementById('payment-request-button').style.display = 'none';
@@ -414,7 +414,7 @@
                     .on('submit', function(event) {
                         event.preventDefault();
                         // Complete payment when the submit button is clicked
-                        payWithCard(stripe, card, data['client_secret']);
+                        payWithCard(stripe, card, payment['client_secret']);
                     });
 
                 // Hide the amount form and show the payment form
@@ -520,7 +520,7 @@
     }
 
     // Shows a success message when the payment is complete
-    var orderComplete = function(payment) {
+    var orderComplete = function(paymentIntent) {
         loading($('#payment-form'), false)
         loading($('.result-message'), false)
         $("button[type=submit]").attr('disabled', true)
@@ -529,14 +529,14 @@
         $('.result-message .premium-success').addClass('hidden')
         $('.result-message .error').addClass('hidden')
 
-        $('#payment-id').text(payment['id'])
-        $('.result-message .amount').text(payment['amount'])
+        $('#payment-id').text(paymentIntent['id'])
+        $('.result-message .amount').text(paymentIntent['amount'])
         $('.result-message').removeClass('hidden')
 
         // If the payment was premium, ask for a token
         if (currentPayment && currentPayment['premium'] === true) {
             loading($('.result-message'), true)
-            api.redeemPayment(payment['id'], payment['receipt_email'])
+            api.redeemPayment(paymentIntent['id'], paymentIntent['receipt_email'])
                 .then(function (token) {
                     $('#token').text(token)
                     $('#register').attr('href', '/register?token='+encodeURIComponent(token))
