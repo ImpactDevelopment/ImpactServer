@@ -358,12 +358,17 @@
                 });
                 var prButton = elements.create('paymentRequestButton', {
                     paymentRequest: paymentRequest,
+                    style: {
+                        type: 'donate', // can be 'default', 'book', 'buy' or 'donate'
+                    }
                 });
 
                 // Check the availability of the Payment Request API first.
                 paymentRequest.canMakePayment().then(function(supported) {
                     if (supported) {
                         // Mount the button
+                        // TODO use our own button?
+                        // we'd need to check supported.applePay to know which logo to show
                         prButton.mount('#payment-request-button');
 
                         // Setup submit handler for PaymentRequest
