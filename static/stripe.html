@@ -235,16 +235,16 @@
     // useful when the user goes back and forth between the amount form and the payment form
     var currentPayment = null
 
-    // Initialise materialize forms
-    if (window.Materialize) {
-        window.Materialize.updateTextFields()
-    }
-
     api.stripeInfo()
         .then(function (info) {
             // Populate required amount
             $('.required-amount').text(info['premium_amount']['usd'] / 100)
             $('#amount').val(info['premium_amount']['usd'] / 100)
+
+            // Initialise materialize forms
+            if (window.Materialize) {
+                window.Materialize.updateTextFields()
+            }
 
             // Initialise stripe
             var stripe = Stripe(info['stripe_public_key'], {
