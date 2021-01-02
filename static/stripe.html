@@ -242,8 +242,8 @@
             $('#amount').val(info['premium_amount']['usd'] / 100)
 
             // Initialise materialize forms
-            if (window.Materialize) {
-                window.Materialize.updateTextFields()
+            if (window.M) {
+                window.M.updateTextFields()
             }
 
             // Initialise stripe
