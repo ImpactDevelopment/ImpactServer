@@ -111,6 +111,20 @@
                 })
             })
         },
+        stripeInfo: function() {
+            return new Promise(function(resolve, reject) {
+                $.get({
+                    url: baseUrl + "/stripe/info",
+                    dataType: "json",
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        reject(messageFromjqXHR(jqXHR))
+                    },
+                    success: function (data, status) {
+                        resolve(data)
+                    }
+                })
+            })
+        },
         createPayment: function(amount, email) {
             return new Promise(function(resolve, reject) {
                 $.post({
