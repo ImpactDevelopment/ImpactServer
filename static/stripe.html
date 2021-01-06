@@ -99,7 +99,7 @@
             </div>
             <div class="input-field col s9 m3 l2">
                 <label for="amount" class="active">Amount</label>
-                <input id="amount" name="amount" type="number" data-type="currency" min="0.5" step="0.01" tabindex="1" required autofocus />
+                <input id="amount" name="amount" type="number" data-type="currency" min="0.5" tabindex="1" required autofocus />
                 <span class="helper-text" data-error="Invalid amount" data-success="">The amount to donate</span>
             </div>
             <div class="input-field col s12 m5 l6">
@@ -319,12 +319,6 @@
                         $(form['amount'])
                             .parent().find('.helper-text')
                             .attr('data-success', baseAmount < currency['premium_amount'] ? 'Donate ' + currency['symbol'] + currency['premium_amount'] / 100 + ' or more for perks' : 'This amount qualifies for perks!')
-
-                        // Normalize if needed, conditional to avoid going infinitely recursive!
-                        // use regex to allow trailing decimals while user enters a value
-                        if (form['amount'].value.length > 0 && !/^[0-9]+(\.[0-9]{0,2})?$/.test(form['amount'].value)) {
-                            form['amount'].value = Math.floor(amount * 100) / 100
-                        }
                     }
                 },
                 submitHandler: function (form, event) {
