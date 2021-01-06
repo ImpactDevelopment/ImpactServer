@@ -125,11 +125,18 @@
                 })
             })
         },
-        createPayment: function(amount, email) {
+        createPayment: function(currency, amount, email) {
+            if (!email) {
+                // currency is optional, if only two args are present then shift them right
+                email = amount
+                amount = currency
+                currency = undefined
+            }
             return new Promise(function(resolve, reject) {
                 $.post({
                     url: baseUrl + "/stripe/createpayment",
                     data: {
+                        currency: currency,
                         amount: amount,
                         email: email
                     },
