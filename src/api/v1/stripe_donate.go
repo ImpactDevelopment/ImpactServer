@@ -127,13 +127,14 @@ func redeemStripePayment(c echo.Context) error {
 	if payment.PaymentIntent.Status != upstreamstripe.PaymentIntentStatusSucceeded {
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad Payment Status: Payment "+body.ID+" is "+string(payment.PaymentIntent.Status)+", expected status "+string(upstreamstripe.PaymentIntentStatusSucceeded))
 	}
-	// Check payment was in USD
-	if payment.PaymentIntent.Currency != string(upstreamstripe.CurrencyUSD) {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Payment Currency: Payment "+body.ID+" is in "+payment.PaymentIntent.Currency+", expected "+string(upstreamstripe.CurrencyUSD))
+	// Check payment is a valid currency
+	currency, err := stripe.GetCurrencyInfo(payment.Currency)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Payment Currency: Payment "+body.ID+" is in "+payment.Currency+", which isn't supported")
 	}
-	// Check payment was over $5
-	if payment.PaymentIntent.Amount < 500 {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Payment Amount: Payment "+body.ID+" totals "+strconv.FormatInt(payment.PaymentIntent.Amount, 10)+", expected 500 or more")
+	// Check payment was enough for perks
+	if payment.PaymentIntent.Amount < currency.Amount {
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Payment Amount: Payment "+body.ID+" totals "+strconv.FormatInt(payment.Amount, 10)+", expected "+strconv.FormatInt(currency.Amount, 10)+" or more")
 	}
 
 	// Now that we are interacting with the DB we should lock
