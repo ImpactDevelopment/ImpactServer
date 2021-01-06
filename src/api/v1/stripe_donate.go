@@ -174,7 +174,7 @@ func redeemStripePayment(c echo.Context) error {
 
 	// Log the donation to discord
 	go func() {
-		_ = editOrCreateDonationLog("Someone just donated and generated a token", payment.Amount, token)
+		_ = editOrCreateDonationLog("Someone just donated and generated a token", payment.PaymentIntent, token)
 		donationLock.Unlock() // Done messing with donation logging
 	}()
 
@@ -235,7 +235,7 @@ func handlePaymentSucceeded(c echo.Context, event *stripe.WebhookEvent, payment 
 		return err
 	}
 
-	_ = editOrCreateDonationLog("Someone just donated", payment.Amount, token)
+	_ = editOrCreateDonationLog("Someone just donated", &payment, token)
 
 	return c.NoContent(http.StatusOK)
 }
@@ -285,14 +285,21 @@ func getOrCreateDonation(paymentID string, email string, currency string, amount
 }
 
 // Helper func to edit the donation discord log - or create on if it doesn't exist
-func editOrCreateDonationLog(message string, amount int64, token uuid.UUID) error {
+func editOrCreateDonationLog(message string, payment *upstreamstripe.PaymentIntent, token uuid.UUID) error {
 	// Get logID if it exitst
 	var logID sql.NullString
 	database.DB.QueryRow(`SELECT log_msg_id FROM pending_donations WHERE token = $1`, token).Scan(&logID)
 
-	newLogID, err := discord.LogDonationEvent(logID.String, message, "", nil, amount)
+	newLogID, err := discord.LogDonationEvent(logID.String, message, "", nil, payment.Currency, payment.Amount)
 	if !logID.Valid && err == nil {
 		database.DB.Exec(`UPDATE pending_donations SET log_msg_id = $2 WHERE token = $1`, token, newLogID)
 	}
 	return err
+}
+
+func GetCurrencySymbol(currency string) string {
+	if it, ok := stripeCurrencyMap[currency]; ok {
+		return it.Symbol
+	}
+	return "¤"
 }

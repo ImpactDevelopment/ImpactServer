@@ -100,6 +100,7 @@ func registerWithToken(c echo.Context) error {
 	var (
 		token      *uuid.UUID
 		createdAt  int64
+		currency   string
 		amount     int64
 		used       bool
 		logID      sql.NullString
@@ -114,7 +115,7 @@ func registerWithToken(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		err = database.DB.QueryRow("SELECT created_at, amount, used, log_msg_id, premium, pepsi, spawnmason, staff FROM pending_donations WHERE token = $1", token).Scan(&createdAt, &amount, &used, &logID, &premium, &pepsi, &spawnmason, &staff)
+		err = database.DB.QueryRow("SELECT created_at, currency, amount, used, log_msg_id, premium, pepsi, spawnmason, staff FROM pending_donations WHERE token = $1", token).Scan(&createdAt, &currency, &amount, &used, &logID, &premium, &pepsi, &spawnmason, &staff)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid token")
 		}
@@ -245,7 +246,7 @@ func registerWithToken(c echo.Context) error {
 				err = discord.JoinOurServer(body.DiscordToken, discordID, true)
 			}
 			if err != nil {
-				discord.LogDonationEvent(logID.String, "Error adding donator to discord: "+err.Error(), discordID, minecraftProfile, amount)
+				discord.LogDonationEvent(logID.String, "Error adding donator to discord: "+err.Error(), discordID, minecraftProfile, currency, amount)
 				return
 			}
 		}
@@ -271,7 +272,7 @@ func registerWithToken(c echo.Context) error {
 			msg.WriteString(" upgraded their")
 		}
 		msg.WriteString(" Impact Account")
-		_, _ = discord.LogDonationEvent(logID.String, msg.String(), discordID, minecraftProfile, amount)
+		_, _ = discord.LogDonationEvent(logID.String, msg.String(), discordID, minecraftProfile, currency, amount)
 	}()
 
 	// Get the user so we can log them in
