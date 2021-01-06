@@ -25,6 +25,7 @@ func createTables() error {
 			token  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT, -- UNIX seconds
 			amount INTEGER, -- Can be null since this might be a _free_ giftcard or staff token
+			currency TEXT,
 		    
 		    -- Either paypal, stripe or both can be null. If both are null it is essentially a "gift card"
 			paypal_order_id TEXT UNIQUE,
