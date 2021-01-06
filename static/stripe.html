@@ -239,9 +239,13 @@
     // Keep track of the current payment so we know whether or not to create a new one;
     // useful when the user goes back and forth between the amount form and the payment form
     var currentPayment = null
+    var currencies = {}
 
     api.stripeInfo()
         .then(function (info) {
+            // We need to access this globally
+            currencies = info['currencies']
+
             // Populate currency drop-down
             $.each(info['currencies'], function (id, currency) {
                 $('#currency').append('<option value="'+id+'">'+currency['display_name']+'</option>')
@@ -385,8 +389,16 @@
             }
 
             var setupPaymentForm = function (payment) {
+                var currency = currencies[payment['currency']]
+                var symbol = '¤'
+                if (currency && currency.hasOwnProperty('symbol')) {
+                    symbol = currency['symbol']
+                } else {
+                    console.error('WARNING invalid currency setting up payment form', payment['currency'], currency)
+                }
+
                 // Display some info
-                $('#payment-form .amount').text('$' + (Math.floor(payment['amount']) / 100).toFixed(2))
+                $('#payment-form .amount').text(symbol + (Math.floor(payment['amount']) / 100).toFixed(2))
                 $('#payment-form .email').text(payment['email'])
                 if (payment['premium'] === true) {
                     $('#payment-form .show-if-premium').removeClass('hidden')
@@ -402,7 +414,7 @@
                 // Setup PaymentRequest button
                 var paymentRequest = stripe.paymentRequest({
                     country: 'US',
-                    currency: 'usd',
+                    currency: payment['currency'],
                     total: {
                         label: 'Donation',
                         amount: payment['amount'],
