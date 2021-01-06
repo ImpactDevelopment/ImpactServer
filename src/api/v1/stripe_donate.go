@@ -40,36 +40,11 @@ type createResponse struct {
 	Premium bool `json:"premium" form:"premium" query:"premium"`
 }
 
-type currencyInfo struct {
-	Amount      int64  `json:"premium_amount" form:"premium_amount" query:"premium_amount"`
-	DisplayName string `json:"display_name" form:"display_name" query:"display_name"`
-	Symbol      string `json:"symbol" form:"symbol" query:"symbol"`
-}
-
 type stripeInfoReqponse struct {
-	Version         string                   `json:"stripe_api_version" form:"stripe_api_version" query:"stripe_api_version"`
-	PubKey          string                   `json:"stripe_public_key" form:"stripe_public_key" query:"stripe_public_key"`
-	DefaultCurrency string                   `json:"default_currency" form:"default_currency" query:"default_currency"`
-	Currencies      *map[string]currencyInfo `json:"currencies" form:"currencies" query:"currencies"`
-}
-
-// Supported currencies and the respective amount required for premium perks
-var stripeCurrencyMap = map[string]currencyInfo{
-	"usd": {
-		Amount:      500,
-		DisplayName: "$ USD",
-		Symbol:      "$",
-	},
-	"eur": {
-		Amount:      500,
-		DisplayName: "€ EUR",
-		Symbol:      "€",
-	},
-	"gbp": {
-		Amount:      500,
-		DisplayName: "£ GBP",
-		Symbol:      "£",
-	},
+	Version         string                         `json:"stripe_api_version" form:"stripe_api_version" query:"stripe_api_version"`
+	PubKey          string                         `json:"stripe_public_key" form:"stripe_public_key" query:"stripe_public_key"`
+	DefaultCurrency string                         `json:"default_currency" form:"default_currency" query:"default_currency"`
+	Currencies      map[string]stripe.CurrencyInfo `json:"currencies" form:"currencies" query:"currencies"`
 }
 
 const defaultCurrency = "usd"
@@ -82,7 +57,7 @@ func getStripeInfo(c echo.Context) error {
 		Version:         upstreamstripe.APIVersion,
 		PubKey:          stripe.PublicKey,
 		DefaultCurrency: defaultCurrency,
-		Currencies:      &stripeCurrencyMap,
+		Currencies:      stripe.GetCurrencyMap(),
 	})
 }
 
@@ -101,11 +76,9 @@ func createStripePayment(c echo.Context) error {
 	}
 
 	// Validate currency
-	var currency currencyInfo
-	if val, ok := stripeCurrencyMap[body.Currency]; ok {
-		currency = val
-	} else {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid or unsupported currency \""+body.Currency+"\"")
+	currency, err := stripe.GetCurrencyInfo(body.Currency)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	}
 
 	if body.Amount == 0 {
@@ -295,11 +268,4 @@ func editOrCreateDonationLog(message string, payment *upstreamstripe.PaymentInte
 		database.DB.Exec(`UPDATE pending_donations SET log_msg_id = $2 WHERE token = $1`, token, newLogID)
 	}
 	return err
-}
-
-func GetCurrencySymbol(currency string) string {
-	if it, ok := stripeCurrencyMap[currency]; ok {
-		return it.Symbol
-	}
-	return "¤"
 }

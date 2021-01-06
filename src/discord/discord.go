@@ -3,8 +3,8 @@ package discord
 import (
 	"errors"
 	"fmt"
-	v1 "github.com/ImpactDevelopment/ImpactServer/src/api/v1"
 	"github.com/ImpactDevelopment/ImpactServer/src/minecraft"
+	"github.com/ImpactDevelopment/ImpactServer/src/stripe"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"os"
@@ -153,7 +153,7 @@ func LogDonationEvent(editMsgID string, msg string, discordID string, minecraft 
 	if amount > 0 {
 		m.Embed.Fields = append(m.Embed.Fields, &discordgo.MessageEmbedField{
 			Name:   "Donation",
-			Value:  fmt.Sprintf("%s%01d.%02d", v1.GetCurrencySymbol(currency), amount/100, amount%100),
+			Value:  fmt.Sprintf("%s%01d.%02d", stripe.GetCurrencySymbol(currency), amount/100, amount%100),
 			Inline: false,
 		})
 	}
