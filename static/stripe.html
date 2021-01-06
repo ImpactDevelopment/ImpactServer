@@ -589,7 +589,8 @@
         $('.result-message .error').addClass('hidden')
 
         $('#payment-id').text(paymentIntent['id'])
-        $('.result-message .amount').text('$' + (Math.floor(paymentIntent['amount']) / 100))
+        var currency = currencies[paymentIntent['currency']]
+        $('.result-message .amount').text(currency['symbol'] + (Math.floor(paymentIntent['amount']) / 100))
         $('.result-message').removeClass('hidden')
 
         // If the payment was premium, ask for a token
