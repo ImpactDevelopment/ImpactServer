@@ -1,6 +1,7 @@
 package stripe
 
 import (
+	"errors"
 	"github.com/labstack/echo/v4"
 	"github.com/stripe/stripe-go/v71"
 	"github.com/stripe/stripe-go/v71/paymentintent"
@@ -29,6 +30,31 @@ type Payment struct {
 
 type WebhookEvent struct {
 	stripe.Event
+}
+
+type CurrencyInfo struct {
+	Amount      int64  `json:"premium_amount" form:"premium_amount" query:"premium_amount"`
+	DisplayName string `json:"display_name" form:"display_name" query:"display_name"`
+	Symbol      string `json:"symbol" form:"symbol" query:"symbol"`
+}
+
+// Supported currencies and the respective amount required for premium perks
+var stripeCurrencyMap = map[string]CurrencyInfo{
+	"usd": {
+		Amount:      500,
+		DisplayName: "$ USD",
+		Symbol:      "$",
+	},
+	"eur": {
+		Amount:      500,
+		DisplayName: "€ EUR",
+		Symbol:      "€",
+	},
+	"gbp": {
+		Amount:      500,
+		DisplayName: "£ GBP",
+		Symbol:      "£",
+	},
 }
 
 func GetWebhookEvent(payload []byte, signature string) (*WebhookEvent, error) {
@@ -75,4 +101,22 @@ func GetPayment(id string) (*Payment, error) {
 		Currency:      payment.Currency,
 		Email:         payment.ReceiptEmail,
 	}, nil
+}
+
+func GetCurrencySymbol(currency string) string {
+	if it, ok := stripeCurrencyMap[currency]; ok {
+		return it.Symbol
+	}
+	return "¤"
+}
+
+func GetCurrencyInfo(currency string) (*CurrencyInfo, error) {
+	if it, ok := stripeCurrencyMap[currency]; ok {
+		return &it, nil
+	}
+	return nil, errors.New("invalid or unsupported currency \"" + currency + "\"")
+}
+
+func GetCurrencyMap() map[string]CurrencyInfo {
+	return stripeCurrencyMap
 }
