@@ -167,7 +167,7 @@ func redeemStripePayment(c echo.Context) error {
 	donationLock.Lock()
 
 	// Store the donation in the DB - or fetch it if it already exists
-	token, err := getOrCreateDonation(body.ID, payment.Email, payment.Amount)
+	token, err := getOrCreateDonation(body.ID, payment.Email, payment.Currency, payment.Amount)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error saving pending donation").SetInternal(err)
 	}
@@ -230,7 +230,7 @@ func handlePaymentSucceeded(c echo.Context, event *stripe.WebhookEvent, payment 
 	defer donationLock.Unlock()
 
 	// Check the DB to see if a pending_donation already exists, create one if not
-	token, err := getOrCreateDonation(payment.ID, payment.ReceiptEmail, payment.Amount)
+	token, err := getOrCreateDonation(payment.ID, payment.ReceiptEmail, payment.Currency, payment.Amount)
 	if err != nil {
 		return err
 	}
@@ -265,19 +265,19 @@ func handleRefund(c echo.Context, event *stripe.WebhookEvent, refund upstreamstr
 }
 
 // Helper func to add a donation to pending_donations - or fetch the token if it already exists
-func getOrCreateDonation(paymentID string, email string, amount int64) (token uuid.UUID, err error) {
+func getOrCreateDonation(paymentID string, email string, currency string, amount int64) (token uuid.UUID, err error) {
 	// INSERT if no conflict or simply SELECT if already exists
 	err = database.DB.QueryRow(`
 		WITH new_pending_donation AS (
-    		INSERT INTO pending_donations(stripe_payment_id, stripe_payer_email, amount, premium)
-    		VALUES ($1, $2, $3, TRUE)
+    		INSERT INTO pending_donations(stripe_payment_id, stripe_payer_email, currency, amount, premium)
+    		VALUES ($1, $2, $3, $4, TRUE)
     		ON CONFLICT(stripe_payment_id) DO NOTHING
     		RETURNING token
 		) SELECT COALESCE (
 		    (SELECT token FROM new_pending_donation),
 		    (SELECT token FROM pending_donations WHERE NOT used AND stripe_payment_id = $1)
 		)`,
-		paymentID, email, amount).Scan(&token)
+		paymentID, email, currency, amount).Scan(&token)
 	if err != nil {
 		log.Println(err)
 	}
