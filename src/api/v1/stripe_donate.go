@@ -72,6 +72,8 @@ var stripeCurrencyMap = map[string]currencyInfo{
 	},
 }
 
+const defaultCurrency = "usd"
+
 // donationLock should be used while editing the DB or discord messages related to a donation
 var donationLock sync.Mutex
 
@@ -79,7 +81,7 @@ func getStripeInfo(c echo.Context) error {
 	return c.JSON(http.StatusOK, &stripeInfoReqponse{
 		Version:         upstreamstripe.APIVersion,
 		PubKey:          stripe.PublicKey,
-		DefaultCurrency: "usd",
+		DefaultCurrency: defaultCurrency,
 		Currencies:      &stripeCurrencyMap,
 	})
 }
@@ -93,7 +95,7 @@ func createStripePayment(c echo.Context) error {
 
 	// Default currency
 	if body.Currency == "" {
-		body.Currency = "usd"
+		body.Currency = defaultCurrency
 	} else {
 		body.Currency = strings.ToLower(strings.TrimSpace(body.Currency))
 	}
