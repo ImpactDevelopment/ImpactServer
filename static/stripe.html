@@ -98,18 +98,18 @@
     </div>
     <form id="amount-form" class="container">
         <div class="row">
-            <div class="input-field col s12">
+            <div class="input-field col s3 m2">
                 <select name="currency" id="currency" required>
                     <option value="" disabled selected>Choose your preferred currency</option>
                 </select>
                 <label for="currency">Currency</label>
             </div>
-            <div class="input-field col s12 m4">
+            <div class="input-field col s9 m3 l2">
                 <label for="amount" class="active">Amount</label>
                 <input id="amount" name="amount" required type="number" data-type="currency" min="0.5" step="0.01" />
                 <span class="helper-text" data-error="Invalid amount" data-success="">Please enter the amount to donate</span>
             </div>
-            <div class="input-field col s12 m6">
+            <div class="input-field col s12 m5 l6">
                 <label for="email">Email</label>
                 <input type="email" id="email" name="email" required />
                 <span class="helper-text" data-error="Invalid Email" data-success="">Please enter your email so that we can send you a receipt</span>
