@@ -55,14 +55,6 @@
             opacity: 0!important;
         }
 
-        /* Fix input prefix alignment */
-        .input-field .prefix ~ input, .input-field .prefix ~ label, .input-field .prefix ~ .helper-text {
-            margin-left: 2rem;
-        }
-        .input-field .prefix {
-            width: 2rem;
-        }
-
         /* Hide the browser's up/down buttons on <input type=number> */
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -99,23 +91,24 @@
     <form id="amount-form" class="container">
         <div class="row">
             <div class="input-field col s3 m2">
-                <select name="currency" id="currency" required>
-                    <option value="" disabled selected>Choose your preferred currency</option>
+                <select name="currency" id="currency" required tabindex="0">
+                    <option value="" disabled selected>Choose...</option>
                 </select>
                 <label for="currency">Currency</label>
+                <span class="helper-text" data-error="Invalid currency" data-success="">The currency to use</span>
             </div>
             <div class="input-field col s9 m3 l2">
                 <label for="amount" class="active">Amount</label>
-                <input id="amount" name="amount" required type="number" data-type="currency" min="0.5" step="0.01" />
-                <span class="helper-text" data-error="Invalid amount" data-success="">Please enter the amount to donate</span>
+                <input id="amount" name="amount" type="number" data-type="currency" min="0.5" step="0.01" tabindex="1" required autofocus />
+                <span class="helper-text" data-error="Invalid amount" data-success="">The amount to donate</span>
             </div>
             <div class="input-field col s12 m5 l6">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" required />
-                <span class="helper-text" data-error="Invalid Email" data-success="">Please enter your email so that we can send you a receipt</span>
+                <input type="email" id="email" name="email" required tabindex="2" />
+                <span class="helper-text" data-error="Invalid Email" data-success="">An email to send your receipt to</span>
             </div>
             <div class="input-field col s12 m2 center">
-                <button type="submit" form="amount-form" disabled class="btn waves-effect waves-light">
+                <button type="submit" form="amount-form" class="btn waves-effect waves-light" disabled tabindex="3">
                     Next
                 </button>
                 <div class="preloader-wrapper small active hidden">
