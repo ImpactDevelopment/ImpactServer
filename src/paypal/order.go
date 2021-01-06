@@ -43,6 +43,16 @@ func (o Order) Total() (cent int64) {
 	return
 }
 
+// Currency returns the first currency found in the order
+func (o Order) Currency() string {
+	for _, purchase := range o.PurchaseUnits {
+		if currency := purchase.Amount.Currency; currency != "" {
+			return currency
+		}
+	}
+	return ""
+}
+
 // Capture will capture "approved" orders and return an error if it fails
 func (o *Order) Capture() error {
 	switch o.Status {
