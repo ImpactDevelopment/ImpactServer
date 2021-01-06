@@ -14,20 +14,11 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 
 	upstreamstripe "github.com/stripe/stripe-go/v71"
 )
-
-type infoAmount struct {
-	USD int64 `json:"usd" form:"usd" query:"usd"`
-}
-
-type stripeInfoReqponse struct {
-	Version string     `json:"stripe_api_version" form:"stripe_api_version" query:"stripe_api_version"`
-	PubKey  string     `json:"stripe_public_key" form:"stripe_public_key" query:"stripe_public_key"`
-	Amount  infoAmount `json:"premium_amount" form:"premium_amount" query:"premium_amount"`
-}
 
 type redeemRequest struct {
 	ID    string `json:"payment_id" form:"payment_id" query:"payment_id"`
@@ -39,8 +30,9 @@ type redeemResponse struct {
 }
 
 type createRequest struct {
-	Amount int64  `json:"amount" form:"amount" query:"amount"`
-	Email  string `json:"email" form:"email" query:"email"`
+	Currency string `json:"currency" form:"currency" query:"currency"`
+	Amount   int64  `json:"amount" form:"amount" query:"amount"`
+	Email    string `json:"email" form:"email" query:"email"`
 }
 
 type createResponse struct {
@@ -48,15 +40,47 @@ type createResponse struct {
 	Premium bool `json:"premium" form:"premium" query:"premium"`
 }
 
+type currencyInfo struct {
+	Amount      int64  `json:"premium_amount" form:"premium_amount" query:"premium_amount"`
+	DisplayName string `json:"display_name" form:"display_name" query:"display_name"`
+	Symbol      string `json:"symbol" form:"symbol" query:"symbol"`
+}
+
+type stripeInfoReqponse struct {
+	Version         string                   `json:"stripe_api_version" form:"stripe_api_version" query:"stripe_api_version"`
+	PubKey          string                   `json:"stripe_public_key" form:"stripe_public_key" query:"stripe_public_key"`
+	DefaultCurrency string                   `json:"default_currency" form:"default_currency" query:"default_currency"`
+	Currencies      *map[string]currencyInfo `json:"currencies" form:"currencies" query:"currencies"`
+}
+
+// Supported currencies and the respective amount required for premium perks
+var stripeCurrencyMap = map[string]currencyInfo{
+	"usd": {
+		Amount:      500,
+		DisplayName: "$ USD",
+		Symbol:      "$",
+	},
+	"eur": {
+		Amount:      500,
+		DisplayName: "€ EUR",
+		Symbol:      "€",
+	},
+	"gbp": {
+		Amount:      500,
+		DisplayName: "£ GBP",
+		Symbol:      "£",
+	},
+}
+
 // donationLock should be used while editing the DB or discord messages related to a donation
 var donationLock sync.Mutex
 
 func getStripeInfo(c echo.Context) error {
 	return c.JSON(http.StatusOK, &stripeInfoReqponse{
-		Version: upstreamstripe.APIVersion,
-		PubKey:  stripe.PublicKey,
-		// In the future we might support multiple currencies, but we should always define the required amount serverside
-		Amount: infoAmount{500},
+		Version:         upstreamstripe.APIVersion,
+		PubKey:          stripe.PublicKey,
+		DefaultCurrency: "usd",
+		Currencies:      &stripeCurrencyMap,
 	})
 }
 
@@ -66,6 +90,22 @@ func createStripePayment(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+
+	// Default currency
+	if body.Currency == "" {
+		body.Currency = "usd"
+	} else {
+		body.Currency = strings.ToLower(strings.TrimSpace(body.Currency))
+	}
+
+	// Validate currency
+	var currency currencyInfo
+	if val, ok := stripeCurrencyMap[body.Currency]; ok {
+		currency = val
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid or unsupported currency \""+body.Currency+"\"")
+	}
+
 	if body.Amount == 0 {
 		return echo.NewHTTPError(http.StatusBadRequest, "order amount is empty")
 	}
@@ -78,14 +118,14 @@ func createStripePayment(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid email: "+body.Email)
 	}
 
-	payment, err := stripe.CreatePayment(body.Amount, "usd", "Donation", body.Email)
+	payment, err := stripe.CreatePayment(body.Amount, body.Currency, "Donation", body.Email)
 	if err != nil {
 		return err
 	}
 
 	return c.JSON(http.StatusOK, &createResponse{
 		Payment: payment,
-		Premium: payment.Amount >= 500,
+		Premium: payment.Amount >= currency.Amount,
 	})
 }
 

@@ -87,7 +87,7 @@
     <div class="container">
         <div class="row">
             <p class="col s12">
-                Donations of any size are appreciated! <strong>The minimum donation to receive premium features is $<span class="required-amount"></span> .</strong>
+                Donations of any size are appreciated! <strong>The minimum donation to receive premium features is <span class="required-amount"></span> .</strong>
                 <br/>
                 This donation form is currently in early beta-testing, please report any issues you find to
                 <a  target="_blank" href="https://github.com/ImpactDevelopment/ImpactServer/issues">this bug tracker</a>.
@@ -98,16 +98,21 @@
     </div>
     <form id="amount-form" class="container">
         <div class="row">
-            <div class="input-field col s12 m6 push-m4">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required />
-                <span class="helper-text" data-error="Invalid Email" data-success="">Please enter your email so that we can send you a receipt</span>
+            <div class="input-field col s12">
+                <select name="currency" id="currency" required>
+                    <option value="" disabled selected>Choose your preferred currency</option>
+                </select>
+                <label for="currency">Currency</label>
             </div>
-            <div class="input-field col s12 m4 pull-m6">
-                <span class="prefix">$</span>
+            <div class="input-field col s12 m4">
                 <label for="amount" class="active">Amount</label>
                 <input id="amount" name="amount" required type="number" data-type="currency" min="0.5" step="0.01" />
                 <span class="helper-text" data-error="Invalid amount" data-success="">Please enter the amount to donate</span>
+            </div>
+            <div class="input-field col s12 m6">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required />
+                <span class="helper-text" data-error="Invalid Email" data-success="">Please enter your email so that we can send you a receipt</span>
             </div>
             <div class="input-field col s12 m2 center">
                 <button type="submit" form="amount-form" disabled class="btn waves-effect waves-light">
@@ -134,8 +139,8 @@
         <div class="row">
             <div class="input-field col s12 info">
                 <h4>Your donation of <span class="amount"></span> will be greatly appreciated!</h4>
-                <p class="hidden show-if-premium">As your donation is $<span class="required-amount"></span> or more, you will be able to create an Impact Account to receive perks!</p>
-                <p class="hidden show-if-not-premium">If you wish to register an Impact Account to receive perks, please donate $<span class="required-amount"></span> or more.</p>
+                <p class="hidden show-if-premium">As your donation is <span class="required-amount"></span> or more, you will be able to create an Impact Account to receive perks!</p>
+                <p class="hidden show-if-not-premium">If you wish to register an Impact Account to receive perks, please donate <span class="required-amount"></span> or more.</p>
                 <p>An email will be sent to <span class="email"></span> with confirmation of your payment.</p>
                 <p><a href="#" id="back-button">Click here to amend any of these details.</a></p>
             </div>
@@ -237,14 +242,41 @@
 
     api.stripeInfo()
         .then(function (info) {
-            // Populate required amount
-            $('.required-amount').text(info['premium_amount']['usd'] / 100)
-            $('#amount').val(info['premium_amount']['usd'] / 100)
+            // Populate currency drop-down
+            $.each(info['currencies'], function (id, currency) {
+                $('#currency').append('<option value="'+id+'">'+currency['display_name']+'</option>')
+            })
 
-            // Initialise materialize forms
-            if (window.M) {
-                window.M.updateTextFields()
+            // TODO autodetect currency
+            var currencyId = info['default_currency']
+            var currency = info['currencies'][currencyId]
+            if (!currencyId || !currency) {
+                // WTF
+                console.error('WARNING default currency id or value is invalid', currencyId, currency)
+                return
             }
+
+            // Populate dynamic values and update them when a new currency is selected
+            $('#amount').val(currency['premium_amount'] / 100)
+            $('.required-amount').text(currency['symbol'] + currency['premium_amount'] / 100)
+            $('#currency')
+                .val(currencyId)
+                .change(function populateInfo() {
+                    // update info whenever the currency is changed
+                    var newId = $(this).val()
+                    var newCurrency = info['currencies'][newId]
+                    if (!newId || !newCurrency) {
+                        // WTF
+                        console.error('WARNING currency id or value is invalid', newId, newCurrency)
+                        return
+                    }
+                    // Make the change
+                    $('.required-amount').text(newCurrency['symbol'] + newCurrency['premium_amount'] / 100)
+                    currencyId = newId
+                    currency = newCurrency
+                    // Update the helper text for too-low amounts
+                    $('#amount').valid()
+                })
 
             // Initialise stripe
             var stripe = Stripe(info['stripe_public_key'], {
@@ -254,6 +286,9 @@
             // Setup validation rules for the amount form
             $("#amount-form").validate({
                 messages: {
+                    currency: {
+                        required: "Please specify the currency to use",
+                    },
                     amount: {
                         required: "Please specify the amount to donate",
                     },
@@ -283,10 +318,10 @@
                     // We also want to check if amount qualifies for perks and update the data-success helper-text
                     if (Array.prototype.includes.call(this.currentElements, form['amount'])) {
                         var amount = this.elementValue(form['amount'])
-                        var centAmount = Math.floor(amount * 100)
+                        var baseAmount = Math.floor(amount * 100)
                         $(form['amount'])
                             .parent().find('.helper-text')
-                            .attr('data-success', centAmount < info['premium_amount']['usd'] ? 'Donate $' + info['premium_amount']['usd'] / 100 + ' or more for perks' : 'This amount qualifies for perks!')
+                            .attr('data-success', baseAmount < currency['premium_amount'] ? 'Donate ' + currency['symbol'] + currency['premium_amount'] / 100 + ' or more for perks' : 'This amount qualifies for perks!')
 
                         // Normalize if needed, conditional to avoid going infinitely recursive!
                         // use regex to allow trailing decimals while user enters a value
@@ -305,6 +340,7 @@
                     // It must be a valid number and be multiplied by 100
                     var amount = Math.floor(form['amount'].value.trim() * 100)
                     var email = form['email'].value.trim()
+                    var currency = form['currency'].value.trim()
 
                     // Show a spinner while creating payment
                     loading($(form), true)
@@ -316,7 +352,7 @@
                         return
                     }
 
-                    api.createPayment(amount, email)
+                    api.createPayment(currency, amount, email)
                         .then(function (payment) {
                             return currentPayment = payment
                         })
@@ -328,6 +364,25 @@
                         })
                 }
             });
+
+            // Initialise materialize forms
+            if (window.M) {
+                window.M.updateTextFields()
+                $('select')
+                    .formSelect()// init <select> elements with Materialize
+                    .css({
+                        // Hack to enable validation on <select> element:
+                        // Materialize sets the actual <select> to display:none, however Validation won't
+                        // validate display:none, so set it to visibility:hidden instead...
+                        display: "block",
+                        position: 'absolute',
+                        visibility: 'hidden'
+                    })
+                    .change(function (event) {
+                        // For some reason validation isn't triggered by <select>'s onchange :thinking_face:
+                        $(this).valid()
+                    })
+            }
 
             var setupPaymentForm = function (payment) {
                 // Display some info
