@@ -57,7 +57,7 @@ func afterDonation(c echo.Context) error {
 	}
 
 	go func() {
-		logID, err := discord.LogDonationEvent("", "Someone just donated", "", nil, order.Total())
+		logID, err := discord.LogDonationEvent("", "Someone just donated", "", nil, order.Currency(), order.Total())
 		if err == nil {
 			database.DB.Exec(`UPDATE pending_donations SET log_msg_id = $2 WHERE token = $1`, token, logID)
 		}
