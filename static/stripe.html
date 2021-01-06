@@ -162,7 +162,7 @@
     </form>
     <div class="container result-message hidden">
         <div class="row">
-            <h4 class="col s12">Thank you for donating <span class="amount"> to Impact</span></h4>
+            <h4 class="col s12">Thank you for donating <span class="amount"></span> to Impact</h4>
             <p class="col s12">
                 Your payment ID is: <code id="payment-id"></code>
             </p>
@@ -338,7 +338,7 @@
 
                     // If the currentPayment object is identical to the new updated amount/email values,
                     // don't bother calling api.createPayment since we don't need a new PaymentIntent
-                    if (currentPayment && !hasPaymentChanged(currentPayment, amount, email)) {
+                    if (currentPayment && !hasPaymentChanged(currentPayment, currency, amount, email)) {
                         setupPaymentForm(currentPayment)
                         return
                     }
@@ -573,8 +573,8 @@
 
     // Check if the given payment matches the given amount and email
     // TODO if we ever add more currencies, we should check that too
-    var hasPaymentChanged = function (payment, amount, email) {
-        return !(payment.amount === amount && payment.email === email);
+    var hasPaymentChanged = function (payment, currency, amount, email) {
+        return !(payment.amount === amount && payment.email === email && payment.currency === currency);
 
     }
 
