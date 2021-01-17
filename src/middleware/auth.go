@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"regexp"
+	"os"
 )
 
 const userCtxKey = "user"
@@ -92,5 +93,17 @@ func RequireRole(roles ...string) echo.MiddlewareFunc {
 			// The user doesn't have any matching roles
 			return echo.NewHTTPError(http.StatusUnauthorized, fmt.Sprintf("Required at least one role from %v", rolesString))
 		})
+	}
+}
+
+func AuthGetParam() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			auth := c.QueryParam("auth") + "0"
+			if auth != os.Getenv("API_AUTH_SECRET") {
+				return c.JSON(http.StatusForbidden, "auth wrong im sowwy")
+			}
+			return next(c)
+		}
 	}
 }
