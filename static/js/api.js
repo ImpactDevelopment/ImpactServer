@@ -111,16 +111,56 @@
                 })
             })
         },
-        confirmPayment: function(orderID) {
-            return new Promise(function (resolve, reject) {
+        stripeInfo: function() {
+            return new Promise(function(resolve, reject) {
+                $.get({
+                    url: baseUrl + "/stripe/info",
+                    dataType: "json",
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        reject(messageFromjqXHR(jqXHR))
+                    },
+                    success: function (data, status) {
+                        resolve(data)
+                    }
+                })
+            })
+        },
+        createPayment: function(currency, amount, email) {
+            if (!email) {
+                // currency is optional, if only two args are present then shift them right
+                email = amount
+                amount = currency
+                currency = undefined
+            }
+            return new Promise(function(resolve, reject) {
                 $.post({
-                    url: baseUrl + "/paypal/afterpayment",
+                    url: baseUrl + "/stripe/createpayment",
                     data: {
-                        orderID: orderID
+                        currency: currency,
+                        amount: amount,
+                        email: email
                     },
                     dataType: "json",
                     error: function (jqXHR, textStatus, errorThrown) {
-                        reject(errorThrown)
+                        reject(messageFromjqXHR(jqXHR))
+                    },
+                    success: function (data, status) {
+                        resolve(data)
+                    }
+                })
+            })
+        },
+        redeemPayment: function(paymentID, email) {
+            return new Promise(function (resolve, reject) {
+                $.post({
+                    url: baseUrl + "/stripe/redeem",
+                    data: {
+                        'payment_id': paymentID,
+                        email: email
+                    },
+                    dataType: "json",
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        reject(messageFromjqXHR(jqXHR))
                     },
                     success: function (data, status) {
                         resolve(data.token)

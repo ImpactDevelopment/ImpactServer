@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ImpactDevelopment/ImpactServer/src/minecraft"
+	"github.com/ImpactDevelopment/ImpactServer/src/stripe"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"os"
@@ -141,7 +142,7 @@ func CheckServerMembership(discordID string) bool {
 	return err == nil && member != nil
 }
 
-func LogDonationEvent(editMsgID string, msg string, discordID string, minecraft *minecraft.Profile, amount int64) (logID string, err error) {
+func LogDonationEvent(editMsgID string, msg string, discordID string, minecraft *minecraft.Profile, currency string, amount int64) (logID string, err error) {
 	m := discordgo.MessageSend{Content: msg}
 	if discordID != "" || minecraft != nil || amount > 0 {
 		m.Embed = &discordgo.MessageEmbed{
@@ -152,7 +153,7 @@ func LogDonationEvent(editMsgID string, msg string, discordID string, minecraft 
 	if amount > 0 {
 		m.Embed.Fields = append(m.Embed.Fields, &discordgo.MessageEmbedField{
 			Name:   "Donation",
-			Value:  fmt.Sprintf("$%01d.%02d", amount/100, amount%100),
+			Value:  fmt.Sprintf("%s%01d.%02d", stripe.GetCurrencySymbol(currency), amount/100, amount%100),
 			Inline: false,
 		})
 	}

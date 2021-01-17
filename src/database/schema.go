@@ -23,13 +23,18 @@ func createTables() error {
 	_, err = DB.Exec(`
 		CREATE TABLE IF NOT EXISTS pending_donations (
 			token  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT, -- unix seconds
-			paypal_order_id TEXT UNIQUE, -- can be null in case we want to make a "gift card" with no paypal order id attached
+			created_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW())::BIGINT, -- UNIX seconds
+			amount INTEGER, -- Can be null since this might be a _free_ giftcard or staff token
+			currency TEXT,
+		    
+		    -- Either paypal, stripe or both can be null. If both are null it is essentially a "gift card"
+			paypal_order_id TEXT UNIQUE,
 			paypal_payer_id TEXT,
 			paypal_payer_email TEXT,
-			amount INTEGER, -- can be null for the same reason
+			stripe_payment_id TEXT UNIQUE,
+			stripe_payer_email TEXT,
 			
-			-- ROLES to be granted
+			-- Roles to be granted
 			premium BOOL NOT NULL DEFAULT FALSE,
 			pepsi BOOL NOT NULL DEFAULT FALSE,
 			spawnmason BOOL NOT NULL DEFAULT FALSE,
