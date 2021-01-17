@@ -15,6 +15,7 @@ func Server() (e *echo.Echo) {
 	e.Match([]string{http.MethodHead, http.MethodGet}, "/changelog", changelog)
 	e.Any("/Impact/*", impactRedirect)
 	e.GET("/releases.json", releases, mid.Cache(86400)) // 1 day, since HTTP can be cached even beyond cloudflare
+	e.Match([]string{http.MethodHead, http.MethodGet}, "/stripe", stripe)
 
 	e.GET("/ImpactInstaller.jar", installerForJar, mid.NoCache())
 	e.GET("/ImpactInstaller.exe", installerForExe, mid.NoCache())
