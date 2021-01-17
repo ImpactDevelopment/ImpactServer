@@ -6,8 +6,8 @@ import (
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"github.com/labstack/echo/v4"
 	"net/http"
-	"regexp"
 	"os"
+	"regexp"
 )
 
 const userCtxKey = "user"

@@ -147,7 +147,7 @@ func s3Releases(resp map[string]Release) error {
 		keys[*item.Key] = true
 	}
 
-	for k, _ := range keys {
+	for k := range keys {
 		// e.g. artifacts/Impact/dev/dev-856f3ad-1.13.2/Impact-dev-856f3ad-1.13.2.jar
 		parts := strings.Split(k, "/")
 		fileName := parts[len(parts)-1] // Impact-dev-856f3ad-1.13.2.jar
@@ -168,11 +168,11 @@ func s3Releases(resp map[string]Release) error {
 			Draft:      strings.Contains(tagName, "dev"),
 			Prerelease: !strings.Contains(tagName, "release"),
 			Assets: []Asset{
-				Asset{
+				{
 					Name: fileName,
 					URL:  "https://files.impactclient.net/" + k,
 				},
-				Asset{
+				{
 					Name: internalName + "json",
 					URL:  "https://files.impactclient.net/" + fullPath + "json",
 				},
