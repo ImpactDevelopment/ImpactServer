@@ -84,7 +84,7 @@
                     <li><a class="waves-effect" href="#about">About</a></li>
                     <li><a class="waves-effect" href="#download">Download</a></li>
                     <li><a class="waves-effect" href="#team">Team</a></li>
-                    <li><a class="waves-effect" href="#donate">Donate</a></li>
+                    <li><a class="waves-effect" href="/donate" onclick="getOutboundLink('donate'); return true;">Donate</a></li>
                     <li><a class="waves-effect" href="#contact">Contact</a></li>
                     <li><a class="waves-effect" href="/account.html">Login</a></li>
                 </ul>
@@ -95,7 +95,7 @@
         <li><a class="waves-effect" href="#about">About</a></li>
         <li><a class="waves-effect" href="#download">Download</a></li>
         <li><a class="waves-effect" href="#team">Team</a></li>
-        <li><a class="waves-effect" href="#donate">Donate</a></li>
+        <li><a class="waves-effect" href="/donate" onclick="getOutboundLink('donate'); return true;">Donate</a></li>
         <li><a class="waves-effect" href="#contact">Contact</a></li>
         <li><a class="waves-effect" href="/account.html">Login</a></li>
     </ul>
@@ -313,21 +313,21 @@
     <div class="container">
         <div class="row">
             <div class="col s12">
-                <h3 class="center">You can <a id="donate_link" href="#donate">donate</a> to help support Impact Development.</h3>
+                <h3 class="center">You can <a id="donate_link" href="/donate" onclick="getOutboundLink('donate'); return true;">donate</a> to help support Impact Development.</h3>
                 <div class="container">
                     <p>
                         If you donate <b>$5 USD or more</b>
                         you will receive a few small rewards such as <b>early access</b> to upcoming releases through nightly builds, <b>premium mods</b> (currently Ignite),
                         a <b>cape</b> visible to other Impact users, and a gold colored name in the
-                        <a href="/discord.html" target="_blank" onclick="getOutboundLink('discord'); return true;"><u>Impact Discord Server</u></a>.
+                        <a href="/discord" target="_blank" onclick="getOutboundLink('discord'); return true;"><u>Impact Discord Server</u></a>.
                     </p>
                     <p>
                         Donations using this new system activate on your Discord and Minecraft accounts instantly, without having to wait at all.
                     </p>
                     <div class="row">
                         <div class="col s12 center">
-                            <a href="/donate.html" onclick="getOutboundLink('paypal'); return true;">
-                                <img src="/img/paypal.png" alt="PayPal. The safer, easier way to pay online."/>
+                            <a href="/donate" onclick="getOutboundLink('donate'); return true;" class="waves-effect waves-light btn-large">
+                                Donate now!
                             </a>
                         </div>
                     </div>

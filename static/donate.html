@@ -1,8 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Donate to impact</title>
+    <meta charset="utf-8" />
+    <title>Donate to Impact</title>
+    <meta name="description" content="Donate to support Impact Development" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Dependencies -->
+    <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js"></script>
+    <script type="text/javascript" src="/min/modernizr-min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.2/jquery.validate.min.js"></script>
+    <script type="text/javascript" src="/js/api.js"></script>
+    <script type="text/javascript" src="https://js.stripe.com/v3/"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-143397381-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-143397381-1');
+
+        var getOutboundLink = function(label) {
+            gtag('event', 'click', {
+                'event_category': 'outbound',
+                'event_label': label,
+                'transport_type': 'beacon'
+            });
+        }
+    </script>
 
     <!-- CSS  -->
     <link rel="stylesheet" type="text/css"
@@ -12,34 +40,30 @@
     <link rel="stylesheet" type="text/css" href="/min/style-min.css"/>
 
     <style>
-        #amount:before {
-            content: '$';
+        .error {
+            color: #F44336;
+            padding-left: 8px;
+        }
+
+        /* Initial page load animation */
+        .fade-in {
+            opacity: 1;
+            -webkit-transition: opacity .33s ease;
+            transition: opacity .33s ease;
+        }
+        .invisible {
+            opacity: 0!important;
+        }
+
+        /* Hide the browser's up/down buttons on <input type=number> */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
         }
     </style>
-
-    <!-- Dependencies -->
-    <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js"></script>
-    <script type="text/javascript" src="/min/modernizr-min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script type="text/javascript" src="/js/api.js"></script>
-
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-143397381-1"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'UA-143397381-1');
-        
-      var getOutboundLink = function(label) {
-        gtag('event', 'click', {
-            'event_category': 'outbound',
-            'event_label': label,
-            'transport_type': 'beacon'
-        });
-      }
-    </script>
 </head>
 <body>
 <header>
@@ -51,179 +75,572 @@
         </nav>
     </div>
 </header>
- <div class="container">
-    <div class="row">
-        <form class="col s12">
-            <div class="row">
-                <br><br>
-                <div class="input-field col s9 push-l3">
-                    Donations of any size are appreciated! The minimum donation to receive premium features is $5. It is currently impossible to donate to Impact due to the termination of the PayPal account. This is being looked into and will be resolved as soon as possible.
-                </div>
-                <div class="input-field col s3 pull-l9">
-                    <span class="prefix">$</span>
-                    <input id="amount" type="number" data-type="currency" min="0.5" step="0.01" value="5"
-                           pattern="^\$\d{1,3}(,\d{3})*(\.\d+)?$">
-                    <label for="amount" class="active">Amount</label>
-                </div>
-                <div class="range-field col s12">
-                    <input id="amountslider" type="range" min="1" max="100" value="5">
+<div id="initial-load" class="invisible fade-in">
+    <div class="container">
+        <div class="row">
+            <p class="col s12">
+                Donations of any size are appreciated! <strong>The minimum donation to receive premium features is <span class="required-amount"></span> .</strong>
+                <br/>
+                This donation form is currently in early beta-testing, please report any issues you find to
+                <a  target="_blank" href="https://github.com/ImpactDevelopment/ImpactServer/issues">this bug tracker</a>.
+                Please avoid including any private information (including payment IDs, emails, etc) when reporting issues on the bug tracker.
+                If private information is needed, please message <code>LeafHacker#5373</code> privately on <a target="_blank" href="/discord">Discord</a>!
+            </p>
+        </div>
+    </div>
+    <form id="amount-form" class="container">
+        <div class="row">
+            <div class="input-field col s3 m2">
+                <select name="currency" id="currency" required tabindex="0">
+                    <option value="" disabled selected>Choose...</option>
+                </select>
+                <label for="currency">Currency</label>
+                <span class="helper-text" data-error="Invalid currency" data-success="">The currency to use</span>
+            </div>
+            <div class="input-field col s9 m3 l2">
+                <label for="amount" class="active">Amount</label>
+                <input id="amount" name="amount" type="number" data-type="currency" min="0.5" tabindex="1" required autofocus />
+                <span class="helper-text" data-error="Invalid amount" data-success="">The amount to donate</span>
+            </div>
+            <div class="input-field col s12 m5 l6">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required tabindex="2" />
+                <span class="helper-text" data-error="Invalid Email" data-success="">An email to send your receipt to</span>
+            </div>
+            <div class="input-field col s12 m2 center">
+                <button type="submit" form="amount-form" class="btn waves-effect waves-light" disabled tabindex="3">
+                    Next
+                </button>
+                <div class="preloader-wrapper small active hidden">
+                    <div class="spinner-layer spinner-blue-only">
+                        <div class="circle-clipper left">
+                            <div class="circle"></div>
+                        </div>
+                        <div class="gap-patch">
+                            <div class="circle"></div>
+                        </div>
+                        <div class="circle-clipper right">
+                            <div class="circle"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="col s12">
-                    <div id="paypal-button-container"></div>
-                </div>
-                <div class="col s12" id="msg">
+            <p id="amount-error" class="input-field col s12 error" role="alert"></p>
+        </div>
+    </form>
+    <form id="payment-form" class="container hidden">
+        <div class="row">
+            <div class="input-field col s12 info">
+                <h4>Your donation of <span class="amount"></span> will be greatly appreciated!</h4>
+                <p class="hidden show-if-premium">As your donation is <span class="required-amount"></span> or more, you will be able to create an Impact Account to receive perks!</p>
+                <p class="hidden show-if-not-premium">If you wish to register an Impact Account to receive perks, please donate <span class="required-amount"></span> or more.</p>
+                <p>An email will be sent to <span class="email"></span> with confirmation of your payment.</p>
+                <p><a href="#" id="back-button">Click here to amend any of these details.</a></p>
+            </div>
+            <div id="payment-request-button" class="input-field col s12"><!-- Stripe.js injects the PaymentRequest Element here --></div>
+            <div id="card-element" class="input-field col s12 m10"><!-- Stripe.js injects the Card Element here --></div>
+            <div class="input-field col s12 m2 center">
+                <button type="submit" form="payment-form" disabled class="btn waves-effect waves-light">
+                    Donate
+                </button>
+                <div class="preloader-wrapper small active hidden">
+                    <div class="spinner-layer spinner-blue-only">
+                        <div class="circle-clipper left">
+                            <div class="circle"></div>
+                        </div>
+                        <div class="gap-patch">
+                            <div class="circle"></div>
+                        </div>
+                        <div class="circle-clipper right">
+                            <div class="circle"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </form>
+            <p id="card-error" class="input-field col s12 error" role="alert"></p>
+        </div>
+    </form>
+    <div class="container result-message hidden">
+        <div class="row">
+            <h4 class="col s12">Thank you for donating <span class="amount"></span> to Impact</h4>
+            <p class="col s12">
+                Your payment ID is: <code id="payment-id"></code>
+            </p>
+            <div class="col s12">
+                <div class="preloader-wrapper small active hidden">
+                    <div class="spinner-layer spinner-blue-only">
+                        <div class="circle-clipper left">
+                            <div class="circle"></div>
+                        </div>
+                        <div class="gap-patch">
+                            <div class="circle"></div>
+                        </div>
+                        <div class="circle-clipper right">
+                            <div class="circle"></div>
+                        </div>
+                    </div>
+                </div>
+                <p class="premium-success">
+                    Your Impact Account registration token is: <code id="token"></code>.
+                    <br/>
+                    <a href="#" id="register">Click here to register an Impact Account</a>
+                </p>
+                <p class="small-success" role="alert">
+                    Although your donation does not qualify for a premium Impact Account, we greatly appreciate any and all donations. Thanks for your support!
+                </p>
+                <p class="error" role="alert"></p>
+            </div>
+        </div>
     </div>
 </div>
 
-<script src="https://www.paypal.com/sdk/js?client-id=AaIwV_K_wsv1FUcoee2uHxfYptMhWXLVG6wFbdYEFBY2Ub94kM3m-8yzBOdKHMplLIES6BLGVB3yWJ7J"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/js/materialize.min.js"></script>
-<script>
-    // TODO accept local currency?
-    var currency = 'USD'; // https://www.currency-iso.org/dam/downloads/lists/list_one.xml
-    var currencyInput = document.getElementById('amount');
-    var currencySlider = document.getElementById('amountslider');
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script type="text/javascript">
 
-    currencyInput.addEventListener('input', () => {
-        if (currencySlider.value !== currencyInput.value)
-            currencySlider.value = currencyInput.value;
-
-    });
-    currencySlider.addEventListener('input', () => {
-        if (currencyInput.value !== currencySlider.value)
-            currencyInput.value = currencySlider.value;
-
-    });
-
-    function localStringToNumber(s) {
-        return Number(String(s).replace(/[^0-9.-]+/g, ""));
-    }
-
-    function formatNumber(n) {
-        // format number 1000000 to 1,234,567
-        return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-    }
-
-
-    function formatCurrency(input, blur) {
-        // appends $ to value, validates decimal side
-        // and puts cursor back in right position.
-
-        // get input value
-        var input_val = input.val();
-
-        // don't validate empty input
-        if (input_val === "") {
-            return;
-        }
-
-        // original length
-        var original_len = input_val.length;
-
-        // initial caret position
-        var caret_pos = input.prop("selectionStart");
-
-        // check for decimal
-        if (input_val.indexOf(".") >= 0) {
-
-            // get position of first decimal
-            // this prevents multiple decimals from
-            // being entered
-            var decimal_pos = input_val.indexOf(".");
-
-            // split number by decimal point
-            var left_side = input_val.substring(0, decimal_pos);
-            var right_side = input_val.substring(decimal_pos);
-
-            // add commas to left side of number
-            left_side = formatNumber(left_side);
-
-            // validate right side
-            right_side = formatNumber(right_side);
-
-            // On blur make sure 2 numbers after decimal
-            if (blur === "blur") {
-                right_side += "00";
+    // Setup jQuery validation for compatibility with materializecss
+    $.validator.setDefaults({
+        errorClass: 'invalid',
+        validClass: "valid",
+        errorPlacement: function(error, element) {
+            $(element)
+                .parent()
+                .find('.helper-text')
+                .attr('data-error', error.text());
+        },
+        // By default, onkeyup uses lazy validation (validates only once some other validation is triggered)
+        // let's change it to eager validation (validates as soon as typing begins)
+        onkeyup: function (element, event) {
+            // Ignore events while the elementValue is empty and also
+            // events triggered by TAB (event.which=9), or specifically excluded keycodes such as SHIFT, HOME and NUMLOCK
+            var excludedKeys = [ 16, 17, 18, 20, 35, 36, 37, 38, 39, 40, 45, 144, 225 ]
+            if ( event.which === 9 && this.elementValue( element ) === "" || $.inArray( event.keyCode, excludedKeys ) !== -1 ) {
+                return
             }
 
-            // Limit decimal to only 2 digits
-            right_side = right_side.substring(0, 2);
-
-            // join number by .
-            input_val = "$" + left_side + "." + right_side;
-
-        } else {
-            // no decimal entered
-            // add commas to number
-            // remove all non-digits
-            input_val = formatNumber(input_val);
-            input_val = "$" + input_val;
-
-            // final formatting
-            if (blur === "blur") {
-                input_val += ".00";
+            this.element(element);
+        },
+        // showErrors is called after validating the form, let's use it to inject our own done event; 'finishedHandler'
+        showErrors: function(errorMap, errorList) {
+            this.defaultShowErrors();
+            // Call our 'finished' event
+            if (typeof this.settings.finishedHnadler === 'function') {
+                this.settings.finishedHnadler.call(this, this.currentForm, errorMap, errorList)
             }
         }
+    });
 
-        // send updated string to input
-        input.value = input_val;
+    // Keep track of the current payment so we know whether or not to create a new one;
+    // useful when the user goes back and forth between the amount form and the payment form
+    var currentPayment = null
+    var currencies = {}
 
-        // put caret back in the right position
-        var updated_len = input_val.length;
-        caret_pos = updated_len - original_len + caret_pos;
-        input[0].setSelectionRange(caret_pos, caret_pos);
-    }
+    api.stripeInfo()
+        .then(function (info) {
+            // We need to access this globally
+            currencies = info['currencies']
 
-    function qualifiesForPerks() {
-        return localStringToNumber(currencyInput.value) >= 5;
-    }
+            // Populate currency drop-down
+            $.each(info['currencies'], function (id, currency) {
+                $('#currency').append('<option value="'+id+'">'+currency['display_name']+'</option>')
+            })
 
-    function createOrder(data, actions) {
-        return actions.order.create({
-            intent: 'CAPTURE',
-            application_context: {
-                brand_name: 'Impact',
-                shipping_preference: 'NO_SHIPPING'
-                // return_url: '',
-                // cancel_url: '',
-            },
-            purchase_units: [
-                {
+            // TODO autodetect currency
+            var currencyId = info['default_currency']
+            var currency = info['currencies'][currencyId]
+            if (!currencyId || !currency) {
+                // WTF
+                console.error('WARNING default currency id or value is invalid', currencyId, currency)
+                return
+            }
+
+            // Populate dynamic values and update them when a new currency is selected
+            $('#amount').val(currency['premium_amount'] / 100)
+            $('.required-amount').text(currency['symbol'] + currency['premium_amount'] / 100)
+            $('#currency')
+                .val(currencyId)
+                .change(function populateInfo() {
+                    // update info whenever the currency is changed
+                    var newId = $(this).val()
+                    var newCurrency = info['currencies'][newId]
+                    if (!newId || !newCurrency) {
+                        // WTF
+                        console.error('WARNING currency id or value is invalid', newId, newCurrency)
+                        return
+                    }
+                    // Make the change
+                    $('.required-amount').text(newCurrency['symbol'] + newCurrency['premium_amount'] / 100)
+                    currencyId = newId
+                    currency = newCurrency
+                    // Update the helper text for too-low amounts
+                    $('#amount').valid()
+                })
+
+            // Initialise stripe
+            var stripe = Stripe(info['stripe_public_key'], {
+                apiVersion: info['stripe_api_version'],
+            });
+
+            // Setup validation rules for the amount form
+            $("#amount-form").validate({
+                messages: {
+                    currency: {
+                        required: "Please specify the currency to use",
+                    },
                     amount: {
-                        currency_code: currency,
-                        value: localStringToNumber(currencyInput.value)
+                        required: "Please specify the amount to donate",
+                    },
+                    email: {
+                        required: "We need your email address to provide you a receipt",
                     }
+                },
+                normalizer: function(value) {
+                    return $.trim(value)
+                },
+                finishedHnadler: function(form, errorMap, errorList){
+                    // After validating the form (or part of it), check to see if the submit button should be disabled or not
+                    // Valid if no errors in list
+                    var valid = errorList.length === 0
+
+                    // If currentElements doesn't match the full elements list, we should manually check all elements
+                    if (valid && this.elements().length !== this.currentElements.length) {
+                        var that = this
+                        valid = Array.prototype.every.call(this.elements(), function (element) {
+                            return that.check(element)
+                        })
+                    }
+
+                    // Disable submit button when the form is not valid
+                    $(form).find('button[type=submit]').attr('disabled', !valid)
+
+                    // We also want to check if amount qualifies for perks and update the data-success helper-text
+                    if (Array.prototype.includes.call(this.currentElements, form['amount'])) {
+                        var amount = this.elementValue(form['amount'])
+                        var baseAmount = Math.floor(amount * 100)
+                        $(form['amount'])
+                            .parent().find('.helper-text')
+                            .attr('data-success', baseAmount < currency['premium_amount'] ? 'Donate ' + currency['symbol'] + currency['premium_amount'] / 100 + ' or more for perks' : 'This amount qualifies for perks!')
+                    }
+                },
+                submitHandler: function (form, event) {
+                    // submitHandler is called on submit, if the form is valid
+
+                    // preventDefault to stop the HTML form from actually submitting
+                    event.preventDefault()
+
+                    // Process the amount value
+                    // It must be a valid number and be multiplied by 100
+                    var amount = Math.floor(form['amount'].value.trim() * 100)
+                    var email = form['email'].value.trim()
+                    var currency = form['currency'].value.trim()
+
+                    // Show a spinner while creating payment
+                    loading($(form), true)
+
+                    // If the currentPayment object is identical to the new updated amount/email values,
+                    // don't bother calling api.createPayment since we don't need a new PaymentIntent
+                    if (currentPayment && !hasPaymentChanged(currentPayment, currency, amount, email)) {
+                        setupPaymentForm(currentPayment)
+                        return
+                    }
+
+                    api.createPayment(currency, amount, email)
+                        .then(function (payment) {
+                            return currentPayment = payment
+                        })
+                        .then(setupPaymentForm)
+                        .catch(function (error) {
+                            currentPayment = null
+                            loading($(form), false)
+                            showError($(form), error)
+                        })
                 }
-            ]
-        });
+            });
+
+            // Initialise materialize forms
+            if (window.M) {
+                window.M.updateTextFields()
+                $('select')
+                    .formSelect()// init <select> elements with Materialize
+                    .css({
+                        // Hack to enable validation on <select> element:
+                        // Materialize sets the actual <select> to display:none, however Validation won't
+                        // validate display:none, so set it to visibility:hidden instead...
+                        display: "block",
+                        position: 'absolute',
+                        visibility: 'hidden'
+                    })
+                    .change(function (event) {
+                        // For some reason validation isn't triggered by <select>'s onchange :thinking_face:
+                        $(this).valid()
+                    })
+            }
+
+            var setupPaymentForm = function (payment) {
+                var currency = currencies[payment['currency']]
+                var symbol = '¤'
+                if (currency && currency.hasOwnProperty('symbol')) {
+                    symbol = currency['symbol']
+                } else {
+                    console.error('WARNING invalid currency setting up payment form', payment['currency'], currency)
+                }
+
+                // Display some info
+                $('#payment-form .amount').text(symbol + (Math.floor(payment['amount']) / 100).toFixed(2))
+                $('#payment-form .email').text(payment['email'])
+                if (payment['premium'] === true) {
+                    $('#payment-form .show-if-premium').removeClass('hidden')
+                    $('#payment-form .show-if-not-premium').addClass('hidden')
+                } else {
+                    $('#payment-form .show-if-not-premium').removeClass('hidden')
+                    $('#payment-form .show-if-premium').addClass('hidden')
+                }
+
+                // Stripe stuff
+                var elements = donate.elements();
+
+                // Setup PaymentRequest button
+                var paymentRequest = donate.paymentRequest({
+                    country: 'US',
+                    currency: payment['currency'],
+                    total: {
+                        label: 'Donation',
+                        amount: payment['amount'],
+                    },
+                    requestPayerName: false,
+                    requestPayerEmail: true, // Requesting name, email, or phone will automatically request billing address on Apple Pay which is useful for anti-fraud
+                    requestShipping: false
+                });
+                var prButton = elements.create('paymentRequestButton', {
+                    paymentRequest: paymentRequest,
+                    style: {
+                        type: 'donate', // can be 'default', 'book', 'buy' or 'donate'
+                    }
+                });
+
+                // Check the availability of the Payment Request API first.
+                paymentRequest.canMakePayment().then(function(supported) {
+                    if (supported) {
+                        // Mount the button
+                        // TODO use our own button?
+                        // we'd need to check supported.applePay to know which logo to show
+                        prButton.mount('#payment-request-button');
+
+                        // Setup submit handler for PaymentRequest
+                        paymentRequest.on('paymentmethod', function(event) {
+                            payWithPaymentRequest(donate, event, payment['client_secret'])
+                        });
+                    } else {
+                        document.getElementById('payment-request-button').style.display = 'none';
+                    }
+                });
+
+                // Setup card input, with vaguely material styles
+                var card = elements.create("card", {
+                    iconStyle: 'solid',
+                    style: {
+                        base: {
+                            iconColor: '#8898AA',
+                            //color: 'white',
+                            lineHeight: '36px',
+                            fontWeight: 300,
+                            fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                            fontSize: '19px',
+
+                            '::placeholder': {
+                                color: '#8898AA',
+                            },
+                        },
+                        invalid: {
+                            iconColor: '#e85746',
+                            color: '#e85746',
+                        }
+                    },
+                    classes: {
+                        focus: 'is-focused',
+                        empty: 'is-empty',
+                    },
+                });
+                card.mount("#card-element"); // Stripe injects an iframe into the DOM
+                card.on("change", function (event) {
+                    // Disable the Pay button if there are no card details in the Element
+                    $('#payment-form button[type=submit]').attr('disabled', event.empty)
+                    $("#card-error").text(event.error ? event.error.message : "")
+                });
+
+                // Setup submit handler
+                $("#payment-form")
+                    .off('submit') // Remove any other handlers - prevent duplicate handlers when re-initialising form
+                    .on('submit', function(event) {
+                        event.preventDefault();
+                        // Complete payment when the submit button is clicked
+                        payWithCard(donate, card, payment['client_secret']);
+                    });
+
+                // Hide the amount form and show the payment form
+                $('#amount-form').addClass('hidden')
+                $('#payment-form').removeClass('hidden')
+                loading($('#amount-form'), false)
+            }
+
+            // Calls stripe.confirmCardPayment
+            // If the card requires authentication Stripe shows a pop-up modal to
+            // prompt the user to enter authentication details without leaving your page.
+            var payWithPaymentRequest = function(stripe, event, clientSecret) {
+                // Confirm the PaymentIntent without handling potential next actions (yet).
+                donate.confirmCardPayment(
+                    clientSecret,
+                    {
+                        payment_method: event.paymentMethod.id
+                    },
+                    {
+                        handleActions: false
+                    }
+                ).then(function(confirmResult) {
+                    if (confirmResult.error) {
+                        // Report to the browser that the payment failed, prompting it to
+                        // re-show the payment interface, or show an error message and close
+                        // the payment interface.
+                        event.complete('fail');
+                    } else {
+                        // Report to the browser that the confirmation was successful, prompting
+                        // it to close the browser payment method collection interface.
+                        event.complete('success');
+                        // Check if the PaymentIntent requires any actions and if so let Stripe.js
+                        // handle the flow. If using an API version older than "2019-02-11" instead
+                        // instead check for: `paymentIntent.status === "requires_source_action"`.
+                        if (confirmResult.paymentIntent.status === "requires_action") {
+                            // Let Stripe.js handle the rest of the payment flow.
+                            donate.confirmCardPayment(clientSecret).then(function(newConfirmResult) {
+                                if (newConfirmResult.error) {
+                                    // The payment failed -- TODO ask user for a new payment method?
+                                    showError($('#payment-form'), newConfirmResult.error.message);
+                                } else {
+                                    // The payment has succeeded.
+                                    orderComplete(newConfirmResult.paymentIntent)
+                                }
+                            });
+                        } else {
+                            // The payment has succeeded.
+                            orderComplete(confirmResult.paymentIntent)
+                        }
+                    }
+                });
+            };
+
+            // Calls stripe.confirmCardPayment
+            // If the card requires authentication Stripe shows a pop-up modal to
+            // prompt the user to enter authentication details without leaving your page.
+            var payWithCard = function(stripe, card, clientSecret) {
+                loading($('#payment-form'), true);
+                donate.confirmCardPayment(
+                    clientSecret,
+                    {
+                        payment_method: {
+                            card: card
+                        }
+                    }
+                ).then(function(confirmResult) {
+                    if (confirmResult.error) {
+                        // Show error to your customer
+                        showError($('#payment-form'), confirmResult.error.message);
+                    } else {
+                        // The payment succeeded!
+                        orderComplete(confirmResult.paymentIntent);
+                    }
+                });
+            };
+
+            $('#initial-load').removeClass('invisible')
+        })
+        .catch(function (error) {
+            $('#initial-load').text(error).addClass('error').removeClass('invisible')
+        })
+
+    $('#back-button').click(function (event) {
+        event.preventDefault()
+
+        // Just show the amount form without resetting any state
+        // We will rely on the "next" button to handle any changes to state
+
+        var paymentf = $('#payment-form')
+        var amountf = $('#amount-form')
+        loading(paymentf, false)
+        loading(amountf, false)
+        paymentf.addClass('hidden')
+        amountf.removeClass('hidden')
+        amountf.find('#amount').focus()
+    })
+
+    // Check if the given payment matches the given amount and email
+    // TODO if we ever add more currencies, we should check that too
+    var hasPaymentChanged = function (payment, currency, amount, email) {
+        return !(payment.amount === amount && payment.email === email && payment.currency === currency);
+
     }
 
-    function onApprove(data, actions) {
-        return actions.order.capture().then(function (details) {
-            // Send our server the order ID to get a registration token
-            return api.confirmPayment(data.orderID)
-                .then(function(token) {
-                    if (token && token !== "thanks") {
-                        // TODO show "thank you" page with token and link instead
-                        document.location.href='/register.html?token=' + token;
-                    } else {
-                        document.getElementById("msg").innerText = "thanks for the donation.";
-                    }
+    // Shows a success message when the payment is complete
+    var orderComplete = function(paymentIntent) {
+        loading($('#payment-form'), false)
+        loading($('.result-message'), false)
+        $("button[type=submit]").attr('disabled', true)
+        $('#payment-form').addClass('hidden')
+        $('.result-message .small-success').addClass('hidden')
+        $('.result-message .premium-success').addClass('hidden')
+        $('.result-message .error').addClass('hidden')
+
+        $('#payment-id').text(paymentIntent['id'])
+        var currency = currencies[paymentIntent['currency']]
+        $('.result-message .amount').text(currency['symbol'] + (Math.floor(paymentIntent['amount']) / 100))
+        $('.result-message').removeClass('hidden')
+
+        // If the payment was premium, ask for a token
+        if (currentPayment && currentPayment['premium'] === true) {
+            loading($('.result-message'), true)
+            api.redeemPayment(paymentIntent['id'], paymentIntent['receipt_email'])
+                .then(function (token) {
+                    $('#token').text(token)
+                    $('#register').attr('href', '/register?token='+encodeURIComponent(token))
+                    loading($('.result-message'), false)
+                    $('.result-message .small-success').addClass('hidden')
+                    $('.result-message .premium-success').removeClass('hidden')
+                    $('.result-message .error').addClass('hidden')
                 })
                 .catch(function (error) {
-                    document.getElementById("msg").innerText = error;
+                    // TODO handle some errors gracefully?
+                    loading($('.result-message'), false)
+                    $('.result-message .small-success').addClass('hidden')
+                    $('.result-message .premium-success').addClass('hidden')
+                    $('.result-message .error')
+                        .removeClass('hidden')
+                        .text(error)
                 })
-        })
-    }
+        } else {
+            // If the payment wasn't premium, just say thanks
+            $('.result-message .small-success').removeClass('hidden')
+            $('.result-message .premium-success').addClass('hidden')
+            $('.result-message .error').addClass('hidden')
+        }
+    };
 
-    paypal.Buttons({
-        createOrder: createOrder,
-        onApprove: onApprove
-    }).render('#paypal-button-container')
+    // Show the customer the error from Stripe if their card fails to charge
+    var showError = function(parent, errorMsgText) {
+        loading(parent, false);
+        var err = parent.find('.error')
+        err.text(errorMsgText)
+    };
+
+    // Show a spinner on form submission
+    // Expects a jQuery object and a boolean
+    var loading = function(form, isLoading) {
+        if (isLoading) {
+            // Disable the button and show a spinner
+            form.find("button[type=submit]").attr('disabled', true).addClass('hidden');
+            form.find(".preloader-wrapper").removeClass("hidden");
+        } else {
+            form.find("button[type=submit]").attr('disabled', false).removeClass('hidden');
+            form.find(".preloader-wrapper").addClass("hidden");
+        }
+    };
 </script>
 </body>
 </html>
