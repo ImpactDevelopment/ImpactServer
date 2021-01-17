@@ -399,10 +399,10 @@
                 }
 
                 // Stripe stuff
-                var elements = donate.elements();
+                var elements = stripe.elements();
 
                 // Setup PaymentRequest button
-                var paymentRequest = donate.paymentRequest({
+                var paymentRequest = stripe.paymentRequest({
                     country: 'US',
                     currency: payment['currency'],
                     total: {
@@ -430,7 +430,7 @@
 
                         // Setup submit handler for PaymentRequest
                         paymentRequest.on('paymentmethod', function(event) {
-                            payWithPaymentRequest(donate, event, payment['client_secret'])
+                            payWithPaymentRequest(stripe, event, payment['client_secret'])
                         });
                     } else {
                         document.getElementById('payment-request-button').style.display = 'none';
@@ -476,7 +476,7 @@
                     .on('submit', function(event) {
                         event.preventDefault();
                         // Complete payment when the submit button is clicked
-                        payWithCard(donate, card, payment['client_secret']);
+                        payWithCard(stripe, card, payment['client_secret']);
                     });
 
                 // Hide the amount form and show the payment form
@@ -490,7 +490,7 @@
             // prompt the user to enter authentication details without leaving your page.
             var payWithPaymentRequest = function(stripe, event, clientSecret) {
                 // Confirm the PaymentIntent without handling potential next actions (yet).
-                donate.confirmCardPayment(
+                stripe.confirmCardPayment(
                     clientSecret,
                     {
                         payment_method: event.paymentMethod.id
@@ -513,7 +513,7 @@
                         // instead check for: `paymentIntent.status === "requires_source_action"`.
                         if (confirmResult.paymentIntent.status === "requires_action") {
                             // Let Stripe.js handle the rest of the payment flow.
-                            donate.confirmCardPayment(clientSecret).then(function(newConfirmResult) {
+                            stripe.confirmCardPayment(clientSecret).then(function(newConfirmResult) {
                                 if (newConfirmResult.error) {
                                     // The payment failed -- TODO ask user for a new payment method?
                                     showError($('#payment-form'), newConfirmResult.error.message);
@@ -535,7 +535,7 @@
             // prompt the user to enter authentication details without leaving your page.
             var payWithCard = function(stripe, card, clientSecret) {
                 loading($('#payment-form'), true);
-                donate.confirmCardPayment(
+                stripe.confirmCardPayment(
                     clientSecret,
                     {
                         payment_method: {
