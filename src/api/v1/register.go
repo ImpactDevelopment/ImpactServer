@@ -100,8 +100,8 @@ func registerWithToken(c echo.Context) error {
 	var (
 		token      *uuid.UUID
 		createdAt  int64
-		currency   string
-		amount     int64
+		currency   sql.NullString
+		amount     sql.NullInt64
 		used       bool
 		logID      sql.NullString
 		premium    bool
@@ -246,7 +246,7 @@ func registerWithToken(c echo.Context) error {
 				err = discord.JoinOurServer(body.DiscordToken, discordID, true)
 			}
 			if err != nil {
-				discord.LogDonationEvent(logID.String, "Error adding donator to discord: "+err.Error(), discordID, minecraftProfile, currency, amount)
+				discord.LogDonationEvent(logID.String, "Error adding donator to discord: "+err.Error(), discordID, minecraftProfile, currency.String, amount.Int64)
 				return
 			}
 		}
@@ -272,7 +272,7 @@ func registerWithToken(c echo.Context) error {
 			msg.WriteString(" upgraded their")
 		}
 		msg.WriteString(" Impact Account")
-		_, _ = discord.LogDonationEvent(logID.String, msg.String(), discordID, minecraftProfile, currency, amount)
+		_, _ = discord.LogDonationEvent(logID.String, msg.String(), discordID, minecraftProfile, currency.String, amount.Int64)
 	}()
 
 	// Get the user so we can log them in
