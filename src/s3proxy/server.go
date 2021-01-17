@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+	"os"
 
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 
@@ -21,29 +22,32 @@ func Server() (e *echo.Echo) {
 
 	e.Use(mid.Log)
 
-	e.Match([]string{http.MethodHead, http.MethodGet}, "/*", proxyHandler)
+	e.Match([]string{http.MethodHead, http.MethodGet}, "/*", proxyHandler("", "impactclient-files"))
+	e.Match([]string{http.MethodHead, http.MethodGet}, "/test_alternate/*", proxyHandler("/test_alternate", os.Getenv("ALT_BUCKET")), mid.AuthGetParam(), mid.NoCache())
 
 	return
 }
 
-func proxyHandler(c echo.Context) error {
-	file := c.Request().URL.Path
+func proxyHandler(base string, bucket string) func (c echo.Context) error {
+	return func (c echo.Context) error {
+		file := c.Request().URL.Path[len(base):]
 
-	s3Req, _ := s3.New(AWSSession).GetObjectRequest(&s3.GetObjectInput{
-		Bucket: aws.String("impactclient-files"),
-		Key:    aws.String(file),
-	})
+		s3Req, _ := s3.New(AWSSession).GetObjectRequest(&s3.GetObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(file),
+		})
 
-	s3PresignedURL, err := s3Req.Presign(1 * time.Minute)
-	if err != nil {
-		return err
+		s3PresignedURL, err := s3Req.Presign(1 * time.Minute)
+		if err != nil {
+			return err
+		}
+
+		target, err := url.Parse(s3PresignedURL)
+		if err != nil {
+			return err
+		}
+
+		util.Proxy(c, target)
+		return nil
 	}
-
-	target, err := url.Parse(s3PresignedURL)
-	if err != nil {
-		return err
-	}
-
-	util.Proxy(c, target)
-	return nil
 }
