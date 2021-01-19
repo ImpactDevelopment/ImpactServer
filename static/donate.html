@@ -40,6 +40,11 @@
     <link rel="stylesheet" type="text/css" href="/min/style-min.css"/>
 
     <style>
+        .fineprint {
+            font-family: serif;
+            font-size: 0.9em;
+            background: transparent;
+        }
         .error {
             color: #F44336;
             padding-left: 8px;
@@ -78,10 +83,21 @@
 <div id="initial-load" class="invisible fade-in">
     <div class="container">
         <div class="row">
+            <h4 class="col s12">
+                Donations of any size are greatly appreciated!
+            </h4>
             <p class="col s12">
-                Donations of any size are appreciated! <strong>The minimum donation to receive premium features is <span class="required-amount"></span> .</strong>
+                If you donate <i><span class="required-amount"></span> or more</i>, you can register an Impact Account. This enables you to receive certain perks, including
+                access to <i>nightly builds</i>, <i>in-game perks</i> and an <i>exclusive role</i> on our Discord server.
             </p>
             <p class="col s12">
+                If you already have an Impact Account you can <a href="/account">login here</a>.
+                <br/>
+                If you'd like to donate again, you should probably <a href="#" onclick="if (api.isLoggedIn()) {api.logout(); alert('Logged out successfully')} else {alert('You are already logged out')} return false;">logout</a> first.
+                <br/>
+                If you already have an Impact registration token, you can use it to <a href="/register">register here</a>.
+            </p>
+            <p class="col s12 beta-warning">
                 This donation form is still relatively new, so feedback is appreciated! Please report any issues you find to
                 <a  target="_blank" href="https://github.com/ImpactDevelopment/ImpactServer/issues">this bug tracker</a>.
                 <br/>
@@ -166,10 +182,8 @@
     <div class="container result-message hidden">
         <div class="row">
             <h4 class="col s12">Thank you for donating <span class="amount"></span> to Impact</h4>
-            <p class="col s12">
-                Your payment ID is: <code id="payment-id"></code>
-            </p>
             <div class="col s12">
+                <p>Your payment ID is: <code id="payment-id"></code></p>
                 <div class="preloader-wrapper small active hidden">
                     <div class="spinner-layer spinner-blue-only">
                         <div class="circle-clipper left">
@@ -183,11 +197,13 @@
                         </div>
                     </div>
                 </div>
-                <p class="premium-success">
-                    Your Impact Account registration token is: <code id="token"></code>.
-                    <br/>
-                    <a href="#" id="register">Click here to register an Impact Account</a>
-                </p>
+                <div class="premium-success">
+                    <p>Your Impact Account registration token is: <code id="token"></code>.</p>
+                    <p>
+                        <strong>Register an Impact Account to receive your rewards</strong><br/>
+                        <a href="/register" id="register">Click here to register</a>, or if you prefer you can gift your token to a friend.
+                    </p>
+                </div>
                 <p class="small-success" role="alert">
                     Although your donation does not qualify for a premium Impact Account, we greatly appreciate any and all donations. Thanks for your support!
                 </p>
@@ -195,6 +211,19 @@
             </div>
         </div>
     </div>
+    <footer class="container fineprint">
+        <div class="row">
+            <p class="col s12">
+                Please note this is not a purchase. Any rewards we offer in return for your donation are at our sole discretion and can be revoked or changed at any time.
+                All rewards require you to setup an Impact Account. If your donation qualifies*, you will be able to register an Impact Account after donating.
+                In-game rewards (including <i>access to nightly builds</i>) require that you to link a genuine Minecraft Account.
+                They will only be available while you are logged into that specific Minecraft account.
+                Access to Discord related rewards require that you to link your Discord account and that you join our <a target="_blank" href="/discord">Discord server</a>.
+                <br>
+                *All donations of <span class="required-amount-list"></span> (or more) currently qualify for an Impact Account.
+            </p>
+        </div>
+    </footer>
 </div>
 
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
@@ -242,10 +271,22 @@
             // We need to access this globally
             currencies = info['currencies']
 
-            // Populate currency drop-down
+            // Populate currency drop-down & a list of currency amounts for use in smallprint
+            var list = ''
             $.each(info['currencies'], function (id, currency) {
+                // append to <select>
                 $('#currency').append('<option value="'+id+'">'+currency['display_name']+'</option>')
+
+                // append to the smallprint list string
+                list += list === '' ? '' : ', '
+                list += currency['symbol'] + currency['premium_amount'] / 100 + ' ' + id.toUpperCase()
             })
+
+            // Replace last comma with "or"
+            var i = list.lastIndexOf(', ')
+            if (i > -1) {
+                list = list.substring(0, i) + ' or ' + list.substring(i + 1)
+            }
 
             // TODO autodetect currency
             var currencyId = info['default_currency']
@@ -259,6 +300,7 @@
             // Populate dynamic values and update them when a new currency is selected
             $('#amount').val(currency['premium_amount'] / 100)
             $('.required-amount').text(currency['symbol'] + currency['premium_amount'] / 100)
+            $('.required-amount-list').text(list)
             $('#currency')
                 .val(currencyId)
                 .change(function populateInfo() {
