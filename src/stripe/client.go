@@ -154,7 +154,7 @@ func GetCurrencyMap() map[string]CurrencyInfo {
 
 // DistributeDonation splits a payment evenly between the cached connected accounts
 // Any leftovers remain in the Impact stripe account
-func DistributeDonation(payment stripe.PaymentIntent) error {
+func DistributeDonation(payment *stripe.PaymentIntent) error {
 	accountsLock.Lock()
 	defer accountsLock.Unlock()
 
