@@ -201,7 +201,6 @@ func handleStripeWebhook(c echo.Context) error {
 
 func handlePaymentSucceeded(c echo.Context, event *stripe.WebhookEvent, payment upstreamstripe.PaymentIntent) error {
 	donationLock.Lock()
-	defer donationLock.Unlock()
 
 	// Check the DB to see if a pending_donation already exists, create one if not
 	token, err := getOrCreateDonation(payment.ID, payment.ReceiptEmail, payment.Currency, payment.Amount)
@@ -210,6 +209,14 @@ func handlePaymentSucceeded(c echo.Context, event *stripe.WebhookEvent, payment 
 	}
 
 	_ = editOrCreateDonationLog("Someone just donated", &payment, token)
+
+	donationLock.Unlock()
+
+	// TODO distribute cash
+	err = stripe.DistributeDonation(payment)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error distributing payment").SetInternal(err)
+	}
 
 	return c.NoContent(http.StatusOK)
 }
