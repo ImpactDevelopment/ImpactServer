@@ -276,9 +276,13 @@ func getConnectedAccounts() ([]stripe.Account, error) {
 
 func getChargesFromPayment(payment *stripe.PaymentIntent) (charges []stripe.Charge) {
 	for _, charge := range payment.Charges.Data {
-		if charge != nil {
-			charges = append(charges, *charge)
+		if charge == nil {
+			continue
 		}
+		if !charge.Paid {
+			continue
+		}
+		charges = append(charges, *charge)
 	}
 	return
 }
