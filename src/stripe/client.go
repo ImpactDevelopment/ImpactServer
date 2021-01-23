@@ -171,6 +171,30 @@ func DistributeDonation(payment *stripe.PaymentIntent) error {
 	accountsLock.Lock()
 	defer accountsLock.Unlock()
 
+	charges := getChargesFromPayment(payment)
+	if len(charges) < 1 {
+		return fmt.Errorf("error processing payment %s, expected at least 1 charge but found %d", payment.ID, len(charges))
+	}
+
+	// Distribute each charge to connected accounts - normally there should only be one charge, but stripe allows for multiple
+	var errs []error
+	for _, charge := range charges {
+		err := distributeDonationCharge(&charge)
+		if err != nil {
+			fmt.Printf("Error processing charge %s (payment %s): %s\n", charge.ID, payment.ID, err.Error())
+			errs = append(errs, err)
+		}
+	}
+
+	// If any charge errored, return an error
+	if len(errs) > 0 {
+		return fmt.Errorf("%d error(s) encountered while distributing %d charge(s) for payment %s", len(errs), len(charges), payment.ID)
+	}
+
+	return nil
+}
+
+func distributeDonationCharge(charge *stripe.Charge) error {
 	// Calculate number of shares
 	shares := len(connectedAccounts)
 	if shares < 1 {
@@ -178,21 +202,12 @@ func DistributeDonation(payment *stripe.PaymentIntent) error {
 	}
 
 	// Calculate the value of each share
-	share := (payment.Amount - targetLeftover) / int64(shares)
+	share := (charge.Amount - targetLeftover) / int64(shares)
 
 	// Don't transfer negative values 😂
-	// This could happen, for example, if targetLeftover > payment.Amount
+	// This could happen, for example, if targetLeftover > charge.Amount
 	if share <= 0 {
-		return fmt.Errorf("calculated share (%.2f %s)is less than zero", float64(share)/100, payment.Currency)
-	}
-
-	// Get charge id
-	// There should only be one charge
-	var chargeID string
-	if charges := getChargesFromPayment(payment); len(charges) == 1 {
-		chargeID = charges[0].ID
-	} else {
-		return fmt.Errorf("unable to get charge ID for payment %s, expectede 1 charge but found %d\n", payment.ID, len(charges))
+		return fmt.Errorf("calculated share (%.2f %s)is less than zero", float64(share)/100, charge.Currency)
 	}
 
 	// Distribute the shares
@@ -203,15 +218,15 @@ func DistributeDonation(payment *stripe.PaymentIntent) error {
 		// Do the transfer
 		t, err := transfer.New(&stripe.TransferParams{
 			Amount:            stripe.Int64(share),
-			Currency:          stripe.String(payment.Currency),
+			Currency:          stripe.String(string(charge.Currency)),
 			Destination:       stripe.String(acct.ID),
-			SourceTransaction: &chargeID,
+			SourceTransaction: stripe.String(charge.ID),
 		})
 
 		if err == nil {
 			transfers = append(transfers, *t)
 		} else {
-			fmt.Printf("Error distributing %.2f %s to %s\n", float64(share)/100, payment.Currency, acct.Email)
+			fmt.Printf("Error distributing %.2f %s to %s\n", float64(share)/100, charge.Currency, acct.Email)
 		}
 	}
 
