@@ -166,40 +166,19 @@ func GetCurrencyMap() map[string]CurrencyInfo {
 	return stripeCurrencyMap
 }
 
-// DistributeDonation splits a payment evenly between the cached connected accounts
+// DistributeDonation splits a paid charge evenly between the cached connected accounts
 // Any leftovers remain in the Impact stripe account
-func DistributeDonation(payment *stripe.PaymentIntent) error {
+func DistributeDonation(charge *stripe.Charge) error {
 	accountsLock.Lock()
 	defer accountsLock.Unlock()
 
-	charges := getChargesFromPayment(payment)
-	if len(charges) < 1 {
-		return fmt.Errorf("error processing payment %s, expected at least 1 charge but found %d", payment.ID, len(charges))
+	if !charge.Paid {
+		return fmt.Errorf("cannot distribute payments from unpaid charge %s with status %s", charge.ID, charge.Status)
 	}
 
-	// Distribute each charge to connected accounts - normally there should only be one charge, but stripe allows for multiple
-	var errs []error
-	for _, charge := range charges {
-		err := distributeDonationCharge(&charge)
-		if err != nil {
-			fmt.Printf("Error processing charge %s (payment %s): %s\n", charge.ID, payment.ID, err.Error())
-			errs = append(errs, err)
-		}
-	}
-
-	// If any charge errored, return an error
-	if len(errs) > 0 {
-		return fmt.Errorf("%d error(s) encountered while distributing %d charge(s) for payment %s", len(errs), len(charges), payment.ID)
-	}
-
-	return nil
-}
-
-func distributeDonationCharge(charge *stripe.Charge) error {
 	// We need to get the actual balance transaction
 	// - the charge may be in a different currency to the final balance transaction
 	// - the charge amount will be higher than the net amount on the balance transaction
-
 	var bt *stripe.BalanceTransaction
 	if charge.BalanceTransaction == nil {
 		return fmt.Errorf("charge %s has no balance_transaction", charge.ID)
@@ -272,17 +251,4 @@ func getConnectedAccounts() ([]stripe.Account, error) {
 	}
 
 	return accounts, nil
-}
-
-func getChargesFromPayment(payment *stripe.PaymentIntent) (charges []stripe.Charge) {
-	for _, charge := range payment.Charges.Data {
-		if charge == nil {
-			continue
-		}
-		if !charge.Paid {
-			continue
-		}
-		charges = append(charges, *charge)
-	}
-	return
 }

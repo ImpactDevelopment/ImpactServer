@@ -179,16 +179,20 @@ func handleStripeWebhook(c echo.Context) error {
 	switch event.Type {
 	case "payment_intent.succeeded":
 		var paymentIntent upstreamstripe.PaymentIntent
-		err := json.Unmarshal(event.Data.Raw, &paymentIntent)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Error parsing webhook JSON").SetInternal(err)
+		if err := unmarshal(event, &paymentIntent); err != nil {
+			return err
 		}
 		return handlePaymentSucceeded(c, event, &paymentIntent)
+	case "charge.succeeded":
+		var charge upstreamstripe.Charge
+		if err := unmarshal(event, &charge); err != nil {
+			return err
+		}
+		return handleChargeSucceeded(c, event, &charge)
 	case "charge.refunded":
-		var refund upstreamstripe.Refund
-		err := json.Unmarshal(event.Data.Raw, &refund)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Error parsing webhook JSON").SetInternal(err)
+		var refund upstreamstripe.Charge
+		if err := unmarshal(event, &refund); err != nil {
+			return err
 		}
 		return handleRefund(c, event, &refund)
 	// TODO: Handle failed refunds; charge.refund.updated with status:failed along with a failure_reason and failure_balance_transaction
@@ -199,8 +203,17 @@ func handleStripeWebhook(c echo.Context) error {
 	}
 }
 
+func unmarshal(event *stripe.WebhookEvent, it interface{}) error {
+	err := json.Unmarshal(event.Data.Raw, it)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Error parsing webhook JSON").SetInternal(err)
+	}
+	return nil
+}
+
 func handlePaymentSucceeded(c echo.Context, event *stripe.WebhookEvent, payment *upstreamstripe.PaymentIntent) error {
 	donationLock.Lock()
+	defer donationLock.Unlock()
 
 	// Check the DB to see if a pending_donation already exists, create one if not
 	token, err := getOrCreateDonation(payment.ID, payment.ReceiptEmail, payment.Currency, payment.Amount)
@@ -210,22 +223,24 @@ func handlePaymentSucceeded(c echo.Context, event *stripe.WebhookEvent, payment 
 
 	_ = editOrCreateDonationLog("Someone just donated", payment, token)
 
-	donationLock.Unlock()
-
-	// TODO distribute cash
-	err = stripe.DistributeDonation(payment)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Error distributing payment").SetInternal(err)
-	}
-
 	return c.NoContent(http.StatusOK)
 }
 
-func handleRefund(c echo.Context, event *stripe.WebhookEvent, refund *upstreamstripe.Refund) error {
+func handleChargeSucceeded(c echo.Context, event *stripe.WebhookEvent, charge *upstreamstripe.Charge) error {
+	// Distribute charge amount between connected accounts
+	// We do this on charge succeeded instead of payment succeeded so we don't have to sort through successful and failed charges
+	err := stripe.DistributeDonation(charge)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error distributing charge").SetInternal(err)
+	}
+	return c.NoContent(http.StatusOK)
+}
+
+func handleRefund(c echo.Context, event *stripe.WebhookEvent, charge *upstreamstripe.Charge) error {
 	donationLock.Lock()
 	defer donationLock.Unlock()
 
-	payment := refund.PaymentIntent
+	payment := charge.PaymentIntent
 	if payment == nil {
 		return echo.NewHTTPError(http.StatusUnprocessableEntity, "unable to handle refunds not associated with a PaymentIntent")
 	}
