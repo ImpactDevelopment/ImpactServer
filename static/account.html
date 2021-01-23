@@ -199,6 +199,9 @@
             <p class="col s12">
                 Your Impact Account has <strong id="roles"></strong> status.
             </p>
+            <p class="col s12 hidden" id="stripe_connect_login">
+                <a class="btn waves-effect waves-light" href="#" target="_blank">Stripe Express Dashboard</a>
+            </p>
             <div class="input-field col s12 m6">
                 <div class="card minecraft unlinked">
                     <div class="card-content">
@@ -676,6 +679,30 @@
                         $("#roles").parent().addClass("hidden")
                     } else {
                         $("#roles").text(oxfordJoin(user.roles))
+                    }
+
+                    // Setup the Stripe login if available
+                    if (user['has_stripe_connect']) {
+                        var stripe = $('#stripe_connect_login')
+                        stripe.find('a').click(function (event) {
+                            event.preventDefault()
+
+                            api.stripeConnectLogin()
+                            .then(function (data) {
+                                var win = window.open(data['url'], '_blank');
+                                if (win) {
+                                    //Browser has opened dashboard
+                                    win.focus()
+                                } else {
+                                    //Browser has blocked opening a window/tab
+                                    alert('Your browser has blocked opening the Stripe Express Dashboard. Please enable Pop-Ups.');
+                                }
+                            })
+                            .catch(function (error) {
+                                alert('Error getting login url: ' + error)
+                            })
+                        })
+                        stripe.removeClass('hidden')
                     }
 
                     // Set the discord info

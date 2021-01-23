@@ -15,6 +15,7 @@ type userRow struct {
 	minecraft     NullUUID
 	discord       sql.NullString
 	passwdHash    sql.NullString
+	stripe        sql.NullString
 	legacyEnabled bool
 	capeEnabled   bool
 	legacy        bool
@@ -29,7 +30,7 @@ type rowScanner interface {
 // scanUsersView takes a sql.Row or sql.Rows and scans it into the user.
 // It is assumed the row is has the same column order as `users_view`
 func (user *userRow) scanUsersView(row rowScanner) error {
-	return row.Scan(&user.id, &user.email, &user.minecraft, &user.discord, &user.passwdHash, &user.capeEnabled, &user.legacyEnabled, &user.legacy, &user.roleList)
+	return row.Scan(&user.id, &user.email, &user.minecraft, &user.discord, &user.passwdHash, &user.stripe, &user.capeEnabled, &user.legacyEnabled, &user.legacy, &user.roleList)
 }
 
 // makeUser converts a userRow into a users.User
@@ -51,6 +52,9 @@ func (user *userRow) makeUser() users.User {
 	}
 	if user.passwdHash.Valid {
 		ret.PasswordHash = user.passwdHash.String
+	}
+	if user.stripe.Valid {
+		ret.StripeID = user.stripe.String
 	}
 	ret.UserInfo = users.NewUserInfo(ret)
 	ret.ID = user.id

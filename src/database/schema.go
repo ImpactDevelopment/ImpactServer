@@ -71,6 +71,8 @@ func createTables() error {
 
 			mc_uuid UUID UNIQUE,
 			discord_id TEXT UNIQUE,
+		    
+		    stripe_connect TEXT, -- the associated stripe connect account if present, used by devs to login to their stripe dashboard
 
 			legacy_enabled BOOL NOT NULL DEFAULT FALSE, -- list this mc uuid in the premium list for 4.7 and below. this determines if you get a cape shown to other users who are using 4.7-
 			cape_enabled BOOL NOT NULL DEFAULT TRUE, -- show a cape to others on 4.8+
@@ -98,6 +100,7 @@ func createTables() error {
 			mc_uuid,
 			discord_id,
 			password_hash,
+		    stripe_connect,
 			cape_enabled, --TODO invert this to "incognito"
 			legacy_enabled,
 			legacy,

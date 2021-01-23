@@ -10,6 +10,7 @@ type User struct {
 	MinecraftID   *uuid.UUID `json:"minecraft"`
 	DiscordID     string     `json:"discord"`
 	PasswordHash  string     `json:"-"`
+	StripeID      string     `json:"-"`
 	LegacyEnabled bool       `json:"legacy_enabled"`
 	Incognito     bool       `json:"incognito"`
 	Legacy        bool       `json:"legacy"`

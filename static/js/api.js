@@ -168,6 +168,21 @@
                 })
             })
         },
+        // returns a one-time login link url for Stripe Connect's Express Account dashboard
+        stripeConnectLogin: function() {
+            return new Promise(function(resolve, reject) {
+                $.withAuth.get({
+                    url: baseUrl + "/stripe/connect/login",
+                    dataType: "json",
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        reject(messageFromjqXHR(jqXHR))
+                    },
+                    success: function (data, status) {
+                        resolve(data)
+                    }
+                })
+            })
+        },
         forgotPassword: function(email, verification) {
             return new Promise(function (resolve, reject) {
                 $.post({

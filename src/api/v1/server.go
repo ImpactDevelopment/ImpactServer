@@ -31,6 +31,7 @@ func API(api *echo.Group) {
 	api.Any("/stripe/webhook", handleStripeWebhook, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/stripe/createpayment", createStripePayment, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/stripe/redeem", redeemStripePayment, middleware.NoCache())
+	api.GET("/stripe/connect/login", getStripeLogin, middleware.NoCache(), middleware.RequireAuth)
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/checktoken", checkToken, middleware.NoCache())
 	api.Match([]string{http.MethodGet, http.MethodPost}, "/register/token", registerWithToken, middleware.NoCache())
 	api.GET("/emailtest", emailTest, middleware.NoCache())

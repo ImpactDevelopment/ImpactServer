@@ -9,6 +9,8 @@ import (
 	"github.com/ImpactDevelopment/ImpactServer/src/users"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/stripe/stripe-go/v71"
+	"github.com/stripe/stripe-go/v71/loginlink"
 	"log"
 	"net/http"
 	"strings"
@@ -44,6 +46,7 @@ func getUser(c echo.Context) error {
 				Incognito     bool               `json:"incognito"`
 				Roles         []users.Role       `json:"roles,omitempty"`
 				Info          *users.UserInfo    `json:"info,omitempty"`
+				HasStripe     bool               `json:"has_stripe_connect,omitempty"`
 			}
 		)
 
@@ -107,6 +110,7 @@ func getUser(c echo.Context) error {
 			Incognito:     user.Incognito,
 			Roles:         user.Roles,
 			Info:          user.UserInfo,
+			HasStripe:     user.StripeID != "",
 		})
 	} else {
 		return echo.NewHTTPError(http.StatusUnauthorized, "not authenticated")
@@ -253,4 +257,21 @@ func patchUser(c echo.Context) error {
 		return getUser(c)
 	}
 	return echo.NewHTTPError(http.StatusUnauthorized, "not authenticated")
+}
+
+func getStripeLogin(c echo.Context) error {
+	if user := middleware.GetUser(c); user != nil {
+		if user.StripeID == "" {
+			return echo.NewHTTPError(http.StatusBadRequest, "no stripe connect account")
+		}
+		link, err := loginlink.New(&stripe.LoginLinkParams{
+			Account: stripe.String(user.StripeID),
+		})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "error getting login link from stripe").SetInternal(err)
+		}
+		return c.JSON(http.StatusOK, &link)
+	} else {
+		return echo.NewHTTPError(http.StatusUnauthorized, "not authenticated")
+	}
 }
