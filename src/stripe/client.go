@@ -9,6 +9,7 @@ import (
 	"github.com/stripe/stripe-go/v71/account"
 	"github.com/stripe/stripe-go/v71/balancetransaction"
 	"github.com/stripe/stripe-go/v71/paymentintent"
+	"github.com/stripe/stripe-go/v71/reversal"
 	"github.com/stripe/stripe-go/v71/transfer"
 	"github.com/stripe/stripe-go/v71/webhook"
 	"net/http"
@@ -251,4 +252,41 @@ func getConnectedAccounts() ([]stripe.Account, error) {
 	}
 
 	return accounts, nil
+}
+
+func ReverseDistribution(charge *stripe.Charge) error {
+	// We're not actually touching connectedAccounts, but we don't want to create any transfers while reversing them...
+	//accountsLock.Lock()
+	//defer accountsLock.Unlock()
+
+	if charge.TransferGroup == "" {
+		// No transfers to reverse
+		return nil
+	}
+
+	// Get all transfers related to this charge
+	iter := transfer.List(&stripe.TransferListParams{
+		TransferGroup: stripe.String(charge.TransferGroup),
+	})
+
+	// Keep track of the number of errors and transfers in case anything goes wrong
+	var errs []error
+
+	// Reverse each transfer
+	for iter.Next() {
+		t := iter.Transfer()
+		_, err := reversal.New(&stripe.ReversalParams{
+			Transfer: stripe.String(t.ID),
+		})
+		if err != nil {
+			fmt.Printf("Error reversing transfer %s: %s\n", t.ID, err.Error())
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("%d errors encountered reversing %d transfers for charge %s", len(errs), iter.Meta().TotalCount, charge.ID)
+	}
+
+	return nil
 }

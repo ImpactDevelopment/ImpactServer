@@ -237,25 +237,17 @@ func handleChargeSucceeded(c echo.Context, event *stripe.WebhookEvent, charge *u
 }
 
 func handleRefund(c echo.Context, event *stripe.WebhookEvent, charge *upstreamstripe.Charge) error {
-	donationLock.Lock()
-	defer donationLock.Unlock()
-
-	payment := charge.PaymentIntent
-	if payment == nil {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, "unable to handle refunds not associated with a PaymentIntent")
+	// First things first, lets reverse any associated transfers (i.e. share distributions to connected accounts)
+	err := stripe.ReverseDistribution(charge)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "error reversing transfers for refunded charge "+charge.ID).SetInternal(err)
 	}
 
-	// TODO Check the DB to see if a pending_donation already exists, create one if not
-
-	if payment.Amount >= 500 {
-		// TODO Mark the token as refunded
-
-		// TODO check if the token was used_by anyone - if so disable or otherwise remove their account
-		// If they had registered, populate userinfo vars above so we can use them in the donate log message
+	// Next, revoke any perks granted by this donation
+	err = revokeDonation(charge.PaymentIntent)
+	if err != nil {
+		return err
 	}
-
-	// TODO log refund to discord
-	// consider also DMing the devs or posting something somewhere like #staff-anouncements or #senior-cisizens?
 
 	return c.NoContent(http.StatusOK)
 }
@@ -291,4 +283,59 @@ func editOrCreateDonationLog(message string, payment *upstreamstripe.PaymentInte
 		database.DB.Exec(`UPDATE pending_donations SET log_msg_id = $2 WHERE token = $1`, token, newLogID)
 	}
 	return err
+}
+
+// revokeDonation mark's the associated token as used, and deletes any user created with the token.
+// It also updates the discord log message accordingly
+func revokeDonation(payment *upstreamstripe.PaymentIntent) error {
+	donationLock.Lock()
+	defer donationLock.Unlock()
+
+	var token uuid.UUID
+	var user *uuid.UUID
+	err := database.DB.QueryRow(`SELECT token, used_by FROM pending_donations WHERE stripe_payment_id=$1`, payment.ID).Scan(&token, &user)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// No token has been generated with this payment, nothing to do
+			return nil
+		} else {
+			// Some other SQL error - uh oh
+			return echo.NewHTTPError(http.StatusInternalServerError, "sql error finding tokens associated with payment").SetInternal(err)
+		}
+	}
+
+	// Make DB changes in a transaction
+	tx, err := database.DB.Begin()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "sql error creating transaction").SetInternal(err)
+	}
+	defer tx.Rollback()
+
+	// TODO add a specific refunded field instead of just setting used=true
+	_, err = tx.Exec(`UPDATE pending_donations SET used = true WHERE token=$1`, token)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "sql error marking token as used").SetInternal(err)
+	}
+
+	if user != nil {
+		_, err = tx.Exec(`DELETE FROM users WHERE user_id=$1`, user)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "sql error deleting refunded user").SetInternal(err)
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Print(err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, "sql error committing transaction").SetInternal(err)
+	}
+
+	// log refund to discord
+	// TODO consider also DMing the devs or posting something somewhere like #staff-announcements or #senior-citizens?
+	err = editOrCreateDonationLog("This donation was refunded", payment, token)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "error logging refund to discord").SetInternal(err)
+	}
+
+	return nil
 }
