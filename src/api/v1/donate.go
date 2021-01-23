@@ -183,14 +183,14 @@ func handleStripeWebhook(c echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Error parsing webhook JSON").SetInternal(err)
 		}
-		return handlePaymentSucceeded(c, event, paymentIntent)
+		return handlePaymentSucceeded(c, event, &paymentIntent)
 	case "charge.refunded":
 		var refund upstreamstripe.Refund
 		err := json.Unmarshal(event.Data.Raw, &refund)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Error parsing webhook JSON").SetInternal(err)
 		}
-		return handleRefund(c, event, refund)
+		return handleRefund(c, event, &refund)
 	// TODO: Handle failed refunds; charge.refund.updated with status:failed along with a failure_reason and failure_balance_transaction
 	//       https://stripe.com/docs/refunds#failed-refunds
 	//case "charge.refund.updated":
@@ -199,9 +199,8 @@ func handleStripeWebhook(c echo.Context) error {
 	}
 }
 
-func handlePaymentSucceeded(c echo.Context, event *stripe.WebhookEvent, payment upstreamstripe.PaymentIntent) error {
+func handlePaymentSucceeded(c echo.Context, event *stripe.WebhookEvent, payment *upstreamstripe.PaymentIntent) error {
 	donationLock.Lock()
-	defer donationLock.Unlock()
 
 	// Check the DB to see if a pending_donation already exists, create one if not
 	token, err := getOrCreateDonation(payment.ID, payment.ReceiptEmail, payment.Currency, payment.Amount)
@@ -209,12 +208,20 @@ func handlePaymentSucceeded(c echo.Context, event *stripe.WebhookEvent, payment 
 		return err
 	}
 
-	_ = editOrCreateDonationLog("Someone just donated", &payment, token)
+	_ = editOrCreateDonationLog("Someone just donated", payment, token)
+
+	donationLock.Unlock()
+
+	// TODO distribute cash
+	err = stripe.DistributeDonation(payment)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error distributing payment").SetInternal(err)
+	}
 
 	return c.NoContent(http.StatusOK)
 }
 
-func handleRefund(c echo.Context, event *stripe.WebhookEvent, refund upstreamstripe.Refund) error {
+func handleRefund(c echo.Context, event *stripe.WebhookEvent, refund *upstreamstripe.Refund) error {
 	donationLock.Lock()
 	defer donationLock.Unlock()
 
