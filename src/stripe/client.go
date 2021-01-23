@@ -12,6 +12,7 @@ import (
 	"github.com/stripe/stripe-go/v71/webhook"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -20,19 +21,31 @@ var PublicKey string
 var webhookSecret string
 
 // A list of accounts to distribute donations to
-// TODO combine mutex lock & slice into one strut
 var connectedAccounts []stripe.Account
 var accountsLock sync.Mutex
+
+// The amount to remain in Impact's balance after distributing (plus any remainder from division)
+var targetLeftover int64
 
 func init() {
 	// Set values from environment
 	PublicKey = os.Getenv("STRIPE_PUBLIC_KEY")
 	stripe.Key = os.Getenv("STRIPE_PRIVATE_KEY")
 	webhookSecret = os.Getenv("STRIPE_WEBHOOK_SECRET")
+	if target, err := strconv.ParseInt(os.Getenv("STRIPE_TARGET_LEFTOVER"), 10, 64); err == nil {
+		targetLeftover = target
+	} else {
+		println("Error reading STRIPE_TARGET_LEFTOVER:", err.Error())
+		targetLeftover = 0
+	}
 
 	// Fetch connected accounts
+	accountsLock.Lock()
+	defer accountsLock.Unlock()
 	var err error
 	connectedAccounts, err = getConnectedAccounts()
+
+	// If no error on initial fetch, do it again every hour
 	if err != nil {
 		println("Error fetching Stripe connected accounts: ", err.Error())
 	} else {
@@ -158,36 +171,29 @@ func DistributeDonation(payment *stripe.PaymentIntent) error {
 	accountsLock.Lock()
 	defer accountsLock.Unlock()
 
-	// Get charge id
-	// There should only be one charge
-	var chargeID *string
-	for _, charge := range payment.Charges.Data {
-		chargeID = &charge.ID
-		break
-	}
-	if chargeID == nil {
-		return fmt.Errorf("unable to get charge ID for payment %s\n", payment.ID)
-	}
-
-	// Calculate the value of each share
+	// Calculate number of shares
 	shares := len(connectedAccounts)
 	if shares < 1 {
 		return errors.New("unable to distribute shares, zero shareholders")
 	}
 
-	// TODO get the target leftover amount from env?
-	const targetLeftover = 50
-	amount := payment.Amount
-	share := (amount - targetLeftover) / int64(shares)
-	leftover := amount - share*int64(shares)
+	// Calculate the value of each share
+	share := (payment.Amount - targetLeftover) / int64(shares)
 
 	// Don't transfer negative values 😂
+	// This could happen, for example, if targetLeftover > payment.Amount
 	if share <= 0 {
 		return fmt.Errorf("calculated share (%.2f %s)is less than zero", float64(share)/100, payment.Currency)
 	}
 
-	// FIXME remove this debugging code?
-	fmt.Printf("Distributing %d shares of %.2f %s, with a leftover of %.2f %s\n", shares, float64(share)/100, payment.Currency, float64(leftover)/100, payment.Currency)
+	// Get charge id
+	// There should only be one charge
+	var chargeID string
+	if charges := getChargesFromPayment(payment); len(charges) == 1 {
+		chargeID = charges[0].ID
+	} else {
+		return fmt.Errorf("unable to get charge ID for payment %s, expectede 1 charge but found %d\n", payment.ID, len(charges))
+	}
 
 	// Distribute the shares
 	// Keep track of created transfers so we can verify they were all created successfully
@@ -199,7 +205,7 @@ func DistributeDonation(payment *stripe.PaymentIntent) error {
 			Amount:            stripe.Int64(share),
 			Currency:          stripe.String(payment.Currency),
 			Destination:       stripe.String(acct.ID),
-			SourceTransaction: chargeID,
+			SourceTransaction: &chargeID,
 		})
 
 		if err == nil {
@@ -235,4 +241,13 @@ func getConnectedAccounts() ([]stripe.Account, error) {
 	}
 
 	return accounts, nil
+}
+
+func getChargesFromPayment(payment *stripe.PaymentIntent) (charges []stripe.Charge) {
+	for _, charge := range payment.Charges.Data {
+		if charge != nil {
+			charges = append(charges, *charge)
+		}
+	}
+	return
 }
