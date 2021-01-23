@@ -86,4 +86,10 @@ var specialCases = map[uuid.UUID]roleTemplate{ // TODO this should basically jus
 			Icon: "https://i.imgur.com/aKt1g4H.jpg",
 		},
 	},
+	// peanut
+	uuid.MustParse("9d913c0a-3d57-4ce9-8b7d-689973312856"): {
+		info: &UserInfo{
+			TextColor: "ORANGE",
+		},
+	},
 }
