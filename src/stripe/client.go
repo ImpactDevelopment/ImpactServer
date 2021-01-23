@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stripe/stripe-go/v71"
 	"github.com/stripe/stripe-go/v71/account"
+	"github.com/stripe/stripe-go/v71/balancetransaction"
 	"github.com/stripe/stripe-go/v71/paymentintent"
 	"github.com/stripe/stripe-go/v71/transfer"
 	"github.com/stripe/stripe-go/v71/webhook"
@@ -195,6 +196,21 @@ func DistributeDonation(payment *stripe.PaymentIntent) error {
 }
 
 func distributeDonationCharge(charge *stripe.Charge) error {
+	// We need to get the actual balance transaction
+	// - the charge may be in a different currency to the final balance transaction
+	// - the charge amount will be higher than the net amount on the balance transaction
+
+	var bt *stripe.BalanceTransaction
+	if charge.BalanceTransaction == nil {
+		return fmt.Errorf("charge %s has no balance_transaction", charge.ID)
+	} else {
+		var err error
+		bt, err = balancetransaction.Get(charge.BalanceTransaction.ID, nil)
+		if err != nil {
+			return fmt.Errorf("error getting balance_transaction %s for charge %s: %s", charge.BalanceTransaction.ID, charge.ID, err.Error())
+		}
+	}
+
 	// Calculate number of shares
 	shares := len(connectedAccounts)
 	if shares < 1 {
@@ -202,12 +218,12 @@ func distributeDonationCharge(charge *stripe.Charge) error {
 	}
 
 	// Calculate the value of each share
-	share := (charge.Amount - targetLeftover) / int64(shares)
+	share := (bt.Net - targetLeftover) / int64(shares)
 
 	// Don't transfer negative values 😂
-	// This could happen, for example, if targetLeftover > charge.Amount
+	// This could happen, for example, if targetLeftover > bt.Net
 	if share <= 0 {
-		return fmt.Errorf("calculated share (%.2f %s)is less than zero", float64(share)/100, charge.Currency)
+		return fmt.Errorf("calculated share (%.2f %s)is less than zero", float64(share)/100, bt.Currency)
 	}
 
 	// Distribute the shares
@@ -218,7 +234,7 @@ func distributeDonationCharge(charge *stripe.Charge) error {
 		// Do the transfer
 		t, err := transfer.New(&stripe.TransferParams{
 			Amount:            stripe.Int64(share),
-			Currency:          stripe.String(string(charge.Currency)),
+			Currency:          stripe.String(string(bt.Currency)),
 			Destination:       stripe.String(acct.ID),
 			SourceTransaction: stripe.String(charge.ID),
 		})
@@ -226,7 +242,7 @@ func distributeDonationCharge(charge *stripe.Charge) error {
 		if err == nil {
 			transfers = append(transfers, *t)
 		} else {
-			fmt.Printf("Error distributing %.2f %s to %s\n", float64(share)/100, charge.Currency, acct.Email)
+			fmt.Printf("Error distributing %.2f %s to %s\n", float64(share)/100, bt.Currency, acct.Email)
 		}
 	}
 
