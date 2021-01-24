@@ -244,9 +244,11 @@ func handleRefund(c echo.Context, event *stripe.WebhookEvent, charge *upstreamst
 	}
 
 	// Next, revoke any perks granted by this donation
-	err = revokeDonation(charge.PaymentIntent)
-	if err != nil {
-		return err
+	if charge.PaymentIntent != nil {
+		err = revokeDonation(charge.PaymentIntent)
+		if err != nil {
+			return err
+		}
 	}
 
 	return c.NoContent(http.StatusOK)
