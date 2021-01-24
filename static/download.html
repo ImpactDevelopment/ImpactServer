@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Download Impact Installer</title>
+    <meta name="description" content="Download the Impact Installer" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Dependencies -->
+    <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js"></script>
+    <script type="text/javascript" src="/min/modernizr-min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-143397381-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-143397381-1');
+
+        var getOutboundLink = function(label) {
+            gtag('event', 'click', {
+                'event_category': 'outbound',
+                'event_label': label,
+                'transport_type': 'beacon'
+            });
+        }
+    </script>
+    <script>
+        // Special handler for loading the page with complete=true
+        // complete=true should only be set as a result of history state manipulation, not an actual page load
+        // going forward with history buttons will skip the countdown and go straight to completed
+        (function () {
+            var params = parseQuery()
+            if (params.complete) {
+                params.complete = false
+                console.warn('Warning: complete=true was set on an ordinary page load')
+                try {
+                    history.replaceState(null, '', params.toQuery())
+                } catch (e) {
+                    console.error('Error removing "complete=true" from an actual page load', e)
+                }
+            }
+        })()
+
+        function parseQuery(params) {
+            if (!params) params = window.location.search
+            var query = new URLSearchParams(params)
+            var ret = {
+                toQuery: function () {
+                    var parts = []
+                    if (this.platform) {
+                        parts.push('platform='+this.platform)
+                    }
+                    if (this.complete) {
+                        parts.push('complete=true')
+                    }
+                    if (parts.length > 0) {
+                        return '?' + parts.join('&')
+                    }
+                    return ''
+                }
+            }
+            var p = query.get('platform')
+            if (p) {
+                ret.platform = p.trim().toLowerCase()
+            }
+            var c = query.get('complete')
+            if (c) {
+                ret.complete = c.trim().toLowerCase() === 'true'
+            }
+            return ret
+        }
+    </script>
+
+    <!-- CSS  -->
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <link rel="stylesheet" type="text/css" href="/min/style-min.css"/>
+
+    <style>
+        /* Initial page load animation */
+        .fade-in {
+            opacity: 1;
+            -webkit-transition: opacity .33s ease;
+            transition: opacity .33s ease;
+        }
+        .invisible {
+            opacity: 0!important;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="navbar-fixed">
+        <nav role="navigation">
+            <div class="nav-wrapper container">
+                <a href="/" class="brand-logo"><h1>Impact</h1></a>
+            </div>
+        </nav>
+    </div>
+</header>
+<noscript>
+    <div class="container center" id="noscript">
+        <div class="row">
+            <h4 class="col s12">Thank you for downloading Impact Installer</h4>
+            <div class="col s12">
+                <h5><a id="noscript-download-link-exe" href="/ImpactInstaller.exe" onclick="getOutboundLink('noscript_exe_download'); return true;">Click here to download for Windows (.exe)</a></h5>
+                <h5><a id="noscript-download-link-jar" href="/ImpactInstaller.jar" onclick="getOutboundLink('noscript_jar_download'); return true;">Click here to download for all platforms (.jar)</a></h5>
+                <p>
+                    If you enjoy using Impact, please <a href="/donate" onclick="getOutboundLink('donate'); return true;">consider donating</a>.
+                    Please note, you'll need to enable JavaScript to use the donation form.
+                </p>
+            </div>
+        </div>
+    </div>
+</noscript>
+<div class="invisible fade-in" id="init">
+    <div class="container hidden" id="selector">
+        <div class="row">
+            <h4 class="col s12">Thank you for choosing Impact</h4>
+            <p class="col s12">
+                If you have an Impact Account you can <a href="/account">login here</a> to download without waiting, or download the Nightly Installer.
+                If you don't have an Impact Account, you can register for one after <a href="/donate" onclick="getOutboundLink('donate'); return true;">donating</a>.
+            </p>
+            <p class="col s12">
+                If you are running Microsoft Windows®, we recommend using the EXE version of the installer, however if you have Java installed you can use either.
+            </p>
+            <h5><a id="download-link-exe" class="download-selection" href="?platform=exe" onclick="getOutboundLink('exe_download_selected'); return true;">Click here to download for Windows (.exe)</a></h5>
+            <h5><a id="download-link-jar" class="download-selection" href="?platform=jar" onclick="getOutboundLink('jar_download_selected'); return true;">Click here to download for all platforms (.jar)</a></h5>
+        </div>
+    </div>
+    <div class="container hiddeen" id="countdown">
+        <div class="row">
+            <h4 class="col s12">Your download will begin <span id="countdown-text">in 5 seconds</span></h4>
+            <div class="col s12" id="progress-bar">
+                <div class="progress">
+                    <div class="determinate" style="width: 0">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container hidden" id="download">
+        <div class="row">
+            <h4 class="col s12">Thank you for downloading Impact Installer</h4>
+            <div class="col s12">
+                <p>If your download hasn't begun automatically, <a id="download-link" href="" onclick="getOutboundLink('download'); return true;">please click here</a>.</p>
+                <p>If you enjoy using Impact, please <a href="/donate" onclick="getOutboundLink('donate'); return true;">consider donating</a>.</p>
+                <p>If you are struggling to install Impact, please checkout these tutorials:</p>
+                <ul>
+                    <li>TODO</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script type="text/javascript">
+
+    // FIXME ugly golbal variable
+    //       we need access to the ticker from the onpopstate event handler as well as
+    //       the startCountdown & updateProgress functions
+    var ticker = null
+
+    // We use history.pushState and history.replaceState to avoid the user going "back" from complete to the countdown
+    // this adds a little complexity as we have to reset our state and re-init the page when a history pop happens
+    // this does mean better history control on supported browsers and less actual http requests though
+    window.onpopstate = function(event) {
+        // If we somehow popstate to a different uri, just reload
+        if (document.location.pathname.toLowerCase() !== '/download') {
+            document.location.reload()
+        }
+
+        // Clear the ticker to ensure we don't download after navigating away from the countdown
+        clearTicker()
+
+        // Re-init based on the new pushed state
+        init(parseQuery())
+    }
+
+    $('.download-selection').click(function (event) {
+        // Try and start the download countdown without actually navigating to `?platform=whatever`
+        // Wrap event.preventDefault() at the end of a try-catch so that traditional navigation can still happen if anything fails
+        try {
+            // Extract the platform
+            var params = parseQuery($(this).attr('href'))
+            params.page = 2
+            try {
+                history.pushState(null, '', params.toQuery())
+            } catch (e) {
+                console.error('Error pushing history state to countdown page', e)
+            }
+
+            // Re-init the page
+            init(params)
+
+            event.preventDefault()
+        } catch (e) {
+            console.error('Failed to re-init the page, navigating instead', e)
+        }
+    })
+
+    // Run init on load
+    init(parseQuery())
+
+    function init(params){
+        $('#init').addClass('invisible')
+
+        // Try and set the download platform
+        if (params.platform) {
+            try {
+                setDownloadPlatform(params.platform)
+            } catch (e) {
+                console.error('Error setting platform', e)
+                params.platform = null
+            }
+        }
+
+        if (params.complete && params.platform) {
+            // Skip straight to download
+            // download() handles showing/hiding stuff
+            download()
+        } else if (params.platform) {
+            // Show the download countdown
+            startCountdown()
+            $('#countdown').removeClass('hidden')
+            $('#selector').addClass('hidden')
+        } else {
+            // Fallback to showing the platform selector
+            $('#selector').removeClass('hidden')
+            $('#countdown').addClass('hidden')
+            $('#download').addClass('hidden')
+        }
+
+        $('#init').removeClass('invisible')
+    }
+
+    function startCountdown() {
+        var start = new Date()
+        var target = new Date(start).setSeconds(start.getSeconds() + 5) // `start + 5000` does string concatenation!
+
+        // increment and update progress every second
+        clearTicker()
+        ticker = setInterval(function () {
+            if (updateProgress()) {
+                clearTicker()
+            }
+        }, 16) //16ms is ~60fps
+
+        // Update progress calculates the progress so far and renders it on the document
+        // returns true if progress is complete
+        function updateProgress() {
+            var now = new Date()
+
+            // Remaining seconds, rounded up
+            var remainingSeconds = Math.ceil((target - now) / 1000)
+
+            // Percent complete as a fraction
+            var fraction = (now - start) / (target - start)
+            if (fraction > 1) fraction = 1
+
+            var countdownElem = $('#countdown-text')
+            var progressBarElm = $('#progress-bar')
+
+            if (now >= target) {
+                try {
+                    var params = parseQuery()
+                    params.page = 3
+                    params.complete = true
+                    history.replaceState(null, '', params.toQuery())
+                } catch (e) {
+                    console.error('Error replacing history state with complete page', e)
+                }
+                countdownElem.text('now')
+                progressBarElm.addClass('hidden')
+                // start the download (etc)
+                download()
+                return true
+            }
+
+            countdownElem.text('in ' + remainingSeconds + ' seconds')
+            progressBarElm.removeClass('hidden')
+            progressBarElm.find('.determinate').css('width', fraction * 100 + '%')
+            return false
+        }
+    }
+
+    function setDownloadPlatform (platform) {
+        if (typeof platform !== 'string') {
+            throw new TypeError('setDownloadPlatform expected a string, found ' + typeof platform)
+        }
+        platform = platform.trim().toLowerCase()
+
+        switch (platform) {
+            case 'jar': break
+            case 'exe': break
+            default:
+                throw new IllegalStateError('setDownloadPlatform expected "jar" or "exe", found "' + platform + '"')
+        }
+
+        $('#download-link').attr('href', '/ImpactInstaller.' + platform)
+    }
+
+    function download() {
+        // Show the completed text
+        $('#selector').addClass('hidden')
+        $('#countdown').addClass('hidden')
+        $('#download').removeClass('hidden')
+
+        // The browser will recognise the Content-Disposition: attachment header,
+        // so it will just download instead of navigating away
+        window.location = $('#download-link').attr('href')
+    }
+
+    function clearTicker() {
+        if (ticker) clearInterval(ticker)
+        ticker = null
+    }
+
+    function IllegalStateError(message, fileName, lineNumber) {
+        var instance = new Error(message, fileName, lineNumber)
+        instance.name = 'IllegalStateError'
+        Object.setPrototypeOf(instance, Object.getPrototypeOf(this))
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(instance, IllegalStateError)
+        }
+        return instance
+    }
+
+    IllegalStateError.prototype = Object.create(Error.prototype, {
+        constructor: {
+            value: Error,
+            enumerable: false,
+            writable: true,
+            configurable: true
+        }
+    })
+</script>
+</body>
+</html>
