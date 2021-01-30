@@ -132,20 +132,76 @@
 <div class="invisible fade-in" id="init">
     <div class="container hidden" id="selector">
         <div class="row">
-            <h4 class="col s12">Thank you for choosing Impact</h4>
-            <p class="col s12">
-                If you have an Impact Account you can <a href="/account">login here</a> to download without waiting, or download the Nightly Installer.
-                If you don't have an Impact Account, you can register for one after <a href="/donate" onclick="getOutboundLink('pre_download_donate'); return true;">donating</a>.
-            </p>
-            <p class="col s12">
-                If you are running Microsoft Windows®, we recommend using the EXE version of the installer, however if you have Java installed you can use either.
-            </p>
-            <h5><a id="download-link-exe" class="download-selection" href="?platform=exe" onclick="getOutboundLink('exe_download_selected'); return true;">Click here to download for Windows (.exe)</a></h5>
-            <h5><a id="download-link-jar" class="download-selection" href="?platform=jar" onclick="getOutboundLink('jar_download_selected'); return true;">Click here to download for all platforms (.jar)</a></h5>
+            <div class="col s12">
+                <div class="center promo promo-example">
+                    <h4>Downloads</h4>
+                    <p>Impact supports Minecraft 1.15.2, 1.14.4, 1.13.2, 1.12.2, 1.12.1, 1.12, and 1.11.2.</p>
+                    <p>Impact does NOT support cracked/non-premium launchers.</p>
+                    <p>
+                        If you have an Impact Account you can <a href="/account">login here</a> to download without waiting, or download the Nightly Installer.
+                        If you don't have an Impact Account, you can register for one after <a href="/donate" onclick="getOutboundLink('pre_download_donate'); return true;">donating</a>.
+                    </p>
+                </div>
+            </div>
+            <div class="center col s12 l4 offset-l2">
+                <a id="download-link-exe" href="/download?platform=exe" onclick="getOutboundLink('exe_download_selected'); return true;" id="adfly-link-exe">
+                    <div class="card-panel waves-effect z-depth-2 hoverable">
+                        <h5 class="black-text">
+                            Impact Installer
+                            <br />
+                            for Windows
+                            <br />
+                        </h5>
+                        <h6 class="black-text">
+                            Vanilla & Forge
+                        </h6>
+                        <div>
+                            <img alt="Impact for Windows" class="large" src="/img/windows-icon.png" height=128/>
+                            <br />
+                            Download
+                            <br />
+                            <span style="font-height: 10px" class="black-text">
+                                ImpactInstaller.exe
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="center col s12 l4">
+                <a id="download-link-jar" href="/download?platform=jar" onclick="getOutboundLink('jar_download_selected'); return true;" id="adfly-link-jar">
+                    <div class="card-panel waves-effect z-depth-2 hoverable">
+                        <h5 class="black-text">
+                            Impact Installer
+                            <br />
+                            for non-Windows
+                            <br />
+                            <div style="font-size: 10px"></div>
+                        </h5>
+                        <h6 class="black-text">
+                            Vanilla & Forge
+                        </h6>
+                        <div>
+                            <img alt="Download Impact" class="large" src="/img/java-icon.png" height=128/>
+                            <br />
+                            Download
+                            <br />
+                            <span style="font-height: 10px" class="black-text">
+                                ImpactInstaller.jar
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col s12">
+                <div class="center promo promo-example">
+                    <br />
+                    <a target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Setup-FAQ" onclick="getOutboundLink('faq_download'); return true;"><u>Download/Setup FAQ</u></a>
+                </div>
+            </div>
         </div>
     </div>
     <div class="container hiddeen" id="countdown">
-        <div class="row">
+        <div class="row center">
             <h4 class="col s12">Your download will begin <span id="countdown-text">in 5 seconds</span></h4>
             <div class="col s12">
                 <div class="progress" id="progress-bar">
@@ -156,11 +212,13 @@
     </div>
     <div class="container hidden" id="download">
         <div class="row">
-            <h4 class="col s12">Thank you for downloading Impact Installer</h4>
-            <div class="col s12">
+            <h4 class="col s12 center">Thank you for downloading Impact Installer</h4>
+            <div class="col s12 center">
                 <!-- #download-link's outboundLink is set dynamically based on platform -->
                 <h5>If your download hasn't begun automatically, <a id="download-link" href="">please click here</a>.</h5>
                 <p>If you enjoy using Impact, please <a href="/donate" onclick="getOutboundLink('post_download_donate'); return true;">consider donating</a>.</p>
+            </div>
+            <div class="col s12">
                 <h5>Having problems?</h5>
                 <ul>
                     <li><a target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Setup-FAQ" onclick="getOutboundLink('faq_setup'); return true;">Setup and Install FAQ</a></li>
@@ -169,20 +227,22 @@
                     <li>Found a problem? <a href="https://github.com/ImpactDevelopment/ImpactClient/issues" target="_blank" onclick="getOutboundLink('issues'); return true;">Report issues</a> on GitHub</li>
                     <li>Curious? <a href="https://github.com/ImpactDevelopment/Installer" target="_blank" onclick="getOutboundLink('installer_source'); return true;">Read the code</a> of the installer you just downloaded</li>
                 </ul>
-                <p id="exe-on-non-windows-moment" class="tutorial hidden">
+            </div>
+            <div class="col s12 tutorial">
+                <p id="exe-on-non-windows-moment" class="hidden">
                     This version of the Installer is intended to run on Windows. If you are installing on another platform (such as Mac or Linux) you should use the <a href="/download?platform=jar" onclick="getOutboundLink('wrong_platform_select_jar'); return true;">.jar version</a> of the Installer instead!
                 </p>
-                <p id="exe-moment" class="tutorial hidden">
+                <p id="exe-moment" class="hidden">
                     On Windows, you may run into the following issue with "Windows protected your PC" on opening the Installer. <a href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Opening-the-Installer-on-Windows" target="_blank" onclick="getOutboundLink('install_windows'); return true;">Click here</a> for instructions on how to get around this issue.
                     <br />
                     <img alt="Impact windows download" src="/img/windowsmoment.png">
                 </p>
-                <p id="mac-moment" class="tutorial hidden">
+                <p id="mac-moment" class="hidden">
                     On Mac, you may run into the following issue with "Unidentified Developer" on opening the Installer. <a href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Opening-the-Installer-on-Mac" target="_blank" onclick="getOutboundLink('install_mac'); return true;">Click here</a> for instructions on how to get around this issue.
                     <br />
                     <img alt="Impact mac download" src="/img/macmoment.png">
                 </p>
-                <p id="jar-moment" class="tutorial hidden">
+                <p id="jar-moment" class="hidden">
                     You must use Java to open this version of the Installer.
                     <br />
                     <a href="https://www.java.com/download" target="_blank" onclick="getOutboundLink('install_java'); return true;">Click here</a> to download java if you don't already have it.
@@ -352,7 +412,7 @@
 
         // Hide all tutorials by default, we'll show the relevant ones shortly
         var tutorials = $('.tutorial')
-        tutorials.addClass('hidden')
+        tutorials.children().addClass('hidden')
 
         if (platform === 'exe') {
             switch (os) {
@@ -360,17 +420,17 @@
                 case 'mobile':
                     // If platform=exe and os=windows|mobile show the "run installer on windows" meme
                     console.info('Showing #exe-moment')
-                    tutorials.filter('#exe-moment').removeClass('hidden')
+                    tutorials.find('#exe-moment').removeClass('hidden')
                     break
                 default:
                     // If platform=exe but not on windows or mobile, show the "wrong platform" meme
                     console.info('Showing #exe-on-non-windows-moment')
-                    tutorials.filter('#exe-on-non-windows-moment').removeClass('hidden')
+                    tutorials.find('#exe-on-non-windows-moment').removeClass('hidden')
             }
         } else { // platform=jar
             // Always show "download java to run installer" meme when platform=jar
             console.info('Showing #jar-moment')
-            tutorials.filter('#jar-moment').removeClass('hidden')
+            tutorials.find('#jar-moment').removeClass('hidden')
             // Let's show an os-specific screenshot for #java-moment
             switch (os) {
                 case 'mac':
@@ -391,7 +451,7 @@
                 case 'mac':
                 case 'mobile':
                     console.info('Showing #mac-moment')
-                    tutorials.filter('#mac-moment').removeClass('hidden')
+                    tutorials.find('#mac-moment').removeClass('hidden')
                     break
             }
         }
