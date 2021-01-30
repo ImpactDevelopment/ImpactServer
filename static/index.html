@@ -7,6 +7,38 @@
     <!-- Title -->
     <title>Impact client - The utility mod for Minecraft</title>
 
+    <!-- Redirect before loading anything if brady-money-grubbing-completed is set -->
+    <script type="text/javascript">
+        (function(){
+            if (grubbingCompleted()) {
+                redirect('/download')
+            }
+
+            function redirect(url) {
+                try {
+                    window.location.replace(url);
+                } catch (e) {
+                    window.location = url;
+                }
+            }
+
+            function grubbingCompleted() {
+                try {
+                    var params = new URLSearchParams(window.location.search)
+                    switch (params.get('brady-money-grubbing-completed').trim().toLowerCase()) {
+                        case 'true':
+                        case 't':
+                        case '1':
+                            return true
+                    }
+                } catch (e) {
+
+                }
+                return false
+            }
+        })()
+    </script>
+
     <!-- CSS  -->
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/css/materialize.min.css" />
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
@@ -337,21 +369,5 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.99.0/js/materialize.min.js"></script>
 <script type="text/javascript" src="/min/init-min.js"></script>
-<script type="text/javascript">
-    if (window.location.search.indexOf("brady-money-grubbing-completed") != -1) {
-        jQuery('#download-complete-modal').modal('open');
-        if (impactPlatform) {
-            var url = "/ImpactInstaller." + impactPlatform;
-            var w = window.open(url);
-            setTimeout(function(){
-                if ((!w || (typeof w) == 'undefined') || (w && (w.closed || w.test || w.outerHeight == 0))) {
-                    // pop up was blocked
-                    // sadly they will not get the install info from the modal, since we need to redirect to make the download work =(
-                    document.location.href = url;
-                }
-            }, 25);
-        }
-    }
-</script>
 </body>
 </html>
