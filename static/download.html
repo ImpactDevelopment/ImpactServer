@@ -112,7 +112,7 @@
                 <h5><a id="noscript-download-link-exe" href="/ImpactInstaller.exe" onclick="getOutboundLink('noscript_exe_download'); return true;">Click here to download for Windows (.exe)</a></h5>
                 <h5><a id="noscript-download-link-jar" href="/ImpactInstaller.jar" onclick="getOutboundLink('noscript_jar_download'); return true;">Click here to download for all platforms (.jar)</a></h5>
                 <p>
-                    If you enjoy using Impact, please <a href="/donate" onclick="getOutboundLink('donate'); return true;">consider donating</a>.
+                    If you enjoy using Impact, please <a href="/donate" onclick="getOutboundLink('noscript_download_donate'); return true;">consider donating</a>.
                     Please note, you'll need to enable JavaScript to use the donation form.
                 </p>
             </div>
@@ -125,7 +125,7 @@
             <h4 class="col s12">Thank you for choosing Impact</h4>
             <p class="col s12">
                 If you have an Impact Account you can <a href="/account">login here</a> to download without waiting, or download the Nightly Installer.
-                If you don't have an Impact Account, you can register for one after <a href="/donate" onclick="getOutboundLink('donate'); return true;">donating</a>.
+                If you don't have an Impact Account, you can register for one after <a href="/donate" onclick="getOutboundLink('pre_download_donate'); return true;">donating</a>.
             </p>
             <p class="col s12">
                 If you are running Microsoft Windows®, we recommend using the EXE version of the installer, however if you have Java installed you can use either.
@@ -137,10 +137,9 @@
     <div class="container hiddeen" id="countdown">
         <div class="row">
             <h4 class="col s12">Your download will begin <span id="countdown-text">in 5 seconds</span></h4>
-            <div class="col s12" id="progress-bar">
-                <div class="progress">
-                    <div class="determinate" style="width: 0">
-                    </div>
+            <div class="col s12">
+                <div class="progress" id="progress-bar">
+                    <div class="determinate" style="width: 0"></div>
                 </div>
             </div>
         </div>
@@ -149,8 +148,9 @@
         <div class="row">
             <h4 class="col s12">Thank you for downloading Impact Installer</h4>
             <div class="col s12">
-                <p>If your download hasn't begun automatically, <a id="download-link" href="" onclick="getOutboundLink('download'); return true;">please click here</a>.</p>
-                <p>If you enjoy using Impact, please <a href="/donate" onclick="getOutboundLink('donate'); return true;">consider donating</a>.</p>
+                <!-- #download-link's outboundLink is set dynamically based on platform -->
+                <p>If your download hasn't begun automatically, <a id="download-link" href="">please click here</a>.</p>
+                <p>If you enjoy using Impact, please <a href="/donate" onclick="getOutboundLink('post_download_donate'); return true;">consider donating</a>.</p>
                 <p>If you are struggling to install Impact, please checkout these tutorials:</p>
                 <ul>
                     <li>TODO</li>
@@ -190,7 +190,6 @@
         try {
             // Extract the platform
             var params = parseQuery($(this).attr('href'))
-            params.page = 2
             try {
                 history.pushState(null, '', params.toQuery())
             } catch (e) {
@@ -244,6 +243,8 @@
     function startCountdown() {
         var start = new Date()
         var target = new Date(start).setSeconds(start.getSeconds() + 5) // `start + 5000` does string concatenation!
+        var countdownText = $('#countdown-text')
+        var progressBar = $('#progress-bar .determinate')
 
         // increment and update progress every second
         clearTicker()
@@ -265,29 +266,27 @@
             var fraction = (now - start) / (target - start)
             if (fraction > 1) fraction = 1
 
-            var countdownElem = $('#countdown-text')
-            var progressBarElm = $('#progress-bar')
-
             if (now >= target) {
-                try {
-                    var params = parseQuery()
-                    params.page = 3
-                    params.complete = true
-                    history.replaceState(null, '', params.toQuery())
-                } catch (e) {
-                    console.error('Error replacing history state with complete page', e)
-                }
-                countdownElem.text('now')
-                progressBarElm.addClass('hidden')
-                // start the download (etc)
-                download()
+                complete()
                 return true
             }
 
-            countdownElem.text('in ' + remainingSeconds + ' seconds')
-            progressBarElm.removeClass('hidden')
-            progressBarElm.find('.determinate').css('width', fraction * 100 + '%')
+            countdownText.text('in ' + remainingSeconds + ' seconds')
+            progressBar.css('width', fraction * 100 + '%')
             return false
+        }
+
+        function complete() {
+            try {
+                var params = parseQuery()
+                params.complete = true
+                history.replaceState(null, '', params.toQuery())
+            } catch (e) {
+                console.error('Error replacing history state with complete page', e)
+            }
+            countdownText.text('now')
+            // start the download (etc)
+            download()
         }
     }
 
@@ -304,7 +303,12 @@
                 throw new IllegalStateError('setDownloadPlatform expected "jar" or "exe", found "' + platform + '"')
         }
 
-        $('#download-link').attr('href', '/ImpactInstaller.' + platform)
+        $('#download-link')
+            .attr('href', '/ImpactInstaller.' + platform)
+            .off('click')
+            .on('click', function (event) {
+                getOutboundLink('direct_' + platform)
+            })
     }
 
     function download() {
