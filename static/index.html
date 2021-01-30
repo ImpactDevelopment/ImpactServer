@@ -130,39 +130,16 @@
             <span id="bothPlatforms">or</span>
             <span id="jarOnly"><a target="_blank" href="/ImpactInstaller.jar" onclick="getOutboundLink('direct_jar'); return true;">here</a> for a direct link to the universal .jar</span>
         </p>
-        <p>
-            <div style="font-size: 15px;float: left;font-weight: bold">Having trouble installing or setting up Impact? There's almost certainly a solution in the&nbsp;</div>
-            <a target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Setup-FAQ" onclick="getOutboundLink('faq_setup'); return true;">Setup / Install FAQ</a>
-            <br />
-            <br />
-            <a target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Usage-FAQ" onclick="getOutboundLink('faq_usage'); return true;">Usage FAQ</a>
-        </p>
-        <p id="mac-moment">
-            On Mac, you may run into the following issue with "Unidentified Developer" on opening the Installer. <a href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Opening-the-installer-on-Mac" onclick="getOutboundLink('install_mac'); return true;">Click here</a> for instructions on how to get around this issue.<br />
-            <img alt="Impact mac download" src="img/macmoment.png" style="width: 50%">
-        </p>
-        <p id="exe-moment">
-            On Windows, you may run into the following issue with missing Java on opening the Installer. This is normal; Java can be downloaded from <a target="_blank" href="https://www.java.com/download/">here</a>.<br />
-            <img alt="Impact windows download" src="img/nojava.png" style="width: 50%">
-        </p>
         <script type="text/javascript">
             function delet(id) {
                 var elem = document.getElementById(id);
                 if (elem)
                     elem.parentNode.removeChild(elem);
             }
-            if (navigator.platform.toUpperCase().indexOf('MAC') == -1) { // if NOT on Mac OS X
-                delet("mac-moment"); // then delete the mac info
-            } else {
-                delet("exe-moment"); // big brain: if on mac, delete the big exe meme
-            }
             if (impactPlatform) {
                 delet("bothPlatforms");
                 if (impactPlatform == "exe") {
                     delet("jarOnly");
-                } else {
-                    delet("exeOnly");
-                    delet("exe-moment");
                 }
             }
         </script>

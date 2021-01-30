@@ -57,6 +57,9 @@
                     if (this.complete) {
                         parts.push('complete=true')
                     }
+                    if (this.os) {
+                        parts.push('os='+this.os)
+                    }
                     if (parts.length > 0) {
                         return '?' + parts.join('&')
                     }
@@ -70,6 +73,10 @@
             var c = query.get('complete')
             if (c) {
                 ret.complete = c.trim().toLowerCase() === 'true'
+            }
+            var o = query.get('os')
+            if (o) {
+                ret.complete = o.trim().toLowerCase()
             }
             return ret
         }
@@ -91,6 +98,9 @@
         }
         .invisible {
             opacity: 0!important;
+        }
+        .tutorial img, img.tutorial {
+            width: 50%;
         }
     </style>
 </head>
@@ -149,12 +159,38 @@
             <h4 class="col s12">Thank you for downloading Impact Installer</h4>
             <div class="col s12">
                 <!-- #download-link's outboundLink is set dynamically based on platform -->
-                <p>If your download hasn't begun automatically, <a id="download-link" href="">please click here</a>.</p>
+                <h5>If your download hasn't begun automatically, <a id="download-link" href="">please click here</a>.</h5>
                 <p>If you enjoy using Impact, please <a href="/donate" onclick="getOutboundLink('post_download_donate'); return true;">consider donating</a>.</p>
-                <p>If you are struggling to install Impact, please checkout these tutorials:</p>
+                <h5>Having problems?</h5>
                 <ul>
-                    <li>TODO</li>
+                    <li><a target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Setup-FAQ" onclick="getOutboundLink('faq_setup'); return true;">Setup and Install FAQ</a></li>
+                    <li><a target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Usage-FAQ" onclick="getOutboundLink('faq_usage'); return true;">Usage FAQ</a></li>
+                    <li>Need help? <a href="/discord" target="_blank" onclick="getOutboundLink('discord'); return true;">Join our Discord</a>!</li>
+                    <li>Found a problem? <a href="https://github.com/ImpactDevelopment/ImpactClient/issues" target="_blank" onclick="getOutboundLink('issues'); return true;">Report issues</a> on GitHub</li>
+                    <li>Curious? <a href="https://github.com/ImpactDevelopment/Installer" target="_blank" onclick="getOutboundLink('installer_source'); return true;">Read the code</a> of the installer you just downloaded</li>
                 </ul>
+                <p id="exe-on-non-windows-moment" class="tutorial hidden">
+                    This version of the Installer is intended to run on Windows. If you are installing on another platform (such as Mac or Linux) you should use the <a href="/download?platform=jar" onclick="getOutboundLink('wrong_platform_select_jar'); return true;">.jar version</a> of the Installer instead!
+                </p>
+                <p id="exe-moment" class="tutorial hidden">
+                    On Windows, you may run into the following issue with "Windows protected your PC" on opening the Installer. <a href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Opening-the-Installer-on-Windows" target="_blank" onclick="getOutboundLink('install_windows'); return true;">Click here</a> for instructions on how to get around this issue.
+                    <br />
+                    <img alt="Impact windows download" src="/img/windowsmoment.png">
+                </p>
+                <p id="mac-moment" class="tutorial hidden">
+                    On Mac, you may run into the following issue with "Unidentified Developer" on opening the Installer. <a href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Opening-the-Installer-on-Mac" target="_blank" onclick="getOutboundLink('install_mac'); return true;">Click here</a> for instructions on how to get around this issue.
+                    <br />
+                    <img alt="Impact mac download" src="/img/macmoment.png">
+                </p>
+                <p id="jar-moment" class="tutorial hidden">
+                    You must use Java to open this version of the Installer.
+                    <br />
+                    <a href="https://www.java.com/download" target="_blank" onclick="getOutboundLink('install_java'); return true;">Click here</a> to download java if you don't already have it.
+                    <br />
+                    <img id="jar-moment-windows" alt="Run with java" src="/img/javamoment_win.png" class="hidden">
+                    <img id="jar-moment-mac" alt="Run with java" src="/img/javamoment_mac.png" class="hidden">
+                    <img id="jar-moment-linux" alt="Run with java" src="/img/javamoment_linux.png" class="hidden">
+                </p>
             </div>
         </div>
     </div>
@@ -303,12 +339,62 @@
                 throw new IllegalStateError('setDownloadPlatform expected "jar" or "exe", found "' + platform + '"')
         }
 
+        console.info('Setting #download-link’s href to /ImpactInstaller.' + platform + ' and outbound link to direct_' + platform)
         $('#download-link')
             .attr('href', '/ImpactInstaller.' + platform)
             .off('click')
             .on('click', function (event) {
                 getOutboundLink('direct_' + platform)
             })
+
+        var os = getOS()
+        console.info('Found OS', os, 'based on platform', window.navigator.platform)
+
+        // Hide all tutorials by default, we'll show the relevant ones shortly
+        var tutorials = $('.tutorial')
+        tutorials.addClass('hidden')
+
+        if (platform === 'exe') {
+            switch (os) {
+                case 'windows':
+                case 'mobile':
+                    // If platform=exe and os=windows|mobile show the "run installer on windows" meme
+                    console.info('Showing #exe-moment')
+                    tutorials.filter('#exe-moment').removeClass('hidden')
+                    break
+                default:
+                    // If platform=exe but not on windows or mobile, show the "wrong platform" meme
+                    console.info('Showing #exe-on-non-windows-moment')
+                    tutorials.filter('#exe-on-non-windows-moment').removeClass('hidden')
+            }
+        } else { // platform=jar
+            // Always show "download java to run installer" meme when platform=jar
+            console.info('Showing #jar-moment')
+            tutorials.filter('#jar-moment').removeClass('hidden')
+            // Let's show an os-specific screenshot for #java-moment
+            switch (os) {
+                case 'mac':
+                    console.info('Showing #jar-moment-mac')
+                    tutorials.find('#jar-moment-mac').removeClass('hidden')
+                    break
+                case 'linux':
+                    console.info('Showing #jar-moment-linux')
+                    tutorials.find('#jar-moment-linux').removeClass('hidden')
+                    break
+                default:
+                    console.info('Showing #jar-moment-windows')
+                    tutorials.find('#jar-moment-windows').removeClass('hidden')
+            }
+
+            // If mac or mobile, show the "run installer on mac" meme
+            switch (os) {
+                case 'mac':
+                case 'mobile':
+                    console.info('Showing #mac-moment')
+                    tutorials.filter('#mac-moment').removeClass('hidden')
+                    break
+            }
+        }
     }
 
     function download() {
@@ -320,6 +406,33 @@
         // The browser will recognise the Content-Disposition: attachment header,
         // so it will just download instead of navigating away
         window.location = $('#download-link').attr('href')
+    }
+
+    // returns one of: 'mobile', 'linux', 'mac', 'windows', ''
+    function getOS() {
+        var platform = window.navigator.platform
+
+        // Assume 'Linux arm*' is android - see https://stackoverflow.com/a/19883965
+        if (/^(iP(hone|od|ad)|Android|Linux arm)]/.test(platform)) {
+            return 'mobile'
+        }
+
+        // Win95+ should always be 'Win32' (even 64bit), older windows might return 'Windows', 'WinCE' or 'Win16' for example
+        if(/^Win/.test(platform)) {
+            return 'windows'
+        }
+
+        // 'Macintosh', 'MacIntel', 'MacPPC', etc - ^Mac should be pretty reliable
+        if(/^Mac/.test(platform)) {
+            return 'mac'
+        }
+
+        // Test for '^Linux' after '^Linux arm' since the latter is most-often found on mobile
+        if (/^(Linux|X11)/.test(platform)) {
+            return 'linux'
+        }
+
+        return ''
     }
 
     function clearTicker() {
