@@ -117,64 +117,6 @@
     </div>
 </section>
 
-<script type="text/javascript">
-    window.impactPlatform = window.location.search.split("platform=")[1];
-</script>
-
-<div id="download-complete-modal" class="modal">
-    <div class="modal-content">
-        <h4>Thank you for downloading Impact!</h4>
-        <p style="font-size: 18px">
-            <span>If your download does not start immediately, please click</span>
-            <span id="exeOnly"><a target="_blank" href="/ImpactInstaller.exe" onclick="getOutboundLink('direct_exe'); return true;">here</a> for a direct link to the Windows .exe</span>
-            <span id="bothPlatforms">or</span>
-            <span id="jarOnly"><a target="_blank" href="/ImpactInstaller.jar" onclick="getOutboundLink('direct_jar'); return true;">here</a> for a direct link to the universal .jar</span>
-        </p>
-        <p>
-            <div style="font-size: 15px;float: left;font-weight: bold">Having trouble installing or setting up Impact? There's almost certainly a solution in the&nbsp;</div>
-            <a target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Setup-FAQ" onclick="getOutboundLink('faq_setup'); return true;">Setup / Install FAQ</a>
-            <br />
-            <br />
-            <a target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Usage-FAQ" onclick="getOutboundLink('faq_usage'); return true;">Usage FAQ</a>
-        </p>
-        <p id="mac-moment">
-            On Mac, you may run into the following issue with "Unidentified Developer" on opening the Installer. <a href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Opening-the-installer-on-Mac" onclick="getOutboundLink('install_mac'); return true;">Click here</a> for instructions on how to get around this issue.<br />
-            <img alt="Impact mac download" src="img/macmoment.png" style="width: 50%">
-        </p>
-        <p id="exe-moment">
-            On Windows, you may run into the following issue with missing Java on opening the Installer. This is normal; Java can be downloaded from <a target="_blank" href="https://www.java.com/download/">here</a>.<br />
-            <img alt="Impact windows download" src="img/nojava.png" style="width: 50%">
-        </p>
-        <script type="text/javascript">
-            function delet(id) {
-                var elem = document.getElementById(id);
-                if (elem)
-                    elem.parentNode.removeChild(elem);
-            }
-            if (navigator.platform.toUpperCase().indexOf('MAC') == -1) { // if NOT on Mac OS X
-                delet("mac-moment"); // then delete the mac info
-            } else {
-                delet("exe-moment"); // big brain: if on mac, delete the big exe meme
-            }
-            if (impactPlatform) {
-                delet("bothPlatforms");
-                if (impactPlatform == "exe") {
-                    delet("jarOnly");
-                } else {
-                    delet("exeOnly");
-                    delet("exe-moment");
-                }
-            }
-        </script>
-        <p>If you need help with Impact, come <a href="/discord.html" target="_blank" onclick="getOutboundLink('discord'); return true;">join our Discord</a>!</p>
-        <p><a href="https://github.com/ImpactDevelopment/ImpactClient/issues" target="_blank" onclick="getOutboundLink('issues'); return true;">Report issues</a> on GitHub</p>
-        <p><a href="https://github.com/ImpactDevelopment/Installer" target="_blank" onclick="getOutboundLink('installer_source'); return true;">Source code</a> of the installer you just downloaded</p>
-    </div>
-    <div class="modal-footer">
-        <a class="modal-close waves-effect waves-green btn-flat">Close</a>
-    </div>
-</div>
-
 <!-- Downloads -->
 <section id="download" class="section scrollspy">
     <div class="container">
@@ -187,7 +129,7 @@
               </div>
             </div>
             <div class="center col s12 l4 offset-l2">
-                <a href="http://evassmat.com/K4AN" onclick="getOutboundLink('adfly_exe'); return true;" id="adfly-link-exe">
+                <a href="/download?platform=exe" onclick="getOutboundLink('exe_download_selected'); return true;" id="adfly-link-exe">
                     <div class="card-panel waves-effect z-depth-2 hoverable">
                         <h5 class="black-text">
                             Impact Installer
@@ -211,7 +153,7 @@
                 </a>
             </div>
             <div class="center col s12 l4">
-                <a href="http://evassmat.com/K44b" onclick="getOutboundLink('adfly_jar'); return true;" id="adfly-link-jar">
+                <a href="/download?platform=jar" onclick="getOutboundLink('jar_download_selected'); return true;" id="adfly-link-jar">
                     <div class="card-panel waves-effect z-depth-2 hoverable">
                         <h5 class="black-text">
                             Impact Installer
@@ -235,15 +177,6 @@
                     </div>
                 </a>
             </div>
-            <script type="text/javascript">
-                // analytics says almost half of firefox users never come back from the adfly
-                // probably a really aggressive adblocker
-                // so... just let them straight through lmao
-                if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
-                    document.getElementById("adfly-link-jar").href = "/?brady-money-grubbing-completed=true&platform=jar";
-                    document.getElementById("adfly-link-exe").href = "/?brady-money-grubbing-completed=true&platform=exe";
-                }
-            </script>
             <div class="col s12">
               <div class="center promo promo-example">
                 <br />
