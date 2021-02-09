@@ -216,7 +216,13 @@ func handlePaymentSucceeded(c echo.Context, event *stripe.WebhookEvent, payment 
 	defer donationLock.Unlock()
 
 	// Check the DB to see if a pending_donation already exists, create one if not
-	token, err := getOrCreateDonation(payment.ID, payment.ReceiptEmail, payment.Currency, payment.Amount)
+	token, err := getOrCreateDonation(payment.ID, payment.Metadata["email"], payment.Currency, payment.Amount)
+	if err != nil {
+		return err
+	}
+
+	// Update the payment with the token and send the email receipt
+	err = stripe.SendReceipt(payment, &token)
 	if err != nil {
 		return err
 	}

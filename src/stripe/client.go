@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stripe/stripe-go/v71"
 	"github.com/stripe/stripe-go/v71/account"
@@ -103,6 +104,16 @@ var stripeCurrencyMap = map[string]CurrencyInfo{
 	},
 }
 
+func makePaymentStruct(intent *stripe.PaymentIntent) *Payment {
+	return &Payment{
+		PaymentIntent: intent,
+		ClientSecret:  intent.ClientSecret,
+		Amount:        intent.Amount,
+		Currency:      intent.Currency,
+		Email:         intent.Metadata["email"],
+	}
+}
+
 func GetWebhookEvent(payload []byte, signature string) (*WebhookEvent, error) {
 	event, err := webhook.ConstructEvent(payload, signature, webhookSecret)
 	if err != nil {
@@ -118,20 +129,14 @@ func CreatePayment(amount int64, currency string, description string, email stri
 		Description: stripe.String(description),
 	}
 	if email != "" {
-		params.ReceiptEmail = stripe.String(email)
+		params.AddMetadata("email", email)
 	}
 	payment, err := paymentintent.New(params)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Payment{
-		PaymentIntent: payment,
-		ClientSecret:  payment.ClientSecret,
-		Amount:        payment.Amount,
-		Currency:      payment.Currency,
-		Email:         payment.ReceiptEmail,
-	}, nil
+	return makePaymentStruct(payment), nil
 }
 
 func GetPayment(id string) (*Payment, error) {
@@ -140,13 +145,7 @@ func GetPayment(id string) (*Payment, error) {
 		return nil, err
 	}
 
-	return &Payment{
-		PaymentIntent: payment,
-		ClientSecret:  payment.ClientSecret,
-		Amount:        payment.Amount,
-		Currency:      payment.Currency,
-		Email:         payment.ReceiptEmail,
-	}, nil
+	return makePaymentStruct(payment), nil
 }
 
 func GetCurrencySymbol(currency string) string {
@@ -165,6 +164,20 @@ func GetCurrencyInfo(currency string) (*CurrencyInfo, error) {
 
 func GetCurrencyMap() map[string]CurrencyInfo {
 	return stripeCurrencyMap
+}
+
+// SendReceipt updates the payment description if a token is provided and sends a receipt if an email is associated with the payment
+func SendReceipt(payment *stripe.PaymentIntent, token *uuid.UUID) error {
+	var params stripe.PaymentIntentParams
+	if email, ok := payment.Metadata["email"]; ok {
+		params.ReceiptEmail = &email
+	}
+	if token != nil {
+		params.AddMetadata("token", token.String())
+		params.Description = stripe.String(payment.Description + "\nRegistration token: " + token.String())
+	}
+	_, err := paymentintent.Update(payment.ID, &params)
+	return err
 }
 
 // DistributeDonation splits a paid charge evenly between the cached connected accounts

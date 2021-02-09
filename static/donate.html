@@ -641,7 +641,7 @@
         // If the payment was premium, ask for a token
         if (currentPayment && currentPayment['premium'] === true) {
             loading($('.result-message'), true)
-            api.redeemPayment(paymentIntent['id'], paymentIntent['receipt_email'])
+            api.redeemPayment(paymentIntent['id'], currentPayment['email'])
                 .then(function (token) {
                     $('#token').text(token)
                     $('#register').attr('href', '/register?token='+encodeURIComponent(token))
