@@ -14,9 +14,10 @@ var alteningInfoStruct = TheAlteningInfo{
 		AccountUrl:  "https://panel.thealtening.com/?ref=" + alteningReferral + "#account",
 	},
 	Generator: &Generator{
-		FreeUrl: "https://thealtening.com/?ref=" + alteningReferral + "&type=transit&destination=https://thealtening.com/free/free-minecraft-alt",
+		FreeUrl: "https://thealtening.com/?ref=" + alteningReferral,
 		PaidUrl: "https://panel.thealtening.com/?ref=" + alteningReferral + "#generator",
 	},
+	Shop: "https://shop.thealtening.com/?r=" + alteningReferral,
 	// TODO load a list of `Promo`s at runtime
 	Promos: &[]Promo{
 		{
@@ -30,6 +31,7 @@ var alteningInfoStruct = TheAlteningInfo{
 type TheAlteningInfo struct {
 	Dashboard *Dashboard `json:"dashboard,omitempty"`
 	Generator *Generator `json:"generate,omitempty"`
+	Shop      string     `json:"shop,omitempty"`
 	Promos    *[]Promo   `json:"promotions,omitempty"`
 	Enabled   bool       `json:"enabled"`
 }
