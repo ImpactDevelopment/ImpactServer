@@ -54,7 +54,7 @@ var donationLock sync.Mutex
 
 func getStripeInfo(c echo.Context) error {
 	return c.JSON(http.StatusOK, &stripeInfoReqponse{
-		Version:         upstreamstripe.APIVersion,
+		Version:         upstreamstripe.APIVersion + "; fast_automatic_capture_beta=v1",
 		PubKey:          stripe.PublicKey,
 		DefaultCurrency: defaultCurrency,
 		Currencies:      stripe.GetCurrencyMap(),
@@ -183,12 +183,14 @@ func handleStripeWebhook(c echo.Context) error {
 			return err
 		}
 		return handlePaymentSucceeded(c, event, &paymentIntent)
+	case "charge.updated":
+		fallthrough
 	case "charge.succeeded":
 		var charge upstreamstripe.Charge
 		if err := unmarshal(event, &charge); err != nil {
 			return err
 		}
-		return handleChargeSucceeded(c, event, &charge)
+		return handleChargeUpdated(c, event, &charge)
 	case "charge.refunded":
 		var refund upstreamstripe.Charge
 		if err := unmarshal(event, &refund); err != nil {
@@ -232,7 +234,23 @@ func handlePaymentSucceeded(c echo.Context, event *stripe.WebhookEvent, payment 
 	return c.NoContent(http.StatusOK)
 }
 
-func handleChargeSucceeded(c echo.Context, event *stripe.WebhookEvent, charge *upstreamstripe.Charge) error {
+func handleChargeUpdated(c echo.Context, event *stripe.WebhookEvent, charge *upstreamstripe.Charge) error {
+	// Filter for an event where the charge has succeeded and the balance_transaction is present
+	if charge.BalanceTransaction == nil {
+		// The new stripe fast_automatic_capture_beta doesn't necessarily include the balance_transaction until later,
+		// check if this is the event that added it to the charge or if we are handling too early.
+		return c.String(http.StatusUnprocessableEntity, "Cannot handle a charge without a balance_transaction")
+	}
+	if charge.Status != "succeeded" {
+		return c.String(http.StatusUnprocessableEntity, "Cannot handle a charge that has not succeeded")
+	}
+	if charge.Refunded {
+		return c.String(http.StatusUnprocessableEntity, "Cannot handle a charge that has been refunded")
+	}
+	if charge.TransferGroup != "" {
+		return c.String(http.StatusUnprocessableEntity, "Cannot handle a charge that has already been distributed")
+	}
+
 	// Distribute charge amount between connected accounts
 	// We do this on charge succeeded instead of payment succeeded so we don't have to sort through successful and failed charges
 	err := stripe.DistributeDonation(charge)
