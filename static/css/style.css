@@ -311,6 +311,7 @@ nav a.button-collapse {
 }
 
 .grey-text.text-lighten-3, .card-avatar {
+    will-change: transform;
     transition: all 150ms;
 }
 
