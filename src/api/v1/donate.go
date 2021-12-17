@@ -249,15 +249,15 @@ func handlePaymentSucceeded(c echo.Context, event *stripe.WebhookEvent, payment 
 }
 
 func handleChargeSucceeded(c echo.Context, event *stripe.WebhookEvent, charge *upstreamstripe.Charge) error {
+	// Attempt to remove from table before any errors can occur
+	database.DB.Exec("DELETE FROM payment_intents WHERE stripe_payment_id = $1", charge.PaymentIntent.ID)
+
 	// Distribute charge amount between connected accounts
 	// We do this on charge succeeded instead of payment succeeded so we don't have to sort through successful and failed charges
 	err := stripe.DistributeDonation(charge)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error distributing charge").SetInternal(err)
 	}
-
-	database.DB.Exec("DELETE FROM payment_intents WHERE stripe_payment_id = $1", charge.PaymentIntent.ID)
-
 	return c.NoContent(http.StatusOK)
 }
 
