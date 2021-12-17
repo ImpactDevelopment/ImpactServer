@@ -50,6 +50,29 @@ func createTables() error {
 		return err
 	}
 
+	// Scuff city, PQ doesn't support INET/CIDR postgres types
+	_, err = DB.Exec(`
+		CREATE TABLE IF NOT EXISTS payment_intents (
+			stripe_payment_id TEXT PRIMARY KEY,
+			ip_address TEXT
+		);
+	`)
+	if err != nil {
+		log.Println("Unable to create payment_intents table")
+		return err
+	}
+
+	_, err = DB.Exec(`
+		CREATE TABLE IF NOT EXISTS failed_charges (
+			ip_address TEXT PRIMARY KEY,
+			failures INTEGER DEFAULT 1
+		);
+	`)
+	if err != nil {
+		log.Println("Unable to create failed_charges table")
+		return err
+	}
+
 	_, err = DB.Exec(`
 		CREATE TABLE IF NOT EXISTS password_resets (
 			token  UUID PRIMARY KEY DEFAULT gen_random_uuid(),

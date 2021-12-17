@@ -12,6 +12,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -93,10 +94,19 @@ func createStripePayment(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid email: "+body.Email)
 	}
 
+	// Don't create the payment if the source address is blacklisted
+	ip := net.ParseIP(util.RealIPBestGuess(c))
+	if ip != nil && stripe.IsAddressBlacklisted(ip) {
+		return echo.NewHTTPError(http.StatusForbidden)
+	}
+
 	payment, err := stripe.CreatePayment(body.Amount, body.Currency, "Donation", body.Email)
 	if err != nil {
 		return err
 	}
+
+	// Log the IP address associated with the payment intent for future lookup
+	database.DB.Exec("INSERT INTO payment_intents (stripe_payment_id, ip_address) VALUES ($1, $2)", payment.PaymentIntent.ID, ip.String())
 
 	return c.JSON(http.StatusOK, &createResponse{
 		Payment: payment,
@@ -189,6 +199,12 @@ func handleStripeWebhook(c echo.Context) error {
 			return err
 		}
 		return handleChargeSucceeded(c, event, &charge)
+	case "charge.failed":
+		var charge upstreamstripe.Charge
+		if err := unmarshal(event, &charge); err != nil {
+			return err
+		}
+		return handleChargeFailed(c, event, &charge)
 	case "charge.refunded":
 		var refund upstreamstripe.Charge
 		if err := unmarshal(event, &refund); err != nil {
@@ -238,6 +254,30 @@ func handleChargeSucceeded(c echo.Context, event *stripe.WebhookEvent, charge *u
 	err := stripe.DistributeDonation(charge)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error distributing charge").SetInternal(err)
+	}
+
+	database.DB.Exec("DELETE FROM payment_intents WHERE stripe_payment_id = $1", charge.PaymentIntent.ID)
+
+	return c.NoContent(http.StatusOK)
+}
+
+func handleChargeFailed(c echo.Context, event *stripe.WebhookEvent, charge *upstreamstripe.Charge) error {
+	if charge.PaymentIntent != nil {
+		var ip string
+		err := database.DB.QueryRow("SELECT ip_address FROM payment_intents WHERE stripe_payment_id = $1", charge.PaymentIntent.ID).Scan(&ip)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Error looking up payment intent IP address").SetInternal(err)
+		}
+
+		_, err = database.DB.Exec("INSERT INTO failed_charges VALUES ($1) ON CONFLICT (ip_address) DO UPDATE SET failures = failed_charges.failures + 1", ip)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to increment failure count").SetInternal(err)
+		}
+
+		_, err = database.DB.Exec("DELETE FROM payment_intents WHERE stripe_payment_id = $1", charge.PaymentIntent.ID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to delete payment IP address from table").SetInternal(err)
+		}
 	}
 	return c.NoContent(http.StatusOK)
 }

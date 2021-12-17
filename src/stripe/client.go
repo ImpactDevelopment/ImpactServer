@@ -3,6 +3,7 @@ package stripe
 import (
 	"errors"
 	"fmt"
+	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -13,6 +14,7 @@ import (
 	"github.com/stripe/stripe-go/v71/reversal"
 	"github.com/stripe/stripe-go/v71/transfer"
 	"github.com/stripe/stripe-go/v71/webhook"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -30,6 +32,9 @@ var accountsLock sync.Mutex
 // The amount to remain in Impact's balance after distributing (plus any remainder from division)
 var targetLeftover int64
 
+// The failed payment count threshold to block IP addresses
+var failedPaymentThreshold int64
+
 func init() {
 	// Set values from environment
 	PublicKey = os.Getenv("STRIPE_PUBLIC_KEY")
@@ -40,6 +45,13 @@ func init() {
 	} else {
 		println("Error reading STRIPE_TARGET_LEFTOVER:", err.Error())
 		targetLeftover = 0
+	}
+
+	if threshold, err := strconv.ParseInt(os.Getenv("FAILED_PAYMENT_THRESHOLD"), 10, 64); err == nil {
+		failedPaymentThreshold = threshold
+	} else {
+		println("Error reading FAILED_PAYMENT_THRESHOLD:", err.Error())
+		failedPaymentThreshold = 50
 	}
 
 	// Fetch connected accounts
@@ -265,6 +277,15 @@ func getConnectedAccounts() ([]stripe.Account, error) {
 	}
 
 	return accounts, nil
+}
+
+func IsAddressBlacklisted(ipAddress net.IP) bool {
+	var failures int64
+	err := database.DB.QueryRow(`SELECT failures FROM failed_charges WHERE ip_address = $1`, ipAddress.String()).Scan(&failures)
+	if err != nil {
+		return false
+	}
+	return failures > failedPaymentThreshold
 }
 
 func ReverseDistribution(charge *stripe.Charge) error {
