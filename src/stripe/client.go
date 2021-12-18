@@ -290,7 +290,7 @@ func getConnectedAccounts() ([]stripe.Account, error) {
 func IsAddressBlacklisted(ipAddress net.IP) bool {
 	var failures int64
 	var highRisk int64
-	err := database.DB.QueryRow(`SELECT (failures, high_risk) FROM failed_charges WHERE ip_address = $1`, ipAddress.String()).Scan(&failures, &highRisk)
+	err := database.DB.QueryRow(`SELECT failures, high_risk FROM failed_charges WHERE ip_address = $1`, ipAddress.String()).Scan(&failures, &highRisk)
 	if err != nil {
 		return false
 	}
