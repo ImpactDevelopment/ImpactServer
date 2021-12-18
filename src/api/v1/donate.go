@@ -98,7 +98,7 @@ func createStripePayment(c echo.Context) error {
 	ip := net.ParseIP(util.RealIPBestGuess(c))
 	if ip != nil && stripe.IsAddressBlacklisted(ip) {
 		// Count the rejection
-		database.DB.Exec("UPDATE failed_charges SET rejections = failed_charges.rejections + 1 WHERE ip_address = $1", ip)
+		database.DB.Exec("UPDATE failed_charges SET rejections = failed_charges.rejections + 1 WHERE ip_address = $1", ip.String())
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
