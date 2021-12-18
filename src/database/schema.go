@@ -54,7 +54,7 @@ func createTables() error {
 	_, err = DB.Exec(`
 		CREATE TABLE IF NOT EXISTS payment_intents (
 			stripe_payment_id TEXT PRIMARY KEY,
-			ip_address TEXT
+			ip_address TEXT NOT NULL
 		);
 	`)
 	if err != nil {
@@ -65,9 +65,9 @@ func createTables() error {
 	_, err = DB.Exec(`
 		CREATE TABLE IF NOT EXISTS failed_charges (
 			ip_address TEXT PRIMARY KEY,
-			failures INTEGER DEFAULT 1,
-			rejections INTEGER DEFAULT 0,
-			high_risk INTEGER DEFAULT 0
+			failures INTEGER NOT NULL DEFAULT 1,
+			rejections INTEGER NOT NULL DEFAULT 0,
+			high_risk INTEGER NOT NULL DEFAULT 0
 		);
 	`)
 	if err != nil {
