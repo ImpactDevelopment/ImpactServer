@@ -97,8 +97,8 @@ func createStripePayment(c echo.Context) error {
 	// Don't create the payment if the source address is blacklisted
 	ip := net.ParseIP(util.RealIPBestGuess(c))
 	if ip != nil && stripe.IsAddressBlacklisted(ip) {
-		// Count the failure
-		incrementFailureCount(ip)
+		// Count the rejection
+		database.DB.Exec("UPDATE failed_charges SET rejections = failed_charges.rejections + 1 WHERE ip_address = $1", ip)
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
@@ -271,25 +271,21 @@ func handleChargeFailed(c echo.Context, event *stripe.WebhookEvent, charge *upst
 			return echo.NewHTTPError(http.StatusInternalServerError, "Error looking up payment intent IP address").SetInternal(err)
 		}
 
-		parsed := net.ParseIP(ip)
-		if parsed == nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to parse IP address from table")
-		}
-
-		err = incrementFailureCount(parsed)
+		// Increment the failure count
+		_, err = database.DB.Exec("INSERT INTO failed_charges (ip_address) VALUES ($1) ON CONFLICT (ip_address) DO UPDATE SET failures = failed_charges.failures + 1", ip)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to increment failure count").SetInternal(err)
 		}
+
+		// If the transaction was rejected for being high risk, log that too
+		if charge.Outcome != nil && charge.Outcome.Type == "blocked" && charge.Outcome.RiskLevel == "highest" {
+			_, err = database.DB.Exec("UPDATE failed_charges SET high_risk = failed_charges.high_risk + 1 WHERE ip_address = $1", ip)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, "Unable to increment high risk count").SetInternal(err)
+			}
+		}
 	}
 	return c.NoContent(http.StatusOK)
-}
-
-func incrementFailureCount(ip net.IP) error {
-	_, err := database.DB.Exec("INSERT INTO failed_charges (ip_address) VALUES ($1) ON CONFLICT (ip_address) DO UPDATE SET failures = failed_charges.failures + 1", ip.String())
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func handleRefund(c echo.Context, event *stripe.WebhookEvent, charge *upstreamstripe.Charge) error {

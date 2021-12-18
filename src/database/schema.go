@@ -65,7 +65,9 @@ func createTables() error {
 	_, err = DB.Exec(`
 		CREATE TABLE IF NOT EXISTS failed_charges (
 			ip_address TEXT PRIMARY KEY,
-			failures INTEGER DEFAULT 1
+			failures INTEGER DEFAULT 1,
+			rejections INTEGER DEFAULT 0,
+			high_risk INTEGER DEFAULT 0
 		);
 	`)
 	if err != nil {

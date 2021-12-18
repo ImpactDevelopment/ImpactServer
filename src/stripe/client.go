@@ -34,6 +34,7 @@ var targetLeftover int64
 
 // The failed payment count threshold to block IP addresses
 var failedPaymentThreshold int64
+var highRiskPaymentThreshold int64
 
 func init() {
 	// Set values from environment
@@ -52,6 +53,13 @@ func init() {
 	} else {
 		println("Error reading FAILED_PAYMENT_THRESHOLD:", err.Error())
 		failedPaymentThreshold = 50
+	}
+
+	if threshold, err := strconv.ParseInt(os.Getenv("HIGH_RISK_PAYMENT_THRESHOLD"), 10, 64); err == nil {
+		highRiskPaymentThreshold = threshold
+	} else {
+		println("Error reading HIGH_RISK_PAYMENT_THRESHOLD:", err.Error())
+		highRiskPaymentThreshold = 5
 	}
 
 	// Fetch connected accounts
@@ -281,11 +289,12 @@ func getConnectedAccounts() ([]stripe.Account, error) {
 
 func IsAddressBlacklisted(ipAddress net.IP) bool {
 	var failures int64
-	err := database.DB.QueryRow(`SELECT failures FROM failed_charges WHERE ip_address = $1`, ipAddress.String()).Scan(&failures)
+	var highRisk int64
+	err := database.DB.QueryRow(`SELECT (failures, high_risk) FROM failed_charges WHERE ip_address = $1`, ipAddress.String()).Scan(&failures, &highRisk)
 	if err != nil {
 		return false
 	}
-	return failures > failedPaymentThreshold
+	return failures >= failedPaymentThreshold || highRisk >= highRiskPaymentThreshold
 }
 
 func ReverseDistribution(charge *stripe.Charge) error {
