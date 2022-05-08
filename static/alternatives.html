@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Impact Alternatives</title>
+    <meta name="description" content="Alternatives to Impact" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Dependencies -->
+    <script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js"></script>
+    <script type="text/javascript" src="/min/modernizr-min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-143397381-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-143397381-1');
+
+        var getOutboundLink = function(label) {
+            gtag('event', 'click', {
+                'event_category': 'outbound',
+                'event_label': label,
+                'transport_type': 'beacon'
+            });
+        }
+    </script>
+
+    <!-- CSS  -->
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"/>
+    <link rel="stylesheet" type="text/css"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <link rel="stylesheet" type="text/css" href="/min/style-min.css"/>
+
+    <style>
+        .meme {
+            font-family: 'Courier New', Courier, monospace;
+            font-style: italic;
+            font-size: 0.5em;
+            vertical-align: text-top;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="navbar-fixed">
+        <nav role="navigation">
+            <div class="nav-wrapper container">
+                <a href="/" class="brand-logo"><h1>Impact</h1></a>
+            </div>
+        </nav>
+    </div>
+</header>
+<div class="container">
+    <div class="row">
+        <div class="col s12">
+            <div class="center promo promo-example">
+                <p>Impact supports Minecraft 1.16.5, 1.15.2, 1.14.4, 1.13.2, 1.12.2, 1.12.1, 1.12, and 1.11.2.</p>
+                <p>Impact does NOT support cracked/non-premium launchers.</p>
+                <p><a target="_blank" href="https://github.com/ImpactDevelopment/ImpactClient/wiki/Setup-FAQ" onclick="getOutboundLink('faq_download'); return true;"><u>Download/Setup FAQ</u></a></p>
+            </div>
+        </div>
+        <div class="col s12">
+            <div class="center promo promo-example">
+                <h2>Alternatives</h2>
+                <p>
+                    Please note, this list is manually compiled. We cannot garentee its acuracy nor can we promise to keep it up to date.
+                    <br/>
+                    The projects listed here are third-party projects, not afiliated with Impact in any way. We do not endorse them and cannot garentee they are safe to use.
+                </p>
+                <!-- TODO: Generate this list from a database or something -->
+                <table>
+                    <tbody>
+                        <tr>
+                            <th>Name</th>
+                            <th>Cost</th>
+                            <th>Notes</th>
+                            <th>Versions</th>
+                        </tr>
+                        <tr>
+                            <td><a href="https://futureclient.net">Future</a></td>
+                            <td>One-time purchase</td>
+                            <td>Future is a premium client with support for the latest versions, popular with players on various anarchy servers. <span class="meme">Impact, sponsered by Future&#8482;</span></td>
+                            <td>1.14.4, 1.13.2, 1.12.2, 1.8.9</td>
+                        </tr>
+                        <tr>
+                            <td><a href="https://aristois.net">Aristois</a></td>
+                            <td>Free (optional donation perks)</td>
+                            <td>Aristois is a free (closed-source) mod that aims to be always up-to-date with the latest minecraft versions. It can be installed with support for Fabric, Forge, MultiMC, and more.</td>
+                            <td>1.8.9 through 1.18.2</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</body>
+</html>
