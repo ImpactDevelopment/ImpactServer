@@ -384,7 +384,10 @@
                     var currency = form['currency'].value.trim()
                     var captcha = $("#g-recaptcha-response").val()
 
-                    if (!captcha) showError($(form), "Recaptcha is required")
+                    if (!captcha) {
+                        showError($(form), "Recaptcha is required")
+                        return
+                    }
 
                     // Show a spinner while creating payment
                     loading($(form), true)
