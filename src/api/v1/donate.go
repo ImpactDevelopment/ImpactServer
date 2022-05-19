@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/ImpactDevelopment/ImpactServer/src/database"
 	"github.com/ImpactDevelopment/ImpactServer/src/discord"
+	"github.com/ImpactDevelopment/ImpactServer/src/recaptcha"
 	"github.com/ImpactDevelopment/ImpactServer/src/stripe"
 	"github.com/ImpactDevelopment/ImpactServer/src/util"
 	"github.com/google/uuid"
@@ -100,6 +101,12 @@ func createStripePayment(c echo.Context) error {
 		// Count the rejection
 		database.DB.Exec("UPDATE failed_charges SET rejections = failed_charges.rejections + 1 WHERE ip_address = $1", ip.String())
 		return echo.NewHTTPError(http.StatusForbidden)
+	}
+
+	// Only check recaptcha after we've verified that the address is allowed
+	err = recaptcha.Verify(c)
+	if err != nil {
+		return err
 	}
 
 	payment, err := stripe.CreatePayment(body.Amount, body.Currency, "Donation", body.Email)

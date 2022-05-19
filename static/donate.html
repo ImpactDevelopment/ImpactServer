@@ -13,6 +13,7 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.2/jquery.validate.min.js"></script>
     <script type="text/javascript" src="/js/api.js"></script>
     <script type="text/javascript" src="https://js.stripe.com/v3/"></script>
+    <script src="https://www.google.com/recaptcha/api.js" async></script>
 
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-143397381-1"></script>
@@ -129,7 +130,8 @@
                 <input type="email" id="email" name="email" required tabindex="2" />
                 <span class="helper-text" data-error="Invalid Email" data-success="">An email to send your receipt to</span>
             </div>
-            <div class="input-field col s12 m2 center">
+            <div class="input-field col s12 g-recaptcha" data-sitekey="6Lf19NcUAAAAADBY-60OxWuSMgr4XMH3aq1BZYRs"></div>
+            <div class="input-field col s12 m2">
                 <button type="submit" form="amount-form" class="btn waves-effect waves-light" disabled tabindex="3">
                     Next
                 </button>
@@ -380,6 +382,9 @@
                     var amount = Math.floor(form['amount'].value.trim() * 100)
                     var email = form['email'].value.trim()
                     var currency = form['currency'].value.trim()
+                    var captcha = $("#g-recaptcha-response").val()
+
+                    if (!captcha) showError($(form), "Recaptcha is required")
 
                     // Show a spinner while creating payment
                     loading($(form), true)
@@ -391,7 +396,7 @@
                         return
                     }
 
-                    api.createPayment(currency, amount, email)
+                    api.createPayment(currency, amount, email, captcha)
                         .then(function (payment) {
                             return currentPayment = payment
                         })

@@ -125,7 +125,7 @@
                 })
             })
         },
-        createPayment: function(currency, amount, email) {
+        createPayment: function(currency, amount, email, verification) {
             if (!email) {
                 // currency is optional, if only two args are present then shift them right
                 email = amount
@@ -138,7 +138,8 @@
                     data: {
                         currency: currency,
                         amount: amount,
-                        email: email
+                        email: email,
+                        "g-recaptcha-response": verification
                     },
                     dataType: "json",
                     error: function (jqXHR, textStatus, errorThrown) {
