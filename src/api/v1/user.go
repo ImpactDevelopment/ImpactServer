@@ -94,7 +94,7 @@ func getUser(c echo.Context) error {
 			featuresResult  = <-featuresCh
 		)
 		if minecraftResult.Error != nil {
-			return minecraftResult.Error
+			//return minecraftResult.Error
 		}
 		if discordResult.Error != nil {
 			return discordResult.Error
