@@ -94,7 +94,7 @@ func githubReleases(rels map[string]Release) error {
 	req.SetQuery("per_page", "100")
 	req.Accept(mediatype.JSON)
 	if githubToken != "" {
-		req.Authorization("Basic", githubToken)
+		req.Authorization("Bearer", githubToken)
 	}
 
 	resp, err := req.Do()
